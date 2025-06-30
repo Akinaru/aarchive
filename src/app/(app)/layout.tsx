@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -16,7 +15,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <AppSidebar />
       <div className="flex-1 p-6">{children}</div>
     </div>
   );
