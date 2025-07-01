@@ -9,7 +9,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const session = await getServerSession(authOptions)
 
   if (!session) {
-    // Protection serveur supplémentaire (en plus du middleware)
     return <div>Accès refusé</div>
   }
 

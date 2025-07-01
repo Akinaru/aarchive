@@ -72,25 +72,32 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
       ),
       cell: ({ cell }) => <div className="text-muted-foreground">{cell.getValue<string>()}</div>,
     },
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(row.original.id)} className="text-destructive">
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
+{
+  id: "actions",
+  enableHiding: false,
+  header: () => null, // Pas de titre
+  cell: ({ row }) => (
+    <div className="flex justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onDelete(row.original.id)}
+            className="text-destructive"
+          >
+            Supprimer
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  ),
+}
+
   ]
 
   const table = useReactTable({
@@ -115,12 +122,14 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center gap-2">
-        <Input
-          placeholder="Filtrer par email..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
-          className="max-w-sm"
-        />
+      <Input
+        type="search"
+        autoComplete="off"
+        placeholder="Filtrer par email..."
+        value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+        onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
+        className="max-w-sm"
+      />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

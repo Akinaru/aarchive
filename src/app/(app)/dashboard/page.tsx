@@ -1,8 +1,13 @@
+import { PageHeader } from "@/components/page-header";
+
 export default function DashboardPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Tableau de bord</h1>
-      <p>Bienvenue sur ton espace personnel !</p>
-    </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Gérer en globalité votre temps et vos missions."
+        breadcrumb={[
+          { label: "Dashboard" },
+        ]}
+      />
   )
 }

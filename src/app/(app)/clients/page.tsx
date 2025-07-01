@@ -4,16 +4,23 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { Client } from "@/types/clients"
 import { DataTableClients } from "@/components/table/data-table-clients"
+import { PageHeader } from "@/components/page-header"
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [newClient, setNewClient] = useState("")
   const [newEmail, setNewEmail] = useState("")
   const [editClient, setEditClient] = useState<Client | null>(null)
+
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  const isFormValid = () =>
+    newClient.trim() !== "" && isValidEmail(newEmail)
 
   const fetchClients = async () => {
     try {
@@ -26,6 +33,15 @@ export default function ClientsPage() {
   }
 
   const addClient = async () => {
+    if (!newClient.trim()) {
+      toast.error("Le nom est requis.")
+      return
+    }
+    if (!isValidEmail(newEmail)) {
+      toast.error("Adresse email invalide.")
+      return
+    }
+
     try {
       const res = await fetch("/api/clients", {
         method: "POST",
@@ -44,6 +60,15 @@ export default function ClientsPage() {
 
   const updateClient = async () => {
     if (!editClient) return
+    if (!editClient.nom.trim()) {
+      toast.error("Le nom est requis.")
+      return
+    }
+    if (!isValidEmail(editClient.email)) {
+      toast.error("Adresse email invalide.")
+      return
+    }
+
     try {
       const res = await fetch(`/api/clients/${editClient.id}`, {
         method: "PUT",
@@ -76,25 +101,35 @@ export default function ClientsPage() {
 
   return (
     <div className="p-6 mx-auto space-y-6">
-    <Card className="w-full max-w-md">
-    <CardHeader>
-        <CardTitle>Ajouter un client</CardTitle>
-    </CardHeader>
-    <CardContent className="flex flex-col gap-4">
-        <Input
-        placeholder="Nom"
-        value={newClient}
-        onChange={(e) => setNewClient(e.target.value)}
-        />
-        <Input
-        placeholder="Email"
-        value={newEmail}
-        onChange={(e) => setNewEmail(e.target.value)}
-        />
-        <Button onClick={addClient}>Ajouter</Button>
-    </CardContent>
-    </Card>
+      <PageHeader
+        title="Clients"
+        subtitle="Gérez ici la liste de vos clients."
+        breadcrumb={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Clients" },
+        ]}
+      />
 
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Ajouter un client</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <Input
+            placeholder="Nom"
+            value={newClient}
+            onChange={(e) => setNewClient(e.target.value)}
+          />
+          <Input
+            placeholder="Email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+          />
+          <Button onClick={addClient} disabled={!isFormValid()}>
+            Ajouter
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
