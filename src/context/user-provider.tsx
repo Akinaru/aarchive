@@ -2,17 +2,11 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-
-type User = {
-  id: string
-  name?: string
-  email?: string
-  // Ajoute ici des champs personnalisés si besoin : role, isValidated, etc.
-}
+import type { Session } from "next-auth"
 
 type UserContextType = {
-  user: User | null
-  setUser: (user: User | null) => void
+  user: Session["user"] | null
+  setUser: (user: Session["user"] | null) => void
   updateUser: () => Promise<void>
 }
 
@@ -20,7 +14,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const { data: session, update } = useSession()
-  const [user, setUser] = useState<User | null>(session?.user || null)
+  const [user, setUser] = useState<Session["user"] | null>(session?.user || null)
 
   useEffect(() => {
     if (session?.user) {

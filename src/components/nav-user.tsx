@@ -23,7 +23,7 @@ export function NavUser() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 p-2 hover:bg-muted rounded-md">
+        <button className="flex items-center gap-2 p-2 hover:bg-muted rounded-md cursor-pointer">
           <div className="bg-muted text-white font-bold h-8 w-8 rounded-full flex items-center justify-center">
             {user.name?.charAt(0).toUpperCase()}
           </div>

@@ -107,7 +107,7 @@ export function AppSidebar({ user }: { user: any }) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser />
       </SidebarFooter>
 
       <SidebarRail />
