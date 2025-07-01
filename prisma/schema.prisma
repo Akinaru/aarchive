@@ -51,17 +51,17 @@ model Mission {
 }
 
 model Temps {
-  id          Int       @id @default(autoincrement())
-  date        DateTime  @default(now())
-  dureeHeures Int
-  dureeMinutes Int
+  id            Int       @id @default(autoincrement())
+  date          DateTime  @default(now())
+  dureeMinutes  Int
   utilisateurId Int
-  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id])
-  missionId   Int
-  mission     Mission   @relation(fields: [missionId], references: [id])
-  typeTacheId Int
-  typeTache   TypeTache @relation(fields: [typeTacheId], references: [id])
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
+  missionId     Int
+  mission       Mission   @relation(fields: [missionId], references: [id])
+  typeTacheId   Int
+  typeTache     TypeTache @relation(fields: [typeTacheId], references: [id])
 }
+
 
 model TypeTache {
   id    Int    @id @default(autoincrement())

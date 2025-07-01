@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { Sidebar, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarContent, SidebarHeader, SidebarFooter, SidebarRail, SidebarMenu, SidebarGroupContent } from "@/components/ui/sidebar"
-import { GalleryVerticalEnd, Contact, Music2, LayoutDashboard, Users, Folder, BookOpen, PlusCircle, ShieldCheck } from "lucide-react"
+import { GalleryVerticalEnd, Contact, Music2, LayoutDashboard, Users, Folder, BookOpen, PlusCircle, ShieldCheck, FolderGit2 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 
 export function AppSidebar({ user }: { user: any }) {
@@ -47,6 +47,14 @@ export function AppSidebar({ user }: { user: any }) {
                   <Link href="/clients">
                     <Users className="mr-2 size-4" />
                     Clients
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/projets">
+                    <FolderGit2 className="mr-2 size-4" />
+                    Projets
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
