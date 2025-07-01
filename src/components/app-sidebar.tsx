@@ -44,16 +44,8 @@ export function AppSidebar({ user }: { user: any }) {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/projects">
-                    <Folder className="mr-2 size-4" />
-                    Projets
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
                   <Link href="/clients">
-                    <Folder className="mr-2 size-4" />
+                    <Users className="mr-2 size-4" />
                     Clients
                   </Link>
                 </SidebarMenuButton>

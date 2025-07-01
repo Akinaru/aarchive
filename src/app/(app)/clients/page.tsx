@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { Client } from "@/types/clients"
 import { DataTableClients } from "@/components/table/data-table-clients"
@@ -15,6 +15,7 @@ export default function ClientsPage() {
   const [newClient, setNewClient] = useState("")
   const [newEmail, setNewEmail] = useState("")
   const [editClient, setEditClient] = useState<Client | null>(null)
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
 
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -33,14 +34,7 @@ export default function ClientsPage() {
   }
 
   const addClient = async () => {
-    if (!newClient.trim()) {
-      toast.error("Le nom est requis.")
-      return
-    }
-    if (!isValidEmail(newEmail)) {
-      toast.error("Adresse email invalide.")
-      return
-    }
+    if (!isFormValid()) return
 
     try {
       const res = await fetch("/api/clients", {
@@ -51,6 +45,7 @@ export default function ClientsPage() {
       if (!res.ok) throw new Error()
       setNewClient("")
       setNewEmail("")
+      setAddDialogOpen(false)
       await fetchClients()
       toast.success("Client ajouté")
     } catch {
@@ -110,26 +105,33 @@ export default function ClientsPage() {
         ]}
       />
 
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Ajouter un client</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <Input
-            placeholder="Nom"
-            value={newClient}
-            onChange={(e) => setNewClient(e.target.value)}
-          />
-          <Input
-            placeholder="Email"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-          />
-          <Button onClick={addClient} disabled={!isFormValid()}>
-            Ajouter
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex justify-end">
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Ajouter un client</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ajouter un client</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <Input
+                placeholder="Nom"
+                value={newClient}
+                onChange={(e) => setNewClient(e.target.value)}
+              />
+              <Input
+                placeholder="Email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+              <Button onClick={addClient} disabled={!isFormValid()}>
+                Ajouter
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <Card>
         <CardHeader>
