@@ -19,18 +19,18 @@ export const authOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await prisma.utilisateur.findUnique({
           where: { email: credentials.email },
         })
 
         if (!user) return null
 
-        const isValid = await bcrypt.compare(credentials.password, user.password)
+        const isValid = await bcrypt.compare(credentials.password, user.motDePasse)
         if (!isValid) return null
 
         return {
           id: user.id.toString(),
-          name: user.name,
+          name: user.nom,
           email: user.email,
         }
       },
@@ -55,17 +55,16 @@ export const authOptions = {
       token: JWT
     }): Promise<any> {
       if (token?.id) {
-        const userInDb = await prisma.user.findUnique({
+        const userInDb = await prisma.utilisateur.findUnique({
           where: { id: parseInt(token.id as string) },
         })
 
         if (userInDb) {
-          session.user.id = userInDb.id.toString()
-          session.user.name = userInDb.name
-          session.user.email = userInDb.email
-          // Tu peux ajouter ici d'autres champs si nécessaire, ex :
-          // session.user.role = userInDb.role
-          // session.user.isValidated = userInDb.isValidated
+          session.user = {
+            id: userInDb.id.toString(),
+            name: userInDb.nom,
+            email: userInDb.email,
+          }
         }
       }
 

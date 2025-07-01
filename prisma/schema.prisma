@@ -7,29 +7,71 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  name     String?
-  tasks    Task[]
+model Utilisateur {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  motDePasse String
+  nom      String?
+  temps    Temps[]
 }
 
-model Project {
-  id       Int    @id @default(autoincrement())
-  name     String
-  client   String?
-  tasks    Task[]
+model Client {
+  id       Int       @id @default(autoincrement())
+  nom      String
+  email    String?
+  projets  ProjetClient[]
 }
 
-model Task {
-  id        Int      @id @default(autoincrement())
-  title     String
-  type      String
-  duration  Float
-  date      DateTime @default(now())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  projectId Int
-  project   Project  @relation(fields: [projectId], references: [id])
+model Projet {
+  id        Int       @id @default(autoincrement())
+  nom       String
+  description String?
+  missions  Mission[]
+  clients   ProjetClient[]
+}
+
+model ProjetClient {
+  id        Int     @id @default(autoincrement())
+  projetId  Int
+  clientId  Int
+  projet    Projet  @relation(fields: [projetId], references: [id])
+  client    Client  @relation(fields: [clientId], references: [id])
+}
+
+model Mission {
+  id           Int       @id @default(autoincrement())
+  titre        String
+  description  String?
+  statut       StatutMission @default(EN_COURS)
+  prixEstime   Float     @default(0)
+  prixReel     Float?
+  projetId     Int
+  projet       Projet    @relation(fields: [projetId], references: [id])
+  temps        Temps[]
+}
+
+model Temps {
+  id          Int       @id @default(autoincrement())
+  date        DateTime  @default(now())
+  dureeHeures Int
+  dureeMinutes Int
+  utilisateurId Int
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id])
+  missionId   Int
+  mission     Mission   @relation(fields: [missionId], references: [id])
+  typeTacheId Int
+  typeTache   TypeTache @relation(fields: [typeTacheId], references: [id])
+}
+
+model TypeTache {
+  id    Int    @id @default(autoincrement())
+  nom   String
+  temps Temps[]
+}
+
+enum StatutMission {
+  EN_COURS
+  TERMINEE
+  EN_ATTENTE
+  ANNULEE
 }
