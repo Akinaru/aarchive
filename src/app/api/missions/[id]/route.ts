@@ -7,15 +7,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const body = await req.json()
   const id = parseInt(params.id)
 
-  if (!body.nom) {
-    return NextResponse.json({ error: "Nom requis" }, { status: 400 })
-  }
-
-  const updated = await prisma.client.update({
+  const updated = await prisma.mission.update({
     where: { id },
-    data: { 
-        nom: body.nom,
-        email: body.email ?? null,
+    data: {
+      titre: body.titre,
+      description: body.description,
+      statut: body.statut,
+      prixEstime: body.prixEstime,
+      prixReel: body.prixReel,
+      projetId: body.projetId,
     },
   })
 
@@ -25,9 +25,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   const id = parseInt(params.id)
 
-  const deleted = await prisma.client.delete({
+  const deleted = await prisma.mission.delete({
     where: { id },
-  }) 
+  })
 
   return NextResponse.json(deleted)
 }
