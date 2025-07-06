@@ -46,66 +46,70 @@ export function DataTableProjets({ data, onEdit, onDelete }: Props) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const columns: ColumnDef<Projet>[] = [
-    {
-      accessorKey: "nom",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Nom
-          <ChevronDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ cell }) => <div className="font-medium">{cell.getValue<string>()}</div>,
+const columns: ColumnDef<Projet>[] = [
+  {
+    accessorKey: "nom",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Nom
+        <ChevronDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ cell }) => <div className="font-medium">{cell.getValue<string>()}</div>,
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ cell }) => <div className="text-muted-foreground">{cell.getValue<string>()}</div>,
+  },
+  {
+    accessorKey: "missions",
+    header: "Missions",
+    cell: ({ row }) => (
+      <div>{row.original.missions.length}</div>
+    ),
+  },
+  {
+    accessorKey: "clients",
+    header: "Clients",
+    cell: ({ row }) => {
+      const clients = row.original.clients
+      const nomsClients = clients.length > 0
+        ? clients.map((c) => c.client.nom).join(", ")
+        : "Aucun"
+      return <div className="text-muted-foreground">{nomsClients}</div>
     },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ cell }) => <div className="text-muted-foreground">{cell.getValue<string>()}</div>,
-    },
-    {
-      accessorKey: "missions",
-      header: "Missions",
-      cell: ({ row }) => (
-        <div>{row.original.missions.length}</div>
-      ),
-    },
-    {
-      accessorKey: "clients",
-      header: "Clients",
-      cell: ({ row }) => {
-        const nomsClients = row.original.clients.map((c) => c.client.nom).join(", ")
-        return <div className="text-muted-foreground">{nomsClients}</div>
-      },
-    },
-    {
-      id: "actions",
-      enableHiding: false,
-      header: () => null,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onDelete(row.original.id)}
-                className="text-destructive"
-              >
-                Supprimer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-  ]
+  },
+  {
+    id: "actions",
+    enableHiding: false,
+    header: () => null,
+    cell: ({ row }) => (
+      <div className="flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(row.original.id)}
+              className="text-destructive"
+            >
+              Supprimer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
+  },
+]
+
 
   const table = useReactTable({
     data,

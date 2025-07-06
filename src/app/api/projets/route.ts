@@ -11,12 +11,13 @@ export async function GET() {
       clients: {
         include: {
           client: {
-            select: { nom: true },
+            select: { id: true, nom: true },
           },
         },
       },
     },
   })
+
   return NextResponse.json(projets)
 }
 
@@ -38,11 +39,16 @@ export async function POST(req: Request) {
       },
     },
     include: {
-      missions: true,
-      clients: { include: { client: true } },
+      missions: { select: { id: true } },
+      clients: {
+        include: {
+          client: {
+            select: { id: true, nom: true },
+          },
+        },
+      },
     },
   })
 
   return NextResponse.json(nouveauProjet)
 }
-

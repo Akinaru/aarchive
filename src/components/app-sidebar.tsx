@@ -1,14 +1,41 @@
-// components/app-sidebar.tsx
 'use client'
 
 import Link from "next/link"
-import { Sidebar, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarContent, SidebarHeader, SidebarFooter, SidebarRail, SidebarMenu, SidebarGroupContent } from "@/components/ui/sidebar"
-import { GalleryVerticalEnd, Contact, Music2, LayoutDashboard, Users, Folder, BookOpen, PlusCircle, ShieldCheck, FolderGit2, Flag } from "lucide-react"
+import { usePathname } from "next/navigation"
+import {
+  Sidebar,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarContent,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarRail,
+  SidebarMenu,
+  SidebarGroupContent,
+} from "@/components/ui/sidebar"
+import {
+  GalleryVerticalEnd,
+  Contact,
+  LayoutDashboard,
+  Users,
+  FolderGit2,
+  Flag,
+  TimerReset,
+  ListTodo,
+  PlusCircle,
+  ShieldCheck,
+} from "lucide-react"
 import { NavUser } from "@/components/nav-user"
+import { cn } from "@/lib/utils"
 
 export function AppSidebar({ user }: { user: any }) {
+  const pathname = usePathname()
   const isAdmin = user?.role === "admin"
   const isValidated = user?.isValidated
+
+  const isActive = (href: string) => pathname.startsWith(href)
 
   return (
     <Sidebar collapsible="icon">
@@ -30,12 +57,19 @@ export function AppSidebar({ user }: { user: any }) {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Exemple des liens statiques */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/temps") })}>
+                  <Link href="/temps">
+                    <TimerReset className="mr-2 size-4" />
+                    Notation des temps
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/dashboard") })}>
                   <Link href="/dashboard">
                     <LayoutDashboard className="mr-2 size-4" />
                     Dashboard
@@ -43,7 +77,7 @@ export function AppSidebar({ user }: { user: any }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/clients") })}>
                   <Link href="/clients">
                     <Users className="mr-2 size-4" />
                     Clients
@@ -51,7 +85,7 @@ export function AppSidebar({ user }: { user: any }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/projets") })}>
                   <Link href="/projets">
                     <FolderGit2 className="mr-2 size-4" />
                     Projets
@@ -59,10 +93,19 @@ export function AppSidebar({ user }: { user: any }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/missions") })}>
                   <Link href="/missions">
                     <Flag className="mr-2 size-4" />
                     Missions
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/type-taches") })}>
+                  <Link href="/type-taches">
+                    <ListTodo className="mr-2 size-4" />
+                    Types de tâche
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -76,7 +119,7 @@ export function AppSidebar({ user }: { user: any }) {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/timesheet") })}>
                     <Link href="/timesheet">
                       <PlusCircle className="mr-2 size-4" />
                       Ma feuille de temps
@@ -94,7 +137,7 @@ export function AppSidebar({ user }: { user: any }) {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/admin/users") })}>
                     <Link href="/admin/users">
                       <ShieldCheck className="mr-2 size-4" />
                       Utilisateurs
@@ -110,7 +153,7 @@ export function AppSidebar({ user }: { user: any }) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/contact") })}>
                   <Link href="/contact">
                     <Contact className="mr-2 size-4" />
                     Contact

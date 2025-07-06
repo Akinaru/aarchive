@@ -12,7 +12,6 @@ model Utilisateur {
   email    String   @unique
   motDePasse String
   nom      String?
-  temps    Temps[]
 }
 
 model Client {
@@ -31,11 +30,13 @@ model Projet {
 }
 
 model ProjetClient {
-  id        Int     @id @default(autoincrement())
   projetId  Int
   clientId  Int
+
   projet    Projet  @relation(fields: [projetId], references: [id])
   client    Client  @relation(fields: [clientId], references: [id])
+
+  @@id([projetId, clientId])
 }
 
 model Mission {
@@ -54,8 +55,7 @@ model Temps {
   id            Int       @id @default(autoincrement())
   date          DateTime  @default(now())
   dureeMinutes  Int
-  utilisateurId Int
-  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id])
+  description   String?
   missionId     Int
   mission       Mission   @relation(fields: [missionId], references: [id])
   typeTacheId   Int

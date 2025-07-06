@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Loader2, CheckCircle, Clock, XCircle } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
@@ -41,6 +42,8 @@ export default function MissionsPage() {
 
   const [editMission, setEditMission] = useState<Mission | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [isLoadingProjets, setIsLoadingProjets] = useState(true)
+
 
   const fetchMissions = async () => {
     const res = await fetch("/api/missions")
@@ -49,10 +52,13 @@ export default function MissionsPage() {
   }
 
   const fetchProjets = async () => {
+    setIsLoadingProjets(true)
     const res = await fetch("/api/projets")
     const data = await res.json()
     setProjets(data)
+    setIsLoadingProjets(false)
   }
+
 
   const addMission = async () => {
     if (!titre.trim() || !projetId) {
@@ -137,80 +143,101 @@ export default function MissionsPage() {
         ]}
       />
 
+
+  {!isLoadingProjets && projets.length === 0 && (
+    <Alert variant="destructive">
+      <AlertCircle className="h-5 w-5" />
+      <AlertTitle>Impossible d’ajouter une mission</AlertTitle>
+      <AlertDescription>
+        <p className="mb-1">Vous devez d’abord créer un projet avant de pouvoir ajouter une mission.</p>
+        <ul className="list-inside list-disc text-sm space-y-1">
+          <li>
+            <a href="/projets" className="underline hover:opacity-85">
+              Créer un projet maintenant
+            </a>
+          </li>
+        </ul>
+      </AlertDescription>
+    </Alert>
+  )}
+
+
       <div className="flex justify-end">
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Ajouter une mission</Button>
+            <Button disabled={projets.length === 0}>
+              Ajouter une mission
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Nouvelle mission</DialogTitle>
             </DialogHeader>
-            <div className="flex flex-col gap-4">
-              <Input
-                placeholder="Titre"
-                value={titre}
-                onChange={(e) => setTitre(e.target.value)}
-              />
-              <Textarea
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-              <Input
-                type="number"
-                placeholder="Prix estimé (€)"
-                value={prixEstime}
-                onChange={(e) => setPrixEstime(e.target.value)}
-              />
-              <Select value={statut} onValueChange={setStatut}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUTS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s.replace("_", " ").toLowerCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
-              {/* Badge de statut sélectionné */}
-              {statut && (
-                <div className="mt-1">
-                  <Badge variant="outline" className="flex items-center gap-1 text-sm">
-                    {statut === "EN_COURS" && (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin text-blue-500" />
-                    )}
-                    {statut === "TERMINEE" && (
-                      <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
-                    )}
-                    {statut === "EN_ATTENTE" && (
-                      <Clock className="mr-1 h-3 w-3 text-yellow-500" />
-                    )}
-                    {statut === "ANNULEE" && (
-                      <XCircle className="mr-1 h-3 w-3 text-red-500" />
-                    )}
-                    {statut.replace("_", " ").toLowerCase()}
-                  </Badge>
+            {projets.length === 0 ? (
+              <div className="space-y-4">
+                <div className="rounded-md border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+                  Aucun projet trouvé. Veuillez{" "}
+                  <a
+                    href="/projets"
+                    className="underline font-medium text-yellow-900 hover:text-yellow-700"
+                  >
+                    créer un projet
+                  </a>{" "}
+                  avant d’ajouter une mission.
                 </div>
-              )}
-
-              <Select value={projetId} onValueChange={setProjetId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Projet associé" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projets.map((p) => (
-                    <SelectItem key={p.id} value={p.id.toString()}>
-                      {p.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={addMission}>Créer</Button>
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <Input
+                  placeholder="Titre"
+                  value={titre}
+                  onChange={(e) => setTitre(e.target.value)}
+                />
+                <Textarea
+                  placeholder="Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+                <Input
+                  type="number"
+                  placeholder="Prix estimé (€)"
+                  value={prixEstime}
+                  onChange={(e) => setPrixEstime(e.target.value)}
+                />
+                <Select value={statut} onValueChange={setStatut}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Statut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUTS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        <div className="flex items-center gap-2 capitalize">
+                          {s === "EN_COURS" && <Loader2 className="h-3 w-3 animate-spin text-blue-500" />}
+                          {s === "TERMINEE" && <CheckCircle className="h-3 w-3 text-green-500" />}
+                          {s === "EN_ATTENTE" && <Clock className="h-3 w-3 text-yellow-500" />}
+                          {s === "ANNULEE" && <XCircle className="h-3 w-3 text-red-500" />}
+                          {s.replace("_", " ").toLowerCase()}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={projetId} onValueChange={setProjetId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Projet associé" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projets.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.nom}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={addMission}>Créer</Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -269,11 +296,18 @@ export default function MissionsPage() {
                 <SelectContent>
                   {STATUTS.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {s.replace("_", " ").toLowerCase()}
+                      <div className="flex items-center gap-2 capitalize">
+                        {s === "EN_COURS" && <Loader2 className="h-3 w-3 animate-spin text-blue-500" />}
+                        {s === "TERMINEE" && <CheckCircle className="h-3 w-3 text-green-500" />}
+                        {s === "EN_ATTENTE" && <Clock className="h-3 w-3 text-yellow-500" />}
+                        {s === "ANNULEE" && <XCircle className="h-3 w-3 text-red-500" />}
+                        {s.replace("_", " ").toLowerCase()}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
               <Select
                 value={editMission.projetId.toString()}
                 onValueChange={(value) =>

@@ -3,5 +3,11 @@ export type Projet = {
   nom: string
   description: string | null
   missions: { id: number }[]
-  clients: { client: { nom: string } }[]
+  clients: {
+    client: {
+      id: number
+      nom: string
+      email?: string | null
+    }
+  }[]
 }

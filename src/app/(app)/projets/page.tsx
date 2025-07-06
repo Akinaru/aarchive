@@ -31,6 +31,7 @@ export default function ProjetsPage() {
   const [newNom, setNewNom] = useState("")
   const [newDescription, setNewDescription] = useState("")
   const [editProjet, setEditProjet] = useState<Projet | null>(null)
+  const [editClientIds, setEditClientIds] = useState<number[]>([])
   const [addDialogOpen, setAddDialogOpen] = useState(false)
 
   const isFormValid = () => newNom.trim() !== ""
@@ -57,6 +58,12 @@ export default function ProjetsPage() {
 
   const toggleClient = (id: number) => {
     setSelectedClientIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    )
+  }
+
+  const toggleEditClient = (id: number) => {
+    setEditClientIds((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     )
   }
@@ -99,6 +106,7 @@ export default function ProjetsPage() {
         body: JSON.stringify({
           nom: editProjet.nom,
           description: editProjet.description,
+          clientIds: editClientIds,
         }),
         headers: { "Content-Type": "application/json" },
       })
@@ -158,7 +166,6 @@ export default function ProjetsPage() {
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
               />
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="justify-start">
@@ -185,7 +192,6 @@ export default function ProjetsPage() {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-
               <Button onClick={addProjet} disabled={!isFormValid()}>
                 Ajouter
               </Button>
@@ -201,38 +207,70 @@ export default function ProjetsPage() {
         <CardContent>
           <DataTableProjets
             data={projets}
-            onEdit={(projet) => setEditProjet(projet)}
+            onEdit={(projet) => {
+              setEditProjet(projet)
+              setEditClientIds(projet.clients?.map((c) => c.client.id) || [])
+            }}
             onDelete={deleteProjet}
           />
         </CardContent>
       </Card>
 
-      <Dialog open={!!editProjet} onOpenChange={(open) => !open && setEditProjet(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier le projet</DialogTitle>
-          </DialogHeader>
-          {editProjet && (
-            <div className="space-y-4">
-              <Input
-                placeholder="Nom"
-                value={editProjet.nom}
-                onChange={(e) =>
-                  setEditProjet({ ...editProjet, nom: e.target.value })
-                }
-              />
-              <Textarea
-                placeholder="Description"
-                value={editProjet.description ?? ""}
-                onChange={(e) =>
-                  setEditProjet({ ...editProjet, description: e.target.value })
-                }
-              />
-              <Button onClick={updateProjet}>Valider</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+<Dialog open={!!editProjet} onOpenChange={(open) => !open && setEditProjet(null)}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Modifier le projet</DialogTitle>
+    </DialogHeader>
+    {editProjet && (
+      <div className="space-y-4">
+        <Input
+          placeholder="Nom"
+          value={editProjet.nom}
+          onChange={(e) =>
+            setEditProjet({ ...editProjet, nom: e.target.value })
+          }
+        />
+        <Textarea
+          placeholder="Description"
+          value={editProjet.description ?? ""}
+          onChange={(e) =>
+            setEditProjet({ ...editProjet, description: e.target.value })
+          }
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="justify-start w-full">
+              {editClientIds.length > 0
+                ? `${editClientIds.length} client(s) sélectionné(s)`
+                : "Sélectionner des clients"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-64 max-h-64 overflow-auto">
+            {clients.length === 0 ? (
+              <div className="px-4 py-2 text-sm text-muted-foreground">
+                Aucun client à sélectionner
+              </div>
+            ) : (
+              clients.map((client) => (
+                <DropdownMenuCheckboxItem
+                  key={client.id}
+                  checked={editClientIds.includes(client.id)}
+                  onCheckedChange={() => toggleEditClient(client.id)}
+                >
+                  {client.nom}
+                </DropdownMenuCheckboxItem>
+              ))
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <div>
+          <Button onClick={updateProjet}>Valider</Button>
+        </div>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+
     </div>
   )
 }
