@@ -29,6 +29,7 @@ import {
   Loader2,
   CheckCircle,
   Clock,
+  Eye,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -46,6 +47,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import Link from "next/link"
 
 type Props = {
   data: Mission[]
@@ -149,6 +151,17 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
       accessorKey: "projet.nom",
       header: "Projet",
       cell: ({ row }) => <div>{row.original.projet.nom}</div>,
+    },
+    {
+      id: "voir",
+      header: "Détail",
+      cell: ({ row }) => (
+        <Link href={`/missions/${row.original.id}`}>
+          <Button variant="outline" size="sm" className="w-full">
+            Voir
+          </Button>
+        </Link>
+      ),
     },
     {
       id: "actions",

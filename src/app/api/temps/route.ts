@@ -1,10 +1,18 @@
 import { PrismaClient } from "@prisma/client"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 const prisma = new PrismaClient()
 
-export async function GET() {
+// GET: /api/temps ou /api/temps?missionId=1
+export async function GET(req: NextRequest) {
+  const missionId = req.nextUrl.searchParams.get("missionId")
+
+  const where = missionId
+    ? { missionId: parseInt(missionId) }
+    : undefined
+
   const temps = await prisma.temps.findMany({
+    where,
     include: {
       mission: { select: { titre: true } },
       typeTache: { select: { nom: true } },
@@ -14,7 +22,6 @@ export async function GET() {
 
   return NextResponse.json(temps)
 }
-
 
 export async function POST(req: Request) {
   const body = await req.json()
@@ -33,7 +40,7 @@ export async function POST(req: Request) {
     },
     include: {
       mission: { select: { titre: true } },
-      typeTache: { select: { nom: true } }
+      typeTache: { select: { nom: true } },
     },
   })
 
