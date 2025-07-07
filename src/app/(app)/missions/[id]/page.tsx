@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { TempsParTypeBarChart } from "@/components/temps-bar-chart"
+import { TempsParTypeBarChart } from "@/components/chart/temps-bar-chart"
 import { FormAddTemps } from "@/components/form/form-ajout-temps"
 import { Button } from "@/components/ui/button"
 
@@ -18,6 +18,7 @@ import { Mission } from "@/types/missions"
 import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
 import { DataTableTempsMission } from "@/components/table/data-table-temps-mission"
+import { ChartTachePie } from "@/components/chart/chart-tache-pie"
 
 export default function MissionSinglePage() {
   const { id } = useParams()
@@ -122,6 +123,12 @@ if (isLoading) {
         <span>Jours travaillés :</span>
         <span className="font-medium text-foreground">{joursUniques.length}</span>
       </div>
+      <div className="flex justify-between">
+        <span>Types de tâches utilisés :</span>
+        <span className="font-medium text-foreground">
+          {[...new Set(temps.map((t) => t.typeTache?.nom ?? "Inconnu"))].length}
+        </span>
+      </div>
     </div>
 
     <div className="border-t pt-3 space-y-1">
@@ -132,56 +139,40 @@ if (isLoading) {
           {Math.round((totalMinutes / joursUniques.length) % 60) || 0}
         </span>
       </div>
-      {temps.length > 0 && (
-        <>
+      <div className="flex justify-between">
+        <span>Moyenne / entrée :</span>
+        <span className="text-foreground">
+          {Math.floor((totalMinutes / temps.length) || 0)}min
+        </span>
+      </div>
+      <div className="flex justify-between">
+        <span>Premier temps saisi :</span>
+        <span className="text-foreground">
+          {temps.length > 0 ? format(new Date(temps[temps.length - 1].date), "dd/MM/yyyy") : "-"}
+        </span>
+      </div>
+      {(() => {
+        const parJour = temps.reduce((acc, t) => {
+          const dateStr = format(new Date(t.date), "yyyy-MM-dd")
+          acc[dateStr] = (acc[dateStr] || 0) + t.dureeMinutes
+          return acc
+        }, {} as Record<string, number>)
+        const [maxJour, maxMinutes] =
+          Object.entries(parJour).sort((a, b) => b[1] - a[1])[0] || []
+
+        return maxJour ? (
           <div className="flex justify-between">
-            <span>Dernier temps saisi :</span>
+            <span>Jour le plus chargé :</span>
             <span className="text-foreground">
-              {format(new Date(temps[0].date), "dd/MM/yyyy")}
+              {format(new Date(maxJour), "dd/MM")} ({Math.floor(maxMinutes / 60)}h{maxMinutes % 60})
             </span>
           </div>
-
-          {(() => {
-            const parJour = temps.reduce((acc, t) => {
-              const dateStr = format(new Date(t.date), "yyyy-MM-dd")
-              acc[dateStr] = (acc[dateStr] || 0) + t.dureeMinutes
-              return acc
-            }, {} as Record<string, number>)
-            const [maxJour, maxMinutes] =
-              Object.entries(parJour).sort((a, b) => b[1] - a[1])[0] || []
-
-            return maxJour ? (
-              <div className="flex justify-between">
-                <span>Jour le plus chargé :</span>
-                <span className="text-foreground">
-                  {format(new Date(maxJour), "dd/MM")} ({Math.floor(maxMinutes / 60)}h{maxMinutes % 60})
-                </span>
-              </div>
-            ) : null
-          })()}
-        </>
-      )}
+        ) : null
+      })()}
     </div>
 
-    {/* Barre de progression (ex: objectif fictif de 10h) */}
-    {(() => {
-      const objectifMinutes = 600 // 10h
-      const ratio = Math.min((totalMinutes / objectifMinutes) * 100, 100)
-      return (
-        <div className="pt-4 space-y-1">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Progression vers l’objectif (10h)</span>
-            <span>{Math.round(ratio)}%</span>
-          </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-500"
-              style={{ width: `${ratio}%` }}
-            />
-          </div>
-        </div>
-      )
-    })()}
+    {/* Visualisation par type de tâche */}
+    <ChartTachePie temps={temps} />
   </CardContent>
 </Card>
     </div>

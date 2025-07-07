@@ -61,14 +61,6 @@ export function AppSidebar({ user }: { user: any }) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/temps") })}>
-                  <Link href="/temps">
-                    <TimerReset className="mr-2 size-4" />
-                    Notation des temps
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/dashboard") })}>
                   <Link href="/dashboard">
                     <LayoutDashboard className="mr-2 size-4" />
@@ -76,6 +68,15 @@ export function AppSidebar({ user }: { user: any }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/temps") })}>
+                  <Link href="/temps">
+                    <TimerReset className="mr-2 size-4" />
+                    Notation des temps
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/clients") })}>
                   <Link href="/clients">
