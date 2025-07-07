@@ -39,6 +39,8 @@ export default function MissionsPage() {
   const [prixEstime, setPrixEstime] = useState("")
   const [statut, setStatut] = useState("EN_COURS")
   const [projetId, setProjetId] = useState("")
+  const [dateDebut, setDateDebut] = useState("")
+  const [dureePrevue, setDureePrevue] = useState("00:00")
 
   const [editMission, setEditMission] = useState<Mission | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
@@ -60,36 +62,43 @@ export default function MissionsPage() {
   }
 
 
-  const addMission = async () => {
-    if (!titre.trim() || !projetId) {
-      toast.error("Titre et projet requis")
-      return
-    }
-
-    try {
-      const res = await fetch("/api/missions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titre,
-          description,
-          statut,
-          prixEstime: parseFloat(prixEstime || "0"),
-          projetId: parseInt(projetId),
-        }),
-      })
-      if (!res.ok) throw new Error()
-      toast.success("Mission ajoutée")
-      setAddDialogOpen(false)
-      setTitre("")
-      setDescription("")
-      setPrixEstime("")
-      setProjetId("")
-      await fetchMissions()
-    } catch {
-      toast.error("Erreur lors de l'ajout.")
-    }
+const addMission = async () => {
+  if (!titre.trim() || !projetId) {
+    toast.error("Titre et projet requis")
+    return
   }
+
+  const [h, m] = dureePrevue.split(":").map(Number)
+  const dureePrevueMinutes = h * 60 + m
+
+  try {
+    const res = await fetch("/api/missions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        titre,
+        description,
+        statut,
+        prixEstime: parseFloat(prixEstime || "0"),
+        projetId: parseInt(projetId),
+        dateDebut: dateDebut ? new Date(dateDebut) : null,
+        dureePrevueMinutes,
+      }),
+    })
+    if (!res.ok) throw new Error()
+    toast.success("Mission ajoutée")
+    setAddDialogOpen(false)
+    setTitre("")
+    setDescription("")
+    setPrixEstime("")
+    setProjetId("")
+    setDateDebut("")
+    setDureePrevue("00:00")
+    await fetchMissions()
+  } catch {
+    toast.error("Erreur lors de l'ajout.")
+  }
+}
 
   const updateMission = async () => {
     if (!editMission) return
@@ -189,22 +198,59 @@ export default function MissionsPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-1">
+                <label htmlFor="description">Titre</label>
                 <Input
                   placeholder="Titre"
                   value={titre}
+                  id="titre"
                   onChange={(e) => setTitre(e.target.value)}
                 />
+                </div>
+                <div className="flex flex-col gap-1">
+                <label htmlFor="description">Description</label>
                 <Textarea
                   placeholder="Description"
+                  id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
-                <Input
-                  type="number"
-                  placeholder="Prix estimé (€)"
-                  value={prixEstime}
-                  onChange={(e) => setPrixEstime(e.target.value)}
-                />
+                </div>
+                {/* Date de début */}
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="dateDebut">Date de début</label>
+                  <Input
+                    type="date"
+                    id="dateDebut"
+                    value={dateDebut}
+                    onChange={(e) => setDateDebut(e.target.value)}
+                  />
+                </div>
+
+                {/* Durée prévisionnelle (hh:mm) */}
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="dureePrevue">Durée prévisionnelle</label>
+                  <Input
+                    type="time"
+                    id="dureePrevue"
+                    step="60"
+                    value={dureePrevue}
+                    onChange={(e) => setDureePrevue(e.target.value)}
+                    className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="prixestime">Prix estimé (€)</label>
+                  <Input
+                    type="number"
+                    id="prixestime"
+                    placeholder="Prix estimé (€)"
+                    value={prixEstime}
+                    onChange={(e) => setPrixEstime(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                <label>Status</label>
                 <Select value={statut} onValueChange={setStatut}>
                   <SelectTrigger>
                     <SelectValue placeholder="Statut" />
@@ -223,9 +269,12 @@ export default function MissionsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                </div>
+                <div className="flex flex-col gap-1">
+                <label>Projet associé</label>
                 <Select value={projetId} onValueChange={setProjetId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Projet associé" />
+                    <SelectValue placeholder="Projet associé"/>
                   </SelectTrigger>
                   <SelectContent>
                     {projets.map((p) => (
@@ -235,6 +284,7 @@ export default function MissionsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                </div>
                 <Button onClick={addMission}>Créer</Button>
               </div>
             )}
@@ -262,6 +312,8 @@ export default function MissionsPage() {
       </DialogHeader>
       {editMission && (
         <div className="flex flex-col gap-4">
+                          <div className="flex flex-col gap-1">
+                <label>Titre</label>
           <Input
             placeholder="Titre"
             value={editMission.titre}
@@ -269,6 +321,9 @@ export default function MissionsPage() {
               setEditMission({ ...editMission, titre: e.target.value })
             }
           />
+          </div>
+                          <div className="flex flex-col gap-1">
+                <label>Description</label>
           <Textarea
             placeholder="Description"
             value={editMission.description ?? ""}
@@ -276,6 +331,9 @@ export default function MissionsPage() {
               setEditMission({ ...editMission, description: e.target.value })
             }
           />
+          </div>
+                          <div className="flex flex-col gap-1">
+                <label>Prix estimé (€)</label>
           <Input
             type="number"
             placeholder="Prix estimé (€)"
@@ -287,6 +345,7 @@ export default function MissionsPage() {
               })
             }
           />
+          </div>
 
           {/* Date de début */}
           <div className="flex flex-col gap-1">
@@ -298,7 +357,7 @@ export default function MissionsPage() {
               onChange={(e) =>
                 setEditMission({
                   ...editMission,
-                  dateDebut: e.target.value,
+                  dateDebut: e.target.value ? new Date(e.target.value) : null,
                 })
               }
             />
@@ -329,6 +388,8 @@ export default function MissionsPage() {
           </div>
 
           {/* Statut */}
+                                    <div className="flex flex-col gap-1">
+                <label>Status</label>
           <Select
             value={editMission.statut}
             onValueChange={(value) =>
@@ -355,8 +416,11 @@ export default function MissionsPage() {
               ))}
             </SelectContent>
           </Select>
+          </div>
 
           {/* Projet associé */}
+                                    <div className="flex flex-col gap-1">
+                <label>Projet associé</label>
           <Select
             value={editMission.projetId.toString()}
             onValueChange={(value) =>
@@ -374,7 +438,7 @@ export default function MissionsPage() {
               ))}
             </SelectContent>
           </Select>
-
+            </div>
           <Button onClick={updateMission}>Mettre à jour</Button>
         </div>
       )}

@@ -47,7 +47,7 @@ export function TempsParTypeBarChart({ temps, typeTaches }: Props) {
     if (
       isWithinInterval(date, {
         start,
-        end: addDays(start, 6),
+        end: addDays(start, 7),
       })
     ) {
       const jour = format(date, "dd/MM")
