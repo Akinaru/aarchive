@@ -23,11 +23,16 @@
   --border: oklch(0.8568 0.0829 328.9110);
   --input: oklch(0.8517 0.0558 336.6002);
   --ring: oklch(0.5916 0.2180 0.5844);
-  --chart-1: oklch(0.6038 0.2363 344.4657);
-  --chart-2: oklch(0.4445 0.2251 300.6246);
-  --chart-3: oklch(0.3790 0.0438 226.1538);
-  --chart-4: oklch(0.8330 0.1185 88.3461);
-  --chart-5: oklch(0.7843 0.1256 58.9964);
+  --chart-1: oklch(0.6038 0.2363 344.4657); /* rose foncé */
+  --chart-2: oklch(0.4445 0.2251 300.6246); /* prune */
+  --chart-3: oklch(0.3790 0.0438 226.1538); /* bleu nuit doux */
+  --chart-4: oklch(0.8330 0.1185 88.3461);  /* jaune pâle */
+  --chart-5: oklch(0.7843 0.1256 58.9964);  /* jaune/vert clair */
+  --chart-6: oklch(0.7350 0.1700 170.0000); /* vert vif */
+  --chart-7: oklch(0.6500 0.1800 200.0000); /* turquoise */
+  --chart-8: oklch(0.5500 0.2000 250.0000); /* bleu doux */
+  --chart-9: oklch(0.6200 0.2200 20.0000);  /* rouge/orange léger */
+  --chart-10: oklch(0.4800 0.2300 340.0000);/* magenta sombre */
   --sidebar: oklch(0.9360 0.0288 320.5788);
   --sidebar-foreground: oklch(0.4948 0.1909 354.5435);
   --sidebar-primary: oklch(0.3963 0.0251 285.1962);

@@ -22,7 +22,7 @@ import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { getColorForTypeTache } from "@/lib/colors"
+import { getColorForTypeTacheStable } from "@/lib/colors"
 
 type Props = {
   temps: Temps[]
@@ -71,15 +71,14 @@ export function TempsParTypeBarChart({ temps, typeTaches }: Props) {
     })
   })
 
-  const allTypeNames = typeTaches.map((t) => t.nom)
 
-  const chartConfig: ChartConfig = {}
-  Array.from(usedTypes).forEach((type) => {
-    chartConfig[type] = {
-      label: type,
-      color: getColorForTypeTache(type, allTypeNames),
-    }
-  })
+const chartConfig: ChartConfig = {}
+Array.from(usedTypes).forEach((type) => {
+  chartConfig[type] = {
+    label: type,
+    color: getColorForTypeTacheStable(type),
+  }
+})
 
   return (
     <div className="space-y-2">

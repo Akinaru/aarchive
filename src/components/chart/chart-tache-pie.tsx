@@ -14,6 +14,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart"
 import { Temps } from "@/types/temps"
+import { getColorForTypeTacheStable } from "@/lib/colors"
 
 type Props = {
   temps: Temps[]
@@ -60,11 +61,11 @@ export function ChartTachePie({ temps }: Props) {
     a.localeCompare(b)
   )
 
-  const chartData = allTypesSorted.map((type) => ({
-    name: type,
-    value: totalByType[type],
-    color: getColorForType(type, allTypesSorted),
-  }))
+const chartData = allTypesSorted.map((type) => ({
+  name: type,
+  value: totalByType[type],
+  color: getColorForTypeTacheStable(type),
+}))
 
   const chartConfig = Object.fromEntries(
     chartData.map((item) => [

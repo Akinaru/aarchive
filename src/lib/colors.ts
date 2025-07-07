@@ -1,4 +1,3 @@
-// lib/colors.ts
 const COLOR_VARS = [
   "--chart-1",
   "--chart-2",
@@ -13,14 +12,26 @@ const COLOR_VARS = [
 ]
 
 /**
- * Génère une couleur stable pour un type de tâche donné,
- * basé sur une liste triée alphabétiquement.
+ * Hash simple pour obtenir un index stable à partir d'un string
  */
-export function getColorForTypeTache(
-  nom: string,
-  allTypes: string[]
-): string {
-  const sorted = [...allTypes].sort((a, b) => a.localeCompare(b))
-  const index = sorted.indexOf(nom)
-  return `var(${COLOR_VARS[index % COLOR_VARS.length]})`
+function hashStringToIndex(str: string, max: number): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0 // Convert to 32bit integer
+  }
+  return Math.abs(hash) % max
+}
+
+/**
+ * Donne une couleur stable pour un type de tâche, peu importe les autres
+ */
+export function getColorForTypeTacheStable(nom: string): string {
+  const cleaned = nom.toLowerCase().trim()
+  const index = hashStringToIndex(cleaned, COLOR_VARS.length)
+  const color = `var(${COLOR_VARS[index]})`
+
+  console.log(`[Color Debug] nom: "${nom}" → cleaned: "${cleaned}" → index: ${index} → color: ${color}`)
+
+  return color
 }
