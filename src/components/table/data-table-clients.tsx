@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Client } from "@/types/clients"
 import { useState } from "react"
+import Link from "next/link"
 
 type Props = {
   data: Client[]
@@ -72,31 +73,42 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
       ),
       cell: ({ cell }) => <div className="text-muted-foreground">{cell.getValue<string>()}</div>,
     },
-{
-  id: "actions",
-  enableHiding: false,
-  header: () => null, // Pas de titre
-  cell: ({ row }) => (
-    <div className="flex justify-end">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
+    {
+      id: "voir",
+      header: "Détail",
+      cell: ({ row }) => (
+        <Link href={`/clients/${row.original.id}`}>
+          <Button variant="outline" size="sm" className="w-full">
+            Voir
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onDelete(row.original.id)}
-            className="text-destructive"
-          >
-            Supprimer
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  ),
-}
+        </Link>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      header: () => null, // Pas de titre
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(row.original.id)}
+                className="text-destructive"
+              >
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    }
 
   ]
 
