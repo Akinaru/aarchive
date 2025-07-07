@@ -185,12 +185,15 @@ if (isLoading) {
 
 
 
-      <DataTableTempsMission data={temps} onDelete={async (id) => {
+    <DataTableTempsMission
+      data={temps}
+      types={typeTaches}
+      onDelete={async (id) => {
         await fetch(`/api/temps/${id}`, { method: "DELETE" })
         await fetchData()
-      } } onEdit={function (): void {
-        throw new Error("Function not implemented.")
-      } } />
+      }}
+      onEdit={fetchData}
+    />
     </div>
   )
 }

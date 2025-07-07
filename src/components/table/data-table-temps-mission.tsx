@@ -12,7 +12,7 @@ import {
   VisibilityState,
   flexRender,
 } from "@tanstack/react-table"
-
+import { fr } from "date-fns/locale"
 import {
   Table,
   TableBody,
@@ -27,27 +27,28 @@ import { useState } from "react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { Temps } from "@/types/temps"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { FormAddTemps } from "@/components/form/form-ajout-temps"
+import { TypeTache } from "@/types/taches"
+import { FormEditTemps } from "@/components/form/form-edit-temps"
 
 type Props = {
   data: Temps[]
+  types: TypeTache[]
   onDelete: (id: number) => void
   onEdit: () => void
 }
 
-export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
+export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-
   const [selectedTemps, setSelectedTemps] = useState<Temps | null>(null)
+
+  const [edited, setEdited] = useState({
+    dureeMinutes: 0,
+    typeTacheId: "",
+    description: "",
+  })
 
   const columns: ColumnDef<Temps>[] = [
     {
@@ -79,7 +80,9 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
     {
       accessorKey: "date",
       header: "Date",
-      cell: ({ cell }) => format(new Date(cell.getValue<string>()), "dd/MM/yyyy HH:mm"),
+      cell: ({ cell }) =>
+        format(new Date(cell.getValue<string>()), "dd MMM yyyy (EEEE)", { locale: fr })
+// → 08 juil. 2024 (lundi)
     },
     {
       accessorKey: "description",
@@ -95,7 +98,15 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setSelectedTemps(row.original)}
+            onClick={() => {
+              const temps = row.original
+              setSelectedTemps(temps)
+              setEdited({
+                dureeMinutes: temps.dureeMinutes,
+                typeTacheId: temps.typeTacheId.toString(),
+                description: temps.description || "",
+              })
+            }}
           >
             <Pencil className="w-4 h-4" />
           </Button>
@@ -193,28 +204,34 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
         </div>
       </div>
 
-      <Dialog
-        open={!!selectedTemps}
-        onOpenChange={(open) => {
-          if (!open) setSelectedTemps(null)
+      <FormEditTemps
+        selectedTemps={selectedTemps}
+        types={types}
+        edited={edited}
+        setEdited={setEdited}
+        setSelectedTemps={setSelectedTemps}
+        updateTemps={async () => {
+          if (!selectedTemps) return
+
+          const res = await fetch(`/api/temps/${selectedTemps.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              description: edited.description,
+              typeTacheId: edited.typeTacheId,
+              dureeMinutes: edited.dureeMinutes,
+            }),
+          })
+
+          if (res.ok) {
+            toast.success("Temps modifié")
+            setSelectedTemps(null)
+            onEdit()
+          } else {
+            toast.error("Erreur lors de la modification")
+          }
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier le temps</DialogTitle>
-          </DialogHeader>
-          {selectedTemps && (
-            <FormAddTemps
-              missionId={selectedTemps.missionId}
-              onAdd={() => {
-                setSelectedTemps(null)
-                onEdit()
-              }}
-              types={[]}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      />
     </>
   )
 }

@@ -8,9 +8,11 @@ export type Temps = {
   createdAt: string
 
   mission: {
+    id: number
     titre: string
   }
   typeTache: {
+    id: number
     nom: string
   }
 }
