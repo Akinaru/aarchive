@@ -14,6 +14,9 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [newClient, setNewClient] = useState("")
   const [newEmail, setNewEmail] = useState("")
+  const [newPhone, setNewPhone] = useState("")
+  const [newWebsite, setNewWebsite] = useState("")
+  const [newPhoto, setNewPhoto] = useState("")
   const [editClient, setEditClient] = useState<Client | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
 
@@ -39,12 +42,21 @@ export default function ClientsPage() {
     try {
       const res = await fetch("/api/clients", {
         method: "POST",
-        body: JSON.stringify({ nom: newClient, email: newEmail }),
+        body: JSON.stringify({
+          nom: newClient,
+          email: newEmail,
+          telephone: newPhone || null,
+          siteWeb: newWebsite || null,
+          photoPath: newPhoto || null,
+        }),
         headers: { "Content-Type": "application/json" },
       })
       if (!res.ok) throw new Error()
       setNewClient("")
       setNewEmail("")
+      setNewPhone("")
+      setNewWebsite("")
+      setNewPhoto("")
       setAddDialogOpen(false)
       await fetchClients()
       toast.success("Client ajouté")
@@ -59,7 +71,7 @@ export default function ClientsPage() {
       toast.error("Le nom est requis.")
       return
     }
-    if (!isValidEmail(editClient.email)) {
+    if (!editClient.email || !isValidEmail(editClient.email)) {
       toast.error("Adresse email invalide.")
       return
     }
@@ -67,7 +79,12 @@ export default function ClientsPage() {
     try {
       const res = await fetch(`/api/clients/${editClient.id}`, {
         method: "PUT",
-        body: JSON.stringify({ nom: editClient.nom, email: editClient.email }),
+        body: JSON.stringify({
+          nom: editClient.nom,
+          email: editClient.email,
+          telephone: editClient.telephone,
+          photoPath: editClient.photoPath,
+        }),
         headers: { "Content-Type": "application/json" },
       })
       if (!res.ok) throw new Error()
@@ -115,16 +132,49 @@ export default function ClientsPage() {
               <DialogTitle>Ajouter un client</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4">
-              <Input
-                placeholder="Nom"
-                value={newClient}
-                onChange={(e) => setNewClient(e.target.value)}
-              />
-              <Input
-                placeholder="Email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-              />
+              <div>
+                <label className="text-sm font-medium">Nom</label>
+                <Input value={newClient} onChange={(e) => setNewClient(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Téléphone</label>
+                <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Site web</label>
+                <Input value={newWebsite} onChange={(e) => setNewWebsite(e.target.value)} />
+              </div>
+              <div className="grid w-full max-w-sm gap-3">
+                <label htmlFor="picture" className="text-sm font-medium">
+                  Photo (fichier)
+                </label>
+                <Input
+                  id="picture"
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onloadend = () => {
+                        setNewPhoto(reader.result as string) // base64 pour affichage/stockage temporaire
+                      }
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                />
+                {newPhoto && (
+                  <img
+                    src={newPhoto}
+                    alt="Preview"
+                    className="h-24 w-24 object-cover rounded border"
+                  />
+                )}
+              </div>
               <Button onClick={addClient} disabled={!isFormValid()}>
                 Ajouter
               </Button>
@@ -153,20 +203,54 @@ export default function ClientsPage() {
           </DialogHeader>
           {editClient && (
             <div className="space-y-4">
-              <Input
-                placeholder="Nom"
-                value={editClient.nom}
-                onChange={(e) =>
-                  setEditClient({ ...editClient, nom: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Email"
-                value={editClient.email}
-                onChange={(e) =>
-                  setEditClient({ ...editClient, email: e.target.value })
-                }
-              />
+              <div>
+                <label className="text-sm font-medium">Nom</label>
+                <Input
+                  value={editClient.nom}
+                  onChange={(e) => setEditClient({ ...editClient, nom: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  value={editClient.email || ""}
+                  onChange={(e) => setEditClient({ ...editClient, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Téléphone</label>
+                <Input
+                  value={editClient.telephone || ""}
+                  onChange={(e) => setEditClient({ ...editClient, telephone: e.target.value })}
+                />
+              </div>
+              <div className="grid w-full max-w-sm gap-3">
+                <label htmlFor="edit-picture" className="text-sm font-medium">
+                  Modifier la photo
+                </label>
+                <Input
+                  id="edit-picture"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onloadend = () => {
+                        setEditClient({ ...editClient, photoPath: reader.result as string })
+                      }
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                />
+                {editClient.photoPath && (
+                  <img
+                    src={editClient.photoPath}
+                    alt="Preview"
+                    className="h-24 w-24 object-cover rounded border"
+                  />
+                )}
+              </div>
               <Button onClick={updateClient}>Valider</Button>
             </div>
           )}

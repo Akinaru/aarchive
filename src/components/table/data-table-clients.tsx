@@ -30,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Client } from "@/types/clients"
 import { useState } from "react"
 import Link from "next/link"
@@ -49,29 +50,28 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
   const columns: ColumnDef<Client>[] = [
     {
       accessorKey: "nom",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Nom
-          <ChevronDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ cell }) => <div className="font-medium">{cell.getValue<string>()}</div>,
+      header: "Client",
+      cell: ({ row }) => {
+        const client = row.original
+        const initial = client.nom?.[0]?.toUpperCase() ?? "?"
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+              <AvatarFallback>{initial}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-medium">{client.nom}</span>
+              {client.email && <span className="text-xs text-muted-foreground">{client.email}</span>}
+            </div>
+          </div>
+        )
+      },
     },
     {
-      accessorKey: "email",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Email
-          <ChevronDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ cell }) => <div className="text-muted-foreground">{cell.getValue<string>()}</div>,
+      accessorKey: "telephone",
+      header: "Téléphone",
+      cell: ({ cell }) => <span>{cell.getValue<string>() ?? "—"}</span>,
     },
     {
       id: "voir",
@@ -87,7 +87,7 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
     {
       id: "actions",
       enableHiding: false,
-      header: () => null, // Pas de titre
+      header: () => null,
       cell: ({ row }) => (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -108,8 +108,7 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
           </DropdownMenu>
         </div>
       ),
-    }
-
+    },
   ]
 
   const table = useReactTable({
@@ -134,14 +133,14 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center gap-2">
-      <Input
-        type="search"
-        autoComplete="off"
-        placeholder="Filtrer par email..."
-        value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-        onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
-        className="max-w-sm"
-      />
+        <Input
+          type="search"
+          autoComplete="off"
+          placeholder="Filtrer par email..."
+          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+          onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
+          className="max-w-sm"
+        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

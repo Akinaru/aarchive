@@ -12,6 +12,11 @@ import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
 import { Client } from "@/types/clients"
 import { BreadcrumbSkeleton } from "@/components/skeleton/breadcrumb"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
 
 export default function ClientSinglePage() {
   const { id } = useParams()
@@ -40,15 +45,15 @@ export default function ClientSinglePage() {
 
   if (loading) {
     return (
-    <div className="p-6 space-y-4">
-      <BreadcrumbSkeleton />
-      <div className="grid grid-cols-2 gap-4 mt-6">
-        <Skeleton className="h-40" />
-        <Skeleton className="h-40" />
-      </div>
+      <div className="p-6 space-y-4">
+        <BreadcrumbSkeleton />
+        <div className="grid grid-cols-2 gap-4 mt-6">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+        </div>
         <Skeleton className="h-96" />
         <Skeleton className="h-36" />
-    </div>
+      </div>
     )
   }
 
@@ -78,6 +83,33 @@ export default function ClientSinglePage() {
           { label: client.nom },
         ]}
       />
+
+      {/* Infos client */}
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+            <AvatarFallback>{client.nom.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <CardTitle className="text-xl">{client.nom}</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+          {client.email && (
+            <div>
+              <p className="font-semibold">Email</p>
+              <p>{client.email}</p>
+            </div>
+          )}
+          {client.telephone && (
+            <div>
+              <p className="font-semibold">Téléphone</p>
+              <p>{client.telephone}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Statistiques générales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

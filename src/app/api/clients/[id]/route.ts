@@ -13,9 +13,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   const updated = await prisma.client.update({
     where: { id },
-    data: { 
-        nom: body.nom,
-        email: body.email ?? null,
+    data: {
+      nom: body.nom,
+      email: body.email ?? null,
+      telephone: body.telephone ?? null,
+      siteWeb: body.siteWeb ?? null,
+      photoPath: body.photoPath ?? null,
     },
   })
 

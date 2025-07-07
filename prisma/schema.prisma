@@ -15,10 +15,15 @@ model Utilisateur {
 }
 
 model Client {
-  id      Int            @id @default(autoincrement())
-  nom     String
-  email   String?
-  projets ProjetClient[]
+  id        Int            @id @default(autoincrement())
+  nom       String
+  email     String?
+  telephone String?
+  siteWeb   String?
+  photoPath String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @default(now()) @updatedAt
+  projets   ProjetClient[]
 }
 
 model Projet {

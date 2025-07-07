@@ -21,6 +21,9 @@ export async function POST(req: Request) {
     data: {
       nom: body.nom,
       email: body.email ?? null,
+      telephone: body.telephone ?? null,
+      siteWeb: body.siteWeb ?? null,
+      photoPath: body.photoPath ?? null,
     },
   })
 
