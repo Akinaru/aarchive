@@ -217,13 +217,11 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
           </DialogHeader>
           {selectedTemps && (
             <FormAddTemps
-              tempsInitial={selectedTemps}
-              missionId={selectedTemps.missionId}
-              onAdd={() => {
-                setSelectedTemps(null)
-                onEdit()
-              }}
-            />
+                          missionId={selectedTemps.missionId}
+                          onAdd={() => {
+                              setSelectedTemps(null)
+                              onEdit()
+                          } } types={[]}            />
           )}
         </DialogContent>
       </Dialog>

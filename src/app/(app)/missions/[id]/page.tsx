@@ -126,41 +126,13 @@ export default function MissionSinglePage() {
       </Card>
 
 
-      <Card>
-        <CardHeader><CardTitle>10 derniers temps saisis</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {lastTemps.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucun temps saisi.</p>
-          ) : (
-            lastTemps.map((t) => {
-              const hasType = t.typeTache?.nom
-              const hasDescription = t.description && t.description.trim() !== ""
-
-              return (
-                <div
-                  key={t.id}
-                  className="flex justify-between items-start border rounded-lg p-3"
-                >
-                  <div>
-                    <p className="font-medium">{t.typeTache?.nom ?? "Type inconnu"}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t.dureeMinutes} min — {format(new Date(t.date), "dd/MM/yyyy HH:mm")}
-                    </p>
-                    {hasDescription && (
-                      <p className="text-sm">{t.description}</p>
-                    )}
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
 
       <DataTableTempsMission data={temps} onDelete={async (id) => {
         await fetch(`/api/temps/${id}`, { method: "DELETE" })
         await fetchData()
-      }} />
+      } } onEdit={function (): void {
+        throw new Error("Function not implemented.")
+      } } />
     </div>
   )
 }
