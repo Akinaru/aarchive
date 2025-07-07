@@ -5,6 +5,7 @@ export type Temps = {
   dureeMinutes: number
   missionId: number
   typeTacheId: number
+  createdAt: string
 
   mission: {
     titre: string

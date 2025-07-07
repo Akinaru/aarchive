@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
 import { Client } from "@/types/clients"
+import { BreadcrumbSkeleton } from "@/components/skeleton/breadcrumb"
 
 export default function ClientSinglePage() {
   const { id } = useParams()
@@ -39,14 +40,15 @@ export default function ClientSinglePage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-4 w-1/2" />
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <Skeleton className="h-48" />
-          <Skeleton className="h-48" />
-        </div>
+    <div className="p-6 space-y-4">
+      <BreadcrumbSkeleton />
+      <div className="grid grid-cols-2 gap-4 mt-6">
+        <Skeleton className="h-40" />
+        <Skeleton className="h-40" />
       </div>
+        <Skeleton className="h-96" />
+        <Skeleton className="h-36" />
+    </div>
     )
   }
 

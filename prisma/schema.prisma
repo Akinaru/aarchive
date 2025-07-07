@@ -56,6 +56,7 @@ model Mission {
 model Temps {
   id           Int       @id @default(autoincrement())
   date         DateTime  @default(now())
+  createdAt    DateTime  @default(now())
   dureeMinutes Int
   description  String?
   missionId    Int

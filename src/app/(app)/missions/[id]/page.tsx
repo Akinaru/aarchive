@@ -19,6 +19,7 @@ import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
 import { DataTableTempsMission } from "@/components/table/data-table-temps-mission"
 import { ChartTachePie } from "@/components/chart/chart-tache-pie"
+import { BreadcrumbSkeleton } from "@/components/skeleton/breadcrumb"
 
 export default function MissionSinglePage() {
   const { id } = useParams()
@@ -56,8 +57,11 @@ export default function MissionSinglePage() {
 if (isLoading) {
   return (
     <div className="p-6 space-y-4">
-      <Skeleton className="h-24" />
-      <Skeleton className="h-[60vh] w-full" />
+      <BreadcrumbSkeleton />
+      <div className="grid grid-cols-[70%_30%] gap-4 mt-6">
+        <Skeleton className="h-[60vh]" />
+        <Skeleton className="h-[60vh]" />
+      </div>
       <Skeleton className="h-60 w-full" />
     </div>
   )

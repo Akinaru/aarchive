@@ -3,29 +3,53 @@
 import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { toast } from "sonner"
+import Link from "next/link"
+import { Pencil, Trash2, AlertTriangle } from "lucide-react"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle } from "lucide-react"
-import Link from "next/link"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 import { Temps } from "@/types/temps"
 import { Mission } from "@/types/missions"
 import { TypeTache } from "@/types/taches"
 import { FormAddTemps } from "@/components/form/form-ajout-temps"
 
+function formatMinutes(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h > 0) return `${h}h${m > 0 ? `${m}min` : ""}`
+  return `${m}min`
+}
+
 export default function TempsPage() {
   const [temps, setTemps] = useState<Temps[]>([])
   const [missions, setMissions] = useState<Mission[]>([])
   const [types, setTypes] = useState<TypeTache[]>([])
+  const [selectedTemps, setSelectedTemps] = useState<Temps | null>(null)
+  const [edited, setEdited] = useState({
+    dureeMinutes: 0,
+    typeTacheId: "",
+    description: "",
+  })
+
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchData = async () => {
     try {
       const [tempsRes, missionRes, typeRes] = await Promise.all([
-        fetch("/api/temps"),
+        fetch("/api/temps/recent"),
         fetch("/api/missions"),
         fetch("/api/type-tache"),
       ])
@@ -45,14 +69,32 @@ export default function TempsPage() {
     await fetchData()
   }
 
+  const updateTemps = async () => {
+    if (!selectedTemps) return
+    await fetch(`/api/temps/${selectedTemps.id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        description: edited.description,
+        typeTacheId: edited.typeTacheId,
+        dureeMinutes: edited.dureeMinutes,
+      }),
+    })
+    toast.success("Temps modifié")
+    setSelectedTemps(null)
+    await fetchData()
+  }
+
   useEffect(() => {
     fetchData()
   }, [])
 
-  const lastTemps = temps.slice().reverse().slice(0, 5)
-  const totalMinutes = temps.reduce((sum, t) => sum + t.dureeMinutes, 0)
-
   const isReady = missions.length > 0 && types.length > 0
+
+  const lastTemps = temps
+
+  const totalMinutes = temps.reduce((sum, t) => sum + t.dureeMinutes, 0)
+  const totalMissions = new Set(temps.map((t) => t.mission?.id)).size
+  const totalTypes = new Set(temps.map((t) => t.typeTache?.id)).size
 
   return (
     <div className="p-6 space-y-6">
@@ -86,68 +128,117 @@ export default function TempsPage() {
 
       {!isLoading && (
         <>
-          {/* Formulaire */} 
+          {/* Formulaire ajout */}
+<Card>
+  <CardHeader>
+    <CardTitle>Ajouter un temps</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <FormAddTemps missions={missions} types={types} onAdd={fetchData} />
+  </CardContent>
+</Card>
+
+          {/* Derniers temps */}
           <Card>
             <CardHeader>
-              <CardTitle>Ajouter un temps</CardTitle>
+              <CardTitle>5 derniers temps enregistrés</CardTitle>
             </CardHeader>
-            <CardContent>
-              <FormAddTemps missions={missions} types={types} onAdd={fetchData} />
-            </CardContent>
-          </Card>
-
-          {/* Historique */} 
-          <Card>
-            <CardHeader>
-              <CardTitle>5 derniers temps saisis</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {lastTemps.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Aucun temps saisi récemment.</p>
-              ) : (
-                lastTemps.map((t) => {
-                  const hasMission = t.mission && t.mission.titre
-                  const hasType = t.typeTache && t.typeTache.nom
-                  const hasDescription = t.description && t.description.trim() !== ""
-
-                  if (!hasMission || !hasType) return null
-
-                  return (
-                    <div key={t.id} className="flex justify-between items-start border rounded-lg p-3">
-                      <div>
-                        <p className="font-medium">{t.mission.titre} — {t.typeTache.nom}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {t.dureeMinutes} min — {format(new Date(t.date), "dd/MM/yyyy HH:mm")}
-                        </p>
-                        {hasDescription && (
-                          <p className="text-sm">{t.description}</p>
-                        )}
+            <CardContent className="space-y-4">
+              {lastTemps.map((t) => {
+                const date = format(new Date(t.date), "dd/MM/yyyy à HH:mm")
+                      const createdAtDate = t.createdAt ? new Date(t.createdAt) : null
+      const createdAtFormatted = createdAtDate && !isNaN(createdAtDate.getTime())
+        ? format(createdAtDate, "dd/MM/yyyy à HH:mm")
+        : null
+                return (
+                  <div key={t.id} className="border p-3 rounded-lg">
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="font-medium">{t.mission?.titre} — {t.typeTache?.nom}</p>
+                      <div className="flex gap-2">
+                        <Button size="icon" variant="outline" onClick={() => {
+                          setSelectedTemps(t)
+                          setEdited({
+                            dureeMinutes: t.dureeMinutes,
+                            typeTacheId: t.typeTache?.id.toString() ?? "",
+                            description: t.description ?? "",
+                          })
+                        }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="destructive" onClick={() => deleteTemps(t.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button variant="destructive" size="sm" onClick={() => deleteTemps(t.id)}>
-                        Supprimer
-                      </Button>
                     </div>
-                  )
-                })
-              )}
+                    <p className="text-sm text-muted-foreground">
+                      {formatMinutes(t.dureeMinutes)} — {date}
+                    </p>
+                    {t.description && <p className="text-sm mt-1">{t.description}</p>}
+                    <p className="text-xs text-muted-foreground mt-1">Enregistré le {createdAtFormatted}</p>
+                  </div>
+                )
+              })}
             </CardContent>
           </Card>
 
-          {/* Statistiques */} 
+          {/* Résumé */}
           <Card>
             <CardHeader>
-              <CardTitle>Statistiques</CardTitle>
+              <CardTitle>Résumé global</CardTitle>
             </CardHeader>
-            <CardContent>
-              {totalMinutes === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun temps saisi pour l’instant.</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Total saisi : <span className="font-semibold">{totalMinutes}</span> minutes
-                </p>
-              )}
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Temps total saisi</p>
+                <p className="text-lg font-bold">{formatMinutes(totalMinutes)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Missions différentes</p>
+                <p className="text-lg font-bold">{totalMissions}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Types de tâches</p>
+                <p className="text-lg font-bold">{totalTypes}</p>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Modal modification */}
+          <Dialog open={!!selectedTemps} onOpenChange={(open) => !open && setSelectedTemps(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Modifier le temps</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  type="number"
+                  value={edited.dureeMinutes}
+                  onChange={(e) => setEdited({ ...edited, dureeMinutes: parseInt(e.target.value) })}
+                  placeholder="Durée (minutes)"
+                />
+                <Select
+                  value={edited.typeTacheId}
+                  onValueChange={(value) => setEdited({ ...edited, typeTacheId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Type de tâche" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {types.map((type) => (
+                      <SelectItem key={type.id} value={type.id.toString()}>
+                        {type.nom}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Textarea
+                  value={edited.description}
+                  onChange={(e) => setEdited({ ...edited, description: e.target.value })}
+                  placeholder="Description"
+                />
+                <Button onClick={updateTemps}>Enregistrer les modifications</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
