@@ -28,6 +28,8 @@ export async function POST(req: Request) {
       prixEstime: body.prixEstime ?? 0,
       prixReel: body.prixReel ?? null,
       projetId: body.projetId,
+      dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
+      dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
     },
   })
 

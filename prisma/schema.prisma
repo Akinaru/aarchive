@@ -8,63 +8,64 @@ datasource db {
 }
 
 model Utilisateur {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique
+  id         Int     @id @default(autoincrement())
+  email      String  @unique
   motDePasse String
-  nom      String?
+  nom        String?
 }
 
 model Client {
-  id       Int       @id @default(autoincrement())
-  nom      String
-  email    String?
-  projets  ProjetClient[]
+  id      Int            @id @default(autoincrement())
+  nom     String
+  email   String?
+  projets ProjetClient[]
 }
 
 model Projet {
-  id        Int       @id @default(autoincrement())
-  nom       String
+  id          Int            @id @default(autoincrement())
+  nom         String
   description String?
-  missions  Mission[]
-  clients   ProjetClient[]
+  missions    Mission[]
+  clients     ProjetClient[]
 }
 
 model ProjetClient {
-  projetId  Int
-  clientId  Int
+  projetId Int
+  clientId Int
 
-  projet    Projet  @relation(fields: [projetId], references: [id])
-  client    Client  @relation(fields: [clientId], references: [id])
+  projet Projet @relation(fields: [projetId], references: [id])
+  client Client @relation(fields: [clientId], references: [id])
 
   @@id([projetId, clientId])
 }
 
 model Mission {
-  id           Int       @id @default(autoincrement())
-  titre        String
-  description  String?
-  statut       StatutMission @default(EN_COURS)
-  prixEstime   Float     @default(0)
-  prixReel     Float?
-  projetId     Int
-  projet       Projet    @relation(fields: [projetId], references: [id])
-  temps        Temps[]
+  id                 Int           @id @default(autoincrement())
+  titre              String
+  description        String?
+  statut             StatutMission @default(EN_COURS)
+  dateDebut          DateTime      @default(now())
+  dureePrevueMinutes Int?
+  prixEstime         Float         @default(0)
+  prixReel           Float?
+  projetId           Int
+  projet             Projet        @relation(fields: [projetId], references: [id])
+  temps              Temps[]
 }
 
 model Temps {
-  id            Int       @id @default(autoincrement())
-  date          DateTime  @default(now())
-  dureeMinutes  Int
-  description   String?
-  missionId     Int
-  mission       Mission   @relation(fields: [missionId], references: [id])
-  typeTacheId   Int
-  typeTache     TypeTache @relation(fields: [typeTacheId], references: [id])
+  id           Int       @id @default(autoincrement())
+  date         DateTime  @default(now())
+  dureeMinutes Int
+  description  String?
+  missionId    Int
+  mission      Mission   @relation(fields: [missionId], references: [id])
+  typeTacheId  Int
+  typeTache    TypeTache @relation(fields: [typeTacheId], references: [id])
 }
 
-
 model TypeTache {
-  id    Int    @id @default(autoincrement())
+  id    Int     @id @default(autoincrement())
   nom   String
   temps Temps[]
 }

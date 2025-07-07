@@ -27,7 +27,10 @@ export const GET = async (
   return NextResponse.json(mission)
 }
 
-export const PUT = async (req: NextRequest, context: { params: { id: string } }) => {
+export const PUT = async (
+  req: NextRequest,
+  context: { params: { id: string } }
+) => {
   const id = parseInt(context.params.id)
   const body = await req.json()
 
@@ -35,18 +38,23 @@ export const PUT = async (req: NextRequest, context: { params: { id: string } })
     where: { id },
     data: {
       titre: body.titre,
-      description: body.description,
-      statut: body.statut,
-      prixEstime: body.prixEstime,
-      prixReel: body.prixReel,
+      description: body.description ?? null,
+      statut: body.statut ?? undefined,
+      prixEstime: body.prixEstime ?? undefined,
+      prixReel: body.prixReel ?? undefined,
       projetId: body.projetId,
+      dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
+      dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
     },
   })
 
   return NextResponse.json(updated)
 }
 
-export const DELETE = async (req: NextRequest, context: { params: { id: string } }) => {
+export const DELETE = async (
+  req: NextRequest,
+  context: { params: { id: string } }
+) => {
   const id = parseInt(context.params.id)
 
   const deleted = await prisma.mission.delete({

@@ -85,113 +85,132 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
     }
   }
 
-  const columns: ColumnDef<Mission>[] = [
-    {
-      accessorKey: "titre",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          Titre
-          <ChevronDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ cell }) => (
-        <div className="font-medium">{cell.getValue<string>()}</div>
-      ),
-    },
-    {
-      accessorKey: "statut",
-      header: "Statut",
-      cell: ({ row }) => {
-        const statut = row.original.statut
-        let icon = null
-        let color = "text-muted-foreground"
-
-        switch (statut) {
-          case "EN_COURS":
-            icon = <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-            color = "text-blue-500"
-            break
-          case "TERMINEE":
-            icon = <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
-            color = "text-green-500"
-            break
-          case "EN_ATTENTE":
-            icon = <Clock className="mr-1 h-3 w-3 text-yellow-500" />
-            color = "text-yellow-500"
-            break
+const columns: ColumnDef<Mission>[] = [
+  {
+    accessorKey: "titre",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
         }
+      >
+        Titre
+        <ChevronDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ cell }) => (
+      <div className="font-medium">{cell.getValue<string>()}</div>
+    ),
+  },
+  {
+    accessorKey: "statut",
+    header: "Statut",
+    cell: ({ row }) => {
+      const statut = row.original.statut
+      let icon = null
+      let color = "text-muted-foreground"
 
-        return (
-          <Badge variant="outline" className={`flex items-center gap-1 ${color}`}>
-            {icon}
-            {statut.replace("_", " ").toLowerCase()}
-          </Badge>
-        )
-      },
+      switch (statut) {
+        case "EN_COURS":
+          icon = <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          color = "text-blue-500"
+          break
+        case "TERMINEE":
+          icon = <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
+          color = "text-green-500"
+          break
+        case "EN_ATTENTE":
+          icon = <Clock className="mr-1 h-3 w-3 text-yellow-500" />
+          color = "text-yellow-500"
+          break
+      }
+
+      return (
+        <Badge variant="outline" className={`flex items-center gap-1 ${color}`}>
+          {icon}
+          {statut.replace("_", " ").toLowerCase()}
+        </Badge>
+      )
     },
-    {
-      accessorKey: "prixEstime",
-      header: "Prix estimé",
-      cell: ({ cell }) => <div>{cell.getValue<number>()} €</div>,
+  },
+  {
+    accessorKey: "dateDebut",
+    header: "Début",
+    cell: ({ row }) => {
+      const date = row.original.dateDebut
+      return date ? new Date(date).toLocaleDateString("fr-FR") : "-"
     },
-    {
-      accessorKey: "prixReel",
-      header: "Prix réel",
-      cell: ({ cell }) => {
-        const value = cell.getValue<number | null>()
-        return <div>{value !== null ? `${value} €` : "-"}</div>
-      },
+  },
+  {
+    accessorKey: "dureePrevueMinutes",
+    header: "Durée prévue",
+    cell: ({ row }) => {
+      const minutes = row.original.dureePrevueMinutes
+      if (!minutes) return "-"
+      const h = Math.floor(minutes / 60)
+      const m = minutes % 60
+      return `${h}h${m > 0 ? m : ""}`
     },
-    {
-      accessorKey: "projet.nom",
-      header: "Projet",
-      cell: ({ row }) => <div>{row.original.projet.nom}</div>,
+  },
+  {
+    accessorKey: "prixEstime",
+    header: "Prix estimé",
+    cell: ({ cell }) => <div>{cell.getValue<number>()} €</div>,
+  },
+  {
+    accessorKey: "prixReel",
+    header: "Prix réel",
+    cell: ({ cell }) => {
+      const value = cell.getValue<number | null>()
+      return <div>{value !== null ? `${value} €` : "-"}</div>
     },
-    {
-      id: "voir",
-      header: "Détail",
-      cell: ({ row }) => (
-        <Link href={`/missions/${row.original.id}`}>
-          <Button variant="outline" size="sm" className="w-full">
-            Voir
-          </Button>
-        </Link>
-      ),
-    },
-    {
-      id: "actions",
-      enableHiding: false,
-      header: () => null,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedMissionForValidation(row.original)}>
-                Valider le paiement
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onDelete(row.original.id)}
-                className="text-destructive"
-              >
-                Supprimer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-  ]
+  },
+  {
+    accessorKey: "projet.nom",
+    header: "Projet",
+    cell: ({ row }) => <div>{row.original.projet.nom}</div>,
+  },
+  {
+    id: "voir",
+    header: "Détail",
+    cell: ({ row }) => (
+      <Link href={`/missions/${row.original.id}`}>
+        <Button variant="outline" size="sm" className="w-full">
+          Voir
+        </Button>
+      </Link>
+    ),
+  },
+  {
+    id: "actions",
+    enableHiding: false,
+    header: () => null,
+    cell: ({ row }) => (
+      <div className="flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSelectedMissionForValidation(row.original)}>
+              Valider le paiement
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(row.original.id)}
+              className="text-destructive"
+            >
+              Supprimer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
+  },
+]
 
   const table = useReactTable({
     data,

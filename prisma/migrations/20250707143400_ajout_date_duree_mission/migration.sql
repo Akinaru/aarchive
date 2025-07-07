@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Mission" ADD COLUMN     "dateDebut" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "dureePrevueMinutes" INTEGER;

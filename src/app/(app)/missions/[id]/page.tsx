@@ -52,7 +52,16 @@ export default function MissionSinglePage() {
     if (id) fetchData()
   }, [id])
 
-  if (isLoading) return <Skeleton className="h-96 w-full" />
+if (isLoading) {
+  return (
+    <div className="p-6 space-y-4">
+      <Skeleton className="h-24" />
+      <Skeleton className="h-[60vh] w-full" />
+      <Skeleton className="h-60 w-full" />
+    </div>
+  )
+}
+
 
   if (!mission)
     return (
@@ -95,22 +104,86 @@ export default function MissionSinglePage() {
       </Card>
 
       {/* Résumé 30% */}
-      <Card className="w-full md:w-[30%]">
-        <CardHeader>
-          <CardTitle>Résumé de la mission</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <div>
-            <strong>Total saisi :</strong> {totalHeures}h{totalReste}
+<Card className="w-full md:w-[30%]">
+  <CardHeader>
+    <CardTitle>Résumé de la mission</CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4 text-sm text-muted-foreground">
+    <div className="space-y-1">
+      <div className="flex justify-between">
+        <span>Total saisi :</span>
+        <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>Nombre d’entrées :</span>
+        <span className="font-medium text-foreground">{temps.length}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>Jours travaillés :</span>
+        <span className="font-medium text-foreground">{joursUniques.length}</span>
+      </div>
+    </div>
+
+    <div className="border-t pt-3 space-y-1">
+      <div className="flex justify-between">
+        <span>Moyenne / jour :</span>
+        <span className="text-foreground">
+          {Math.floor((totalMinutes / joursUniques.length) || 0)}h
+          {Math.round((totalMinutes / joursUniques.length) % 60) || 0}
+        </span>
+      </div>
+      {temps.length > 0 && (
+        <>
+          <div className="flex justify-between">
+            <span>Dernier temps saisi :</span>
+            <span className="text-foreground">
+              {format(new Date(temps[0].date), "dd/MM/yyyy")}
+            </span>
           </div>
-          <div>
-            <strong>Nombre d’entrées :</strong> {temps.length}
+
+          {(() => {
+            const parJour = temps.reduce((acc, t) => {
+              const dateStr = format(new Date(t.date), "yyyy-MM-dd")
+              acc[dateStr] = (acc[dateStr] || 0) + t.dureeMinutes
+              return acc
+            }, {} as Record<string, number>)
+            const [maxJour, maxMinutes] =
+              Object.entries(parJour).sort((a, b) => b[1] - a[1])[0] || []
+
+            return maxJour ? (
+              <div className="flex justify-between">
+                <span>Jour le plus chargé :</span>
+                <span className="text-foreground">
+                  {format(new Date(maxJour), "dd/MM")} ({Math.floor(maxMinutes / 60)}h{maxMinutes % 60})
+                </span>
+              </div>
+            ) : null
+          })()}
+        </>
+      )}
+    </div>
+
+    {/* Barre de progression (ex: objectif fictif de 10h) */}
+    {(() => {
+      const objectifMinutes = 600 // 10h
+      const ratio = Math.min((totalMinutes / objectifMinutes) * 100, 100)
+      return (
+        <div className="pt-4 space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Progression vers l’objectif (10h)</span>
+            <span>{Math.round(ratio)}%</span>
           </div>
-          <div>
-            <strong>Jours de travail :</strong> {joursUniques.length}
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-500"
+              style={{ width: `${ratio}%` }}
+            />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )
+    })()}
+  </CardContent>
+</Card>
     </div>
 
 

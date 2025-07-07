@@ -6,5 +6,7 @@ export type Mission = {
   prixEstime: number
   prixReel: number | null
   projetId: number
+  dateDebut: Date | null
+  dureePrevueMinutes: number | null
   projet: { nom: string }
 }

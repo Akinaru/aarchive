@@ -255,81 +255,131 @@ export default function MissionsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!editMission} onOpenChange={(open) => !open && setEditMission(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier la mission</DialogTitle>
-          </DialogHeader>
-          {editMission && (
-            <div className="flex flex-col gap-4">
-              <Input
-                value={editMission.titre}
-                onChange={(e) =>
-                  setEditMission({ ...editMission, titre: e.target.value })
-                }
-              />
-              <Textarea
-                value={editMission.description ?? ""}
-                onChange={(e) =>
-                  setEditMission({ ...editMission, description: e.target.value })
-                }
-              />
-              <Input
-                type="number"
-                value={editMission.prixEstime.toString()}
-                onChange={(e) =>
-                  setEditMission({
-                    ...editMission,
-                    prixEstime: parseFloat(e.target.value),
-                  })
-                }
-              />
-              <Select
-                value={editMission.statut}
-                onValueChange={(value) =>
-                  setEditMission({ ...editMission, statut: value as Mission["statut"] })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUTS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      <div className="flex items-center gap-2 capitalize">
-                        {s === "EN_COURS" && <Loader2 className="h-3 w-3 animate-spin text-blue-500" />}
-                        {s === "TERMINEE" && <CheckCircle className="h-3 w-3 text-green-500" />}
-                        {s === "EN_ATTENTE" && <Clock className="h-3 w-3 text-yellow-500" />}
-                        {s === "ANNULEE" && <XCircle className="h-3 w-3 text-red-500" />}
-                        {s.replace("_", " ").toLowerCase()}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+  <Dialog open={!!editMission} onOpenChange={(open) => !open && setEditMission(null)}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Modifier la mission</DialogTitle>
+      </DialogHeader>
+      {editMission && (
+        <div className="flex flex-col gap-4">
+          <Input
+            placeholder="Titre"
+            value={editMission.titre}
+            onChange={(e) =>
+              setEditMission({ ...editMission, titre: e.target.value })
+            }
+          />
+          <Textarea
+            placeholder="Description"
+            value={editMission.description ?? ""}
+            onChange={(e) =>
+              setEditMission({ ...editMission, description: e.target.value })
+            }
+          />
+          <Input
+            type="number"
+            placeholder="Prix estimé (€)"
+            value={editMission.prixEstime.toString()}
+            onChange={(e) =>
+              setEditMission({
+                ...editMission,
+                prixEstime: parseFloat(e.target.value),
+              })
+            }
+          />
 
-              <Select
-                value={editMission.projetId.toString()}
-                onValueChange={(value) =>
-                  setEditMission({ ...editMission, projetId: parseInt(value) })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Projet associé" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projets.map((p) => (
-                    <SelectItem key={p.id} value={p.id.toString()}>
-                      {p.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={updateMission}>Mettre à jour</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          {/* Date de début */}
+          <div className="flex flex-col gap-1">
+            <label htmlFor="dateDebut">Date de début</label>
+            <Input
+              type="date"
+              id="dateDebut"
+              value={editMission.dateDebut?.slice(0, 10) || ""}
+              onChange={(e) =>
+                setEditMission({
+                  ...editMission,
+                  dateDebut: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          {/* Durée prévisionnelle (en temps hh:mm) */}
+          <div className="flex flex-col gap-1">
+            <label htmlFor="dureePrevue">Durée prévisionnelle</label>
+            <Input
+              type="time"
+              id="dureePrevue"
+              step="60"
+              value={(() => {
+                const min = editMission.dureePrevueMinutes ?? 0
+                const h = String(Math.floor(min / 60)).padStart(2, "0")
+                const m = String(min % 60).padStart(2, "0")
+                return `${h}:${m}`
+              })()}
+              onChange={(e) => {
+                const [h, m] = e.target.value.split(":").map(Number)
+                setEditMission({
+                  ...editMission,
+                  dureePrevueMinutes: h * 60 + m,
+                })
+              }}
+              className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+            />
+          </div>
+
+          {/* Statut */}
+          <Select
+            value={editMission.statut}
+            onValueChange={(value) =>
+              setEditMission({
+                ...editMission,
+                statut: value as Mission["statut"],
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUTS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  <div className="flex items-center gap-2 capitalize">
+                    {s === "EN_COURS" && <Loader2 className="h-3 w-3 animate-spin text-blue-500" />}
+                    {s === "TERMINEE" && <CheckCircle className="h-3 w-3 text-green-500" />}
+                    {s === "EN_ATTENTE" && <Clock className="h-3 w-3 text-yellow-500" />}
+                    {s === "ANNULEE" && <XCircle className="h-3 w-3 text-red-500" />}
+                    {s.replace("_", " ").toLowerCase()}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Projet associé */}
+          <Select
+            value={editMission.projetId.toString()}
+            onValueChange={(value) =>
+              setEditMission({ ...editMission, projetId: parseInt(value) })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Projet associé" />
+            </SelectTrigger>
+            <SelectContent>
+              {projets.map((p) => (
+                <SelectItem key={p.id} value={p.id.toString()}>
+                  {p.nom}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button onClick={updateMission}>Mettre à jour</Button>
+        </div>
+      )}
+    </DialogContent>
+  </Dialog>
     </div>
   )
 }
