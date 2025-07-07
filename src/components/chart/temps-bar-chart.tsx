@@ -71,23 +71,29 @@ export function TempsParTypeBarChart({ temps, typeTaches }: Props) {
     })
   })
 
+  const allTypeNames = typeTaches.map((t) => t.nom)
 
-const allTypeNames = typeTaches.map((t) => t.nom)
-
-const chartConfig: ChartConfig = {}
-Array.from(usedTypes).forEach((type) => {
-  chartConfig[type] = {
-    label: type,
-    color: getColorForTypeTache(type, allTypeNames),
-  }
-})
+  const chartConfig: ChartConfig = {}
+  Array.from(usedTypes).forEach((type) => {
+    chartConfig[type] = {
+      label: type,
+      color: getColorForTypeTache(type, allTypeNames),
+    }
+  })
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center mb-1">
-        <div className="flex gap-2">
+      <div className="flex justify-between items-center mb-1 flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setWeekOffset((prev) => prev - 1)}>
             ⬅ Semaine précédente
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setWeekOffset(0)}
+            disabled={weekOffset === 0}
+          >
+            🔄 Semaine actuelle
           </Button>
           <Button variant="outline" onClick={() => setWeekOffset((prev) => prev + 1)}>
             Semaine suivante ➡

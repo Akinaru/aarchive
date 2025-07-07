@@ -116,10 +116,6 @@ if (isLoading) {
         <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
       </div>
       <div className="flex justify-between">
-        <span>Nombre d’entrées :</span>
-        <span className="font-medium text-foreground">{temps.length}</span>
-      </div>
-      <div className="flex justify-between">
         <span>Jours travaillés :</span>
         <span className="font-medium text-foreground">{joursUniques.length}</span>
       </div>
@@ -143,12 +139,6 @@ if (isLoading) {
         <span>Moyenne / entrée :</span>
         <span className="text-foreground">
           {Math.floor((totalMinutes / temps.length) || 0)}min
-        </span>
-      </div>
-      <div className="flex justify-between">
-        <span>Premier temps saisi :</span>
-        <span className="text-foreground">
-          {temps.length > 0 ? format(new Date(temps[temps.length - 1].date), "dd/MM/yyyy") : "-"}
         </span>
       </div>
       {(() => {
