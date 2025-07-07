@@ -22,7 +22,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Trash2, ChevronDown, Pencil } from "lucide-react"
 import { useState } from "react"
 import { format } from "date-fns"
@@ -52,7 +51,8 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
 
   const columns: ColumnDef<Temps>[] = [
     {
-      accessorKey: "typeTache.nom",
+      accessorFn: (row) => row.typeTache?.nom ?? "Inconnu",
+      id: "typeTache",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -64,7 +64,7 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => row.original.typeTache?.nom ?? "Inconnu",
+      cell: ({ getValue }) => getValue(),
     },
     {
       accessorKey: "dureeMinutes",
@@ -136,18 +136,6 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
   return (
     <>
       <div className="w-full space-y-4">
-        <div className="flex items-center gap-2">
-          <Input
-            type="search"
-            placeholder="Filtrer par type..."
-            value={(table.getColumn("typeTache.nom")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("typeTache.nom")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-        </div>
-
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -217,11 +205,13 @@ export function DataTableTempsMission({ data, onDelete, onEdit }: Props) {
           </DialogHeader>
           {selectedTemps && (
             <FormAddTemps
-                          missionId={selectedTemps.missionId}
-                          onAdd={() => {
-                              setSelectedTemps(null)
-                              onEdit()
-                          } } types={[]}            />
+              missionId={selectedTemps.missionId}
+              onAdd={() => {
+                setSelectedTemps(null)
+                onEdit()
+              }}
+              types={[]}
+            />
           )}
         </DialogContent>
       </Dialog>
