@@ -87,6 +87,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
   }
 
 const columns: ColumnDef<Mission>[] = [
+
   {
     accessorKey: "titre",
     header: ({ column }) => (
@@ -103,6 +104,11 @@ const columns: ColumnDef<Mission>[] = [
     cell: ({ cell }) => (
       <div className="font-medium">{cell.getValue<string>()}</div>
     ),
+  },
+      {
+    accessorKey: "projet.nom",
+    header: "Projet",
+    cell: ({ row }) => <div>{row.original.projet.nom}</div>,
   },
 {
   accessorKey: "statut",
@@ -150,11 +156,7 @@ const columns: ColumnDef<Mission>[] = [
       return <div>{value !== null ? `${value} €` : "-"}</div>
     },
   },
-  {
-    accessorKey: "projet.nom",
-    header: "Projet",
-    cell: ({ row }) => <div>{row.original.projet.nom}</div>,
-  },
+
   {
     id: "voir",
     header: "Détail",

@@ -53,11 +53,13 @@ model Mission {
   statut             StatutMission @default(EN_COURS)
   dateDebut          DateTime      @default(now())
   dureePrevueMinutes Int?
-  prixEstime         Float         @default(0)
-  prixReel           Float?
-  projetId           Int
-  projet             Projet        @relation(fields: [projetId], references: [id])
-  temps              Temps[]
+  createdAt          DateTime      @default(now())
+
+  prixEstime Float   @default(0)
+  prixReel   Float?
+  projetId   Int
+  projet     Projet  @relation(fields: [projetId], references: [id])
+  temps      Temps[]
 }
 
 model Temps {

@@ -27,9 +27,10 @@ import { getColorForTypeTacheStable } from "@/lib/colors"
 type Props = {
   temps: Temps[]
   typeTaches: TypeTache[]
+  navigation?: boolean
 }
 
-export function TempsParTypeBarChart({ temps, typeTaches }: Props) {
+export function TempsParTypeBarChart({ temps, typeTaches, navigation = true }: Props) {
   const [weekOffset, setWeekOffset] = useState(0)
 
   const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset)
@@ -40,7 +41,7 @@ export function TempsParTypeBarChart({ temps, typeTaches }: Props) {
     return {
       raw: date,
       date: format(date, "dd/MM"),
-      label: format(date, "EEEE", { locale: fr }).split("-")[0],
+      label: format(date, "EEEE", { locale: fr }),
     }
   })
 
@@ -71,37 +72,38 @@ export function TempsParTypeBarChart({ temps, typeTaches }: Props) {
     })
   })
 
-
-const chartConfig: ChartConfig = {}
-Array.from(usedTypes).forEach((type) => {
-  chartConfig[type] = {
-    label: type,
-    color: getColorForTypeTacheStable(type),
-  }
-})
+  const chartConfig: ChartConfig = {}
+  Array.from(usedTypes).forEach((type) => {
+    chartConfig[type] = {
+      label: type,
+      color: getColorForTypeTacheStable(type),
+    }
+  })
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center mb-1 flex-wrap gap-2">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setWeekOffset((prev) => prev - 1)}>
-            ⬅ Semaine précédente
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setWeekOffset(0)}
-            disabled={weekOffset === 0}
-          >
-            🔄 Semaine actuelle
-          </Button>
-          <Button variant="outline" onClick={() => setWeekOffset((prev) => prev + 1)}>
-            Semaine suivante ➡
-          </Button>
+      {navigation && (
+        <div className="flex justify-between items-center mb-1 flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setWeekOffset((prev) => prev - 1)}>
+              ⬅ Semaine précédente
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setWeekOffset(0)}
+              disabled={weekOffset === 0}
+            >
+              🔄 Semaine actuelle
+            </Button>
+            <Button variant="outline" onClick={() => setWeekOffset((prev) => prev + 1)}>
+              Semaine suivante ➡
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {format(start, "dd MMM yyyy")} – {format(end, "dd MMM yyyy")}
+          </div>
         </div>
-        <div className="text-sm text-muted-foreground">
-          {format(start, "dd MMM yyyy")} – {format(end, "dd MMM yyyy")}
-        </div>
-      </div>
+      )}
 
       <ChartContainer config={chartConfig} className="w-full">
         <ResponsiveContainer width="100%" height={160}>
