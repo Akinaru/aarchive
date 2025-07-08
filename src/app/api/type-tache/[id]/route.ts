@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client"
 import { NextResponse } from "next/server"
+import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
@@ -7,7 +7,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const id = parseInt(params.id)
   const body = await req.json()
 
-  if (!body.nom || body.nom.trim() === "") {
+  if (!body.nom) {
     return NextResponse.json({ error: "Nom requis" }, { status: 400 })
   }
 

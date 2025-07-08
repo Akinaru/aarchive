@@ -7,11 +7,18 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { toast } from "sonner"
 import { TypeTache } from "@/types/taches"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function TypeTachePage() {
   const [types, setTypes] = useState<TypeTache[]>([])
   const [newNom, setNewNom] = useState("")
-  const [editNom, setEditNom] = useState<Record<number, string>>({})
+  const [editNom, setEditNom] = useState("")
+  const [selectedType, setSelectedType] = useState<TypeTache | null>(null)
 
   const fetchTypes = async () => {
     const res = await fetch("/api/type-tache")
@@ -37,19 +44,20 @@ export default function TypeTachePage() {
     }
   }
 
-  const updateType = async (id: number) => {
-    const nom = editNom[id]
-    if (!nom.trim()) return toast.error("Nom requis")
+  const updateType = async () => {
+    if (!selectedType) return
+    if (!editNom.trim()) return toast.error("Nom requis")
 
-    const res = await fetch(`/api/type-tache/${id}`, {
+    const res = await fetch(`/api/type-tache/${selectedType.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nom }),
+      body: JSON.stringify({ nom: editNom }),
     })
 
     if (res.ok) {
       toast.success("Type modifié")
-      setEditNom((prev) => ({ ...prev, [id]: "" }))
+      setSelectedType(null)
+      setEditNom("")
       await fetchTypes()
     } else {
       toast.error("Erreur lors de la modification")
@@ -104,13 +112,15 @@ export default function TypeTachePage() {
 
           {types.map((t) => (
             <div key={t.id} className="flex items-center gap-2">
-              <Input
-                value={editNom[t.id] ?? t.nom}
-                onChange={(e) =>
-                  setEditNom((prev) => ({ ...prev, [t.id]: e.target.value }))
-                }
-              />
-              <Button variant="outline" size="sm" onClick={() => updateType(t.id)}>
+              <span className="flex-1">{t.nom}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedType(t)
+                  setEditNom(t.nom)
+                }}
+              >
                 Modifier
               </Button>
               <Button variant="destructive" size="sm" onClick={() => deleteType(t.id)}>
@@ -120,6 +130,30 @@ export default function TypeTachePage() {
           ))}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={!!selectedType}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedType(null)
+            setEditNom("")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le type</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={editNom}
+              onChange={(e) => setEditNom(e.target.value)}
+              placeholder="Nouveau nom"
+            />
+            <Button onClick={updateType}>Valider</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

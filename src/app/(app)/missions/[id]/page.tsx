@@ -97,37 +97,7 @@ export default function MissionSinglePage() {
         ]}
       />
 
-      {(mission.projet.clients?.length ?? 0) > 0 && (
-        <Card className="border-muted">
-          <CardHeader>
-            <CardTitle className="text-base">Clients liés à cette mission</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              {mission.projet.clients?.map((pc) => {
-                const client = pc.client
-                return (
-                  <div
-                    key={client.id}
-                    className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={client.photoPath || ""} alt={client.nom} />
-                      <AvatarFallback>{client.nom[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-foreground">{client.nom}</span>
-                      {client.email && (
-                        <span className="text-xs text-muted-foreground">{client.email}</span>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       <div className="flex flex-col md:flex-row gap-4">
         <Card className="w-full md:w-[70%]">
@@ -202,6 +172,38 @@ export default function MissionSinglePage() {
           </CardContent>
         </Card>
       </div>
+
+            {(mission.projet.clients?.length ?? 0) > 0 && (
+        <Card className="border-muted">
+          <CardHeader>
+            <CardTitle className="text-base">Clients liés à cette mission</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              {mission.projet.clients?.map((pc) => {
+                const client = pc.client
+                return (
+                  <div
+                    key={client.id}
+                    className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+                      <AvatarFallback>{client.nom[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">{client.nom}</span>
+                      {client.email && (
+                        <span className="text-xs text-muted-foreground">{client.email}</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle>Ajouter un temps</CardTitle></CardHeader>
