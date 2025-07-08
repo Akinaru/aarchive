@@ -23,6 +23,8 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Label } from "@/components/ui/label"
 
 export default function ProjetsPage() {
   const [projets, setProjets] = useState<Projet[]>([])
@@ -221,49 +223,89 @@ export default function ProjetsPage() {
     <DialogHeader>
       <DialogTitle>Modifier le projet</DialogTitle>
     </DialogHeader>
+
     {editProjet && (
       <div className="space-y-4">
-        <Input
-          placeholder="Nom"
-          value={editProjet.nom}
-          onChange={(e) =>
-            setEditProjet({ ...editProjet, nom: e.target.value })
-          }
-        />
-        <Textarea
-          placeholder="Description"
-          value={editProjet.description ?? ""}
-          onChange={(e) =>
-            setEditProjet({ ...editProjet, description: e.target.value })
-          }
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="justify-start w-full">
-              {editClientIds.length > 0
-                ? `${editClientIds.length} client(s) sélectionné(s)`
-                : "Sélectionner des clients"}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-64 max-h-64 overflow-auto">
-            {clients.length === 0 ? (
-              <div className="px-4 py-2 text-sm text-muted-foreground">
-                Aucun client à sélectionner
-              </div>
-            ) : (
-              clients.map((client) => (
-                <DropdownMenuCheckboxItem
-                  key={client.id}
-                  checked={editClientIds.includes(client.id)}
-                  onCheckedChange={() => toggleEditClient(client.id)}
-                >
-                  {client.nom}
-                </DropdownMenuCheckboxItem>
-              ))
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <div>
+        <div className="space-y-1">
+          <Label htmlFor="nom">Nom du projet</Label>
+          <Input
+            id="nom"
+            placeholder="Nom"
+            value={editProjet.nom}
+            onChange={(e) =>
+              setEditProjet({ ...editProjet, nom: e.target.value })
+            }
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            placeholder="Description"
+            value={editProjet.description ?? ""}
+            onChange={(e) =>
+              setEditProjet({ ...editProjet, description: e.target.value })
+            }
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label>Clients associés</Label>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="justify-start w-full">
+                {editClientIds.length > 0
+                  ? `${editClientIds.length} client(s) sélectionné(s)`
+                  : "Sélectionner des clients"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64 max-h-64 overflow-auto">
+              {clients.length === 0 ? (
+                <div className="px-4 py-2 text-sm text-muted-foreground">
+                  Aucun client à sélectionner
+                </div>
+              ) : (
+                clients.map((client) => (
+                  <DropdownMenuCheckboxItem
+                    key={client.id}
+                    checked={editClientIds.includes(client.id)}
+                    onCheckedChange={() => toggleEditClient(client.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+                      <AvatarFallback>{client.nom[0]}</AvatarFallback>
+                    </Avatar>
+                    <span>{client.nom}</span>
+                  </DropdownMenuCheckboxItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {editClientIds.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {clients
+                .filter((c) => editClientIds.includes(c.id))
+                .map((client) => (
+                  <div
+                    key={client.id}
+                    className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded"
+                  >
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+                      <AvatarFallback>{client.nom[0]}</AvatarFallback>
+                    </Avatar>
+                    <span>{client.nom}</span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end pt-2">
           <Button onClick={updateProjet}>Valider</Button>
         </div>
       </div>

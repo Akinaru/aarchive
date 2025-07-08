@@ -216,6 +216,21 @@ const addMission = async () => {
                   onChange={(e) => setDescription(e.target.value)}
                 />
                 </div>
+                           <div className="flex flex-col gap-1">
+                <label>Projet associé</label>
+                <Select value={projetId} onValueChange={setProjetId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Projet associé"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projets.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.nom}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                </div>
                 {/* Date de début */}
                 <div className="flex flex-col gap-1">
                   <label htmlFor="dateDebut">Date de début</label>
@@ -270,21 +285,7 @@ const addMission = async () => {
                   </SelectContent>
                 </Select>
                 </div>
-                <div className="flex flex-col gap-1">
-                <label>Projet associé</label>
-                <Select value={projetId} onValueChange={setProjetId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Projet associé"/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projets.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                </div>
+     
                 <Button onClick={addMission}>Créer</Button>
               </div>
             )}
