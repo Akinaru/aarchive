@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Projet } from "@/types/projets"
 import { useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 
 type Props = {
   data: Projet[]
@@ -72,17 +73,40 @@ const columns: ColumnDef<Projet>[] = [
       <div>{row.original.missions.length}</div>
     ),
   },
-  {
-    accessorKey: "clients",
-    header: "Clients",
-    cell: ({ row }) => {
-      const clients = row.original.clients
-      const nomsClients = clients.length > 0
-        ? clients.map((c) => c.client.nom).join(", ")
-        : "Aucun"
-      return <div className="text-muted-foreground">{nomsClients}</div>
-    },
+{
+  accessorKey: "clients",
+  header: "Clients",
+  cell: ({ row }) => {
+    const clients = row.original.clients
+
+    if (!clients.length) return <span className="text-muted-foreground">Aucun</span>
+
+    const visibles = clients.slice(0, 3)
+    const hiddenCount = clients.length - visibles.length
+
+    return (
+      <div className="flex flex-wrap gap-3">
+        {visibles.map((c) => (
+          <div
+            key={c.client.id}
+            className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded"
+          >
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={c.client.photoPath || ""} alt={c.client.nom} />
+              <AvatarFallback>{c.client.nom[0]}</AvatarFallback>
+            </Avatar>
+            <span>{c.client.nom}</span>
+          </div>
+        ))}
+        {hiddenCount > 0 && (
+          <div className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded text-muted-foreground">
+            +{hiddenCount} autre{hiddenCount > 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+    )
   },
+},
   {
     id: "actions",
     enableHiding: false,

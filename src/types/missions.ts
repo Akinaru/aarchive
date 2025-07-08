@@ -8,5 +8,16 @@ export type Mission = {
   projetId: number
   dateDebut: Date | null
   dureePrevueMinutes: number | null
-  projet: { nom: string }
+  projet: {
+    nom: string
+    clients?: {
+      client: {
+        id: number
+        nom: string
+        photoPath?: string | null
+        email?: string | null
+        telephone?: string | null
+      }
+    }[]
+  }
 }

@@ -20,6 +20,7 @@ import { TypeTache } from "@/types/taches"
 import { DataTableTempsMission } from "@/components/table/data-table-temps-mission"
 import { ChartTachePie } from "@/components/chart/chart-tache-pie"
 import { BreadcrumbSkeleton } from "@/components/skeleton/breadcrumb"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function MissionSinglePage() {
   const { id } = useParams()
@@ -97,6 +98,38 @@ if (isLoading) {
         ]}
       />
 
+      {(mission.projet.clients?.length ?? 0) > 0 && (
+        <Card className="border-muted">
+          <CardHeader>
+            <CardTitle className="text-base">Clients liés à cette mission</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              {mission.projet.clients?.map((pc) => {
+                const client = pc.client
+                return (
+                  <div
+                    key={client.id}
+                    className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+                      <AvatarFallback>{client.nom[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">{client.nom}</span>
+                      {client.email && (
+                        <span className="text-xs text-muted-foreground">{client.email}</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
     <div className="flex flex-col md:flex-row gap-4">
       {/* Graphique 70% */}
       <Card className="w-full md:w-[70%]">
@@ -109,66 +142,66 @@ if (isLoading) {
       </Card>
 
       {/* Résumé 30% */}
-<Card className="w-full md:w-[30%]">
-  <CardHeader>
-    <CardTitle>Résumé de la mission</CardTitle>
-  </CardHeader>
-  <CardContent className="space-y-4 text-sm text-muted-foreground">
-    <div className="space-y-1">
-      <div className="flex justify-between">
-        <span>Total saisi :</span>
-        <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
-      </div>
-      <div className="flex justify-between">
-        <span>Jours travaillés :</span>
-        <span className="font-medium text-foreground">{joursUniques.length}</span>
-      </div>
-      <div className="flex justify-between">
-        <span>Types de tâches utilisés :</span>
-        <span className="font-medium text-foreground">
-          {[...new Set(temps.map((t) => t.typeTache?.nom ?? "Inconnu"))].length}
-        </span>
-      </div>
-    </div>
-
-    <div className="border-t pt-3 space-y-1">
-      <div className="flex justify-between">
-        <span>Moyenne / jour :</span>
-        <span className="text-foreground">
-          {Math.floor((totalMinutes / joursUniques.length) || 0)}h
-          {Math.round((totalMinutes / joursUniques.length) % 60) || 0}
-        </span>
-      </div>
-      <div className="flex justify-between">
-        <span>Moyenne / entrée :</span>
-        <span className="text-foreground">
-          {Math.floor((totalMinutes / temps.length) || 0)}min
-        </span>
-      </div>
-      {(() => {
-        const parJour = temps.reduce((acc, t) => {
-          const dateStr = format(new Date(t.date), "yyyy-MM-dd")
-          acc[dateStr] = (acc[dateStr] || 0) + t.dureeMinutes
-          return acc
-        }, {} as Record<string, number>)
-        const [maxJour, maxMinutes] =
-          Object.entries(parJour).sort((a, b) => b[1] - a[1])[0] || []
-
-        return maxJour ? (
-          <div className="flex justify-between">
-            <span>Jour le plus chargé :</span>
-            <span className="text-foreground">
-              {format(new Date(maxJour), "dd/MM")} ({Math.floor(maxMinutes / 60)}h{maxMinutes % 60})
-            </span>
+      <Card className="w-full md:w-[30%]">
+        <CardHeader>
+          <CardTitle>Résumé de la mission</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm text-muted-foreground">
+          <div className="space-y-1">
+            <div className="flex justify-between">
+              <span>Total saisi :</span>
+              <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Jours travaillés :</span>
+              <span className="font-medium text-foreground">{joursUniques.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Types de tâches utilisés :</span>
+              <span className="font-medium text-foreground">
+                {[...new Set(temps.map((t) => t.typeTache?.nom ?? "Inconnu"))].length}
+              </span>
+            </div>
           </div>
-        ) : null
-      })()}
-    </div>
 
-    {/* Visualisation par type de tâche */}
-    <ChartTachePie temps={temps} />
-  </CardContent>
-</Card>
+          <div className="border-t pt-3 space-y-1">
+            <div className="flex justify-between">
+              <span>Moyenne / jour :</span>
+              <span className="text-foreground">
+                {Math.floor((totalMinutes / joursUniques.length) || 0)}h
+                {Math.round((totalMinutes / joursUniques.length) % 60) || 0}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Moyenne / entrée :</span>
+              <span className="text-foreground">
+                {Math.floor((totalMinutes / temps.length) || 0)}min
+              </span>
+            </div>
+            {(() => {
+              const parJour = temps.reduce((acc, t) => {
+                const dateStr = format(new Date(t.date), "yyyy-MM-dd")
+                acc[dateStr] = (acc[dateStr] || 0) + t.dureeMinutes
+                return acc
+              }, {} as Record<string, number>)
+              const [maxJour, maxMinutes] =
+                Object.entries(parJour).sort((a, b) => b[1] - a[1])[0] || []
+
+              return maxJour ? (
+                <div className="flex justify-between">
+                  <span>Jour le plus chargé :</span>
+                  <span className="text-foreground">
+                    {format(new Date(maxJour), "dd/MM")} ({Math.floor(maxMinutes / 60)}h{maxMinutes % 60})
+                  </span>
+                </div>
+              ) : null
+            })()}
+          </div>
+
+          {/* Visualisation par type de tâche */}
+          <ChartTachePie temps={temps} />
+        </CardContent>
+      </Card>
     </div>
 
 

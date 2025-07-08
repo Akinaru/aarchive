@@ -10,9 +10,7 @@ export async function GET() {
       missions: { select: { id: true } },
       clients: {
         include: {
-          client: {
-            select: { id: true, nom: true },
-          },
+          client: true,
         },
       },
     },

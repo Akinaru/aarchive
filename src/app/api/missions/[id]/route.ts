@@ -16,7 +16,16 @@ export const GET = async (
   const mission = await prisma.mission.findUnique({
     where: { id },
     include: {
-      projet: { select: { nom: true } },
+      projet: {
+        select: {
+          nom: true,
+          clients: {
+            include: {
+              client: true,
+            },
+          },
+        },
+      },
     },
   })
 
