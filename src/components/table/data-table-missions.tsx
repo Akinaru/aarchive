@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import Link from "next/link"
+import { STATUT_ICONS } from "@/lib/status"
 
 type Props = {
   data: Mission[]
@@ -103,37 +104,20 @@ const columns: ColumnDef<Mission>[] = [
       <div className="font-medium">{cell.getValue<string>()}</div>
     ),
   },
-  {
-    accessorKey: "statut",
-    header: "Statut",
-    cell: ({ row }) => {
-      const statut = row.original.statut
-      let icon = null
-      let color = "text-muted-foreground"
-
-      switch (statut) {
-        case "EN_COURS":
-          icon = <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-          color = "text-blue-500"
-          break
-        case "TERMINEE":
-          icon = <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
-          color = "text-green-500"
-          break
-        case "EN_ATTENTE":
-          icon = <Clock className="mr-1 h-3 w-3 text-yellow-500" />
-          color = "text-yellow-500"
-          break
-      }
-
-      return (
-        <Badge variant="outline" className={`flex items-center gap-1 ${color}`}>
-          {icon}
-          {statut.replace("_", " ").toLowerCase()}
-        </Badge>
-      )
-    },
+{
+  accessorKey: "statut",
+  header: "Statut",
+  cell: ({ row }) => {
+    const statut = row.original.statut
+    const { icon: Icon, className, spin } = STATUT_ICONS[statut] || {}
+    return (
+      <Badge variant="outline" className={`flex items-center gap-1 ${className}`}>
+        {Icon && <Icon className={`mr-1 h-3 w-3 ${className} ${spin ? "animate-spin" : ""}`} />}
+        {statut.replace("_", " ").toLowerCase()}
+      </Badge>
+    )
   },
+},
   {
     accessorKey: "dateDebut",
     header: "Début",

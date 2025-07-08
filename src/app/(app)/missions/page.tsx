@@ -27,8 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { STATUT_ICONS } from "@/lib/status"
 
-const STATUTS = ["EN_COURS", "TERMINEE", "EN_ATTENTE", "ANNULEE"]
+const STATUTS: (keyof typeof STATUT_ICONS)[] = ["EN_COURS", "TERMINEE", "EN_ATTENTE", "ANNULEE"]
 
 export default function MissionsPage() {
   const [missions, setMissions] = useState<Mission[]>([])
@@ -114,6 +115,8 @@ const addMission = async () => {
           prixEstime: editMission.prixEstime,
           prixReel: editMission.prixReel,
           projetId: editMission.projetId,
+          dateDebut: editMission.dateDebut ? new Date(editMission.dateDebut) : null,
+          dureePrevueMinutes: editMission.dureePrevueMinutes ?? 0,
         }),
       })
       if (!res.ok) throw new Error()
@@ -354,7 +357,7 @@ const addMission = async () => {
             <Input
               type="date"
               id="dateDebut"
-              value={editMission.dateDebut?.slice(0, 10) || ""}
+              value={editMission.dateDebut ? new Date(editMission.dateDebut).toISOString().slice(0, 10) : ""}
               onChange={(e) =>
                 setEditMission({
                   ...editMission,
@@ -404,17 +407,17 @@ const addMission = async () => {
               <SelectValue placeholder="Statut" />
             </SelectTrigger>
             <SelectContent>
-              {STATUTS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  <div className="flex items-center gap-2 capitalize">
-                    {s === "EN_COURS" && <Loader2 className="h-3 w-3 animate-spin text-blue-500" />}
-                    {s === "TERMINEE" && <CheckCircle className="h-3 w-3 text-green-500" />}
-                    {s === "EN_ATTENTE" && <Clock className="h-3 w-3 text-yellow-500" />}
-                    {s === "ANNULEE" && <XCircle className="h-3 w-3 text-red-500" />}
-                    {s.replace("_", " ").toLowerCase()}
-                  </div>
-                </SelectItem>
-              ))}
+              {STATUTS.map((s: keyof typeof STATUT_ICONS) => {
+                const { icon: Icon, className, spin } = STATUT_ICONS[s]
+                return (
+                  <SelectItem key={s} value={s}>
+                    <div className="flex items-center gap-2 capitalize">
+                      <Icon className={`h-3 w-3 ${className} ${spin ? "animate-spin" : ""}`} />
+                      {s.replace("_", " ").toLowerCase()}
+                    </div>
+                  </SelectItem>
+                )
+              })}
             </SelectContent>
           </Select>
           </div>

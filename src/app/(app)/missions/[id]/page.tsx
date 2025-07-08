@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { TempsParTypeBarChart } from "@/components/chart/temps-bar-chart"
 import { FormAddTemps } from "@/components/form/form-ajout-temps"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { Mission } from "@/types/missions"
 import { Temps } from "@/types/temps"
@@ -20,7 +21,8 @@ import { TypeTache } from "@/types/taches"
 import { DataTableTempsMission } from "@/components/table/data-table-temps-mission"
 import { ChartTachePie } from "@/components/chart/chart-tache-pie"
 import { BreadcrumbSkeleton } from "@/components/skeleton/breadcrumb"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { CheckCircle, Clock, Loader2, XCircle } from "lucide-react"
+import { STATUT_ICONS } from "@/lib/status"
 
 export default function MissionSinglePage() {
   const { id } = useParams()
@@ -55,19 +57,18 @@ export default function MissionSinglePage() {
     if (id) fetchData()
   }, [id])
 
-if (isLoading) {
-  return (
-    <div className="p-6 space-y-4">
-      <BreadcrumbSkeleton />
-      <div className="grid grid-cols-[70%_30%] gap-4 mt-6">
-        <Skeleton className="h-[60vh]" />
-        <Skeleton className="h-[60vh]" />
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <BreadcrumbSkeleton />
+        <div className="grid grid-cols-[70%_30%] gap-4 mt-6">
+          <Skeleton className="h-[60vh]" />
+          <Skeleton className="h-[60vh]" />
+        </div>
+        <Skeleton className="h-60 w-full" />
       </div>
-      <Skeleton className="h-60 w-full" />
-    </div>
-  )
-}
-
+    )
+  }
 
   if (!mission)
     return (
@@ -83,8 +84,6 @@ if (isLoading) {
   const totalHeures = Math.floor(totalMinutes / 60)
   const totalReste = totalMinutes % 60
   const joursUniques = [...new Set(temps.map(t => format(new Date(t.date), "yyyy-MM-dd")))]
-
-  const lastTemps = [...temps].reverse().slice(0, 10)
 
   return (
     <div className="p-6 mx-auto space-y-6">
@@ -130,80 +129,79 @@ if (isLoading) {
         </Card>
       )}
 
-    <div className="flex flex-col md:flex-row gap-4">
-      {/* Graphique 70% */}
-      <Card className="w-full md:w-[70%]">
-        <CardHeader>
-          <CardTitle>Graphique : Répartition de la semaine</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
-        </CardContent>
-      </Card>
+      <div className="flex flex-col md:flex-row gap-4">
+        <Card className="w-full md:w-[70%]">
+          <CardHeader>
+            <CardTitle>Graphique : Répartition de la semaine</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
+          </CardContent>
+        </Card>
 
-      {/* Résumé 30% */}
-      <Card className="w-full md:w-[30%]">
-        <CardHeader>
-          <CardTitle>Résumé de la mission</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm text-muted-foreground">
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span>Total saisi :</span>
-              <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
+        <Card className="w-full md:w-[30%]">
+          <CardHeader>
+            <CardTitle>Résumé de la mission</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span>Total saisi :</span>
+                <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Jours travaillés :</span>
+                <span className="font-medium text-foreground">{joursUniques.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Types de tâches utilisés :</span>
+                <span className="font-medium text-foreground">
+                  {[...new Set(temps.map((t) => t.typeTache?.nom ?? "Inconnu"))].length}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span>Jours travaillés :</span>
-              <span className="font-medium text-foreground">{joursUniques.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Types de tâches utilisés :</span>
-              <span className="font-medium text-foreground">
-                {[...new Set(temps.map((t) => t.typeTache?.nom ?? "Inconnu"))].length}
-              </span>
-            </div>
-          </div>
 
-          <div className="border-t pt-3 space-y-1">
-            <div className="flex justify-between">
-              <span>Moyenne / jour :</span>
-              <span className="text-foreground">
-                {Math.floor((totalMinutes / joursUniques.length) || 0)}h
-                {Math.round((totalMinutes / joursUniques.length) % 60) || 0}
-              </span>
+            <div className="border-t pt-3 space-y-1">
+              <div className="flex justify-between">
+                <span>Statut :</span>
+                <span className="flex items-center gap-2 text-foreground capitalize">
+                  {(() => {
+                    const { icon: Icon, className, spin } = STATUT_ICONS[mission.statut]
+                    return <Icon className={`h-4 w-4 ${className} ${spin ? "animate-spin" : ""}`} />
+                  })()}
+                  {mission.statut.replace("_", " ").toLowerCase()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Date de début :</span>
+                <span className="text-foreground">
+                  {mission.dateDebut ? format(new Date(mission.dateDebut), "dd/MM/yyyy") : "-"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Durée prévue :</span>
+                <span className="text-foreground">
+                  {mission.dureePrevueMinutes
+                    ? `${Math.floor(mission.dureePrevueMinutes / 60)}h${mission.dureePrevueMinutes % 60 || ""}`
+                    : "-"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Prix estimé :</span>
+                <span className="text-foreground">{mission.prixEstime} €</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Prix réel :</span>
+                <span className="text-foreground">
+                  {mission.prixReel !== null ? `${mission.prixReel} €` : "-"}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span>Moyenne / entrée :</span>
-              <span className="text-foreground">
-                {Math.floor((totalMinutes / temps.length) || 0)}min
-              </span>
-            </div>
-            {(() => {
-              const parJour = temps.reduce((acc, t) => {
-                const dateStr = format(new Date(t.date), "yyyy-MM-dd")
-                acc[dateStr] = (acc[dateStr] || 0) + t.dureeMinutes
-                return acc
-              }, {} as Record<string, number>)
-              const [maxJour, maxMinutes] =
-                Object.entries(parJour).sort((a, b) => b[1] - a[1])[0] || []
 
-              return maxJour ? (
-                <div className="flex justify-between">
-                  <span>Jour le plus chargé :</span>
-                  <span className="text-foreground">
-                    {format(new Date(maxJour), "dd/MM")} ({Math.floor(maxMinutes / 60)}h{maxMinutes % 60})
-                  </span>
-                </div>
-              ) : null
-            })()}
-          </div>
-
-          {/* Visualisation par type de tâche */}
-          <ChartTachePie temps={temps} />
-        </CardContent>
-      </Card>
-    </div>
-
+            <ChartTachePie temps={temps} />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader><CardTitle>Ajouter un temps</CardTitle></CardHeader>
@@ -216,17 +214,15 @@ if (isLoading) {
         </CardContent>
       </Card>
 
-
-
-    <DataTableTempsMission
-      data={temps}
-      types={typeTaches}
-      onDelete={async (id) => {
-        await fetch(`/api/temps/${id}`, { method: "DELETE" })
-        await fetchData()
-      }}
-      onEdit={fetchData}
-    />
+      <DataTableTempsMission
+        data={temps}
+        types={typeTaches}
+        onDelete={async (id) => {
+          await fetch(`/api/temps/${id}`, { method: "DELETE" })
+          await fetchData()
+        }}
+        onEdit={fetchData}
+      />
     </div>
   )
 }
