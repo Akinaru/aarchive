@@ -1,8 +1,7 @@
-import { PrismaClient } from "@prisma/client"
 import { NextResponse } from "next/server"
 import { startOfWeek, endOfWeek } from "date-fns"
 
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   const start = startOfWeek(new Date(), { weekStartsOn: 1 }) // lundi
