@@ -49,15 +49,7 @@ export function NavUser() {
 
       {!isLoading && (
         <DropdownMenuContent className="w-56" align="end">
-          <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-          <DropdownMenuItem asChild>
-            <Link href="/my-account">Mes infos</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/my-account/publications">Mes publications</Link>
-          </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
           <DropdownMenuLabel>Thème</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => setTheme("light")}>
             <Sun className="mr-2 size-4" /> Clair

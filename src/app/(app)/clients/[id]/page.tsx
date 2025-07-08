@@ -17,6 +17,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
+import { formatMinutes } from "@/lib/time"
 
 export default function ClientSinglePage() {
   const { id } = useParams()
@@ -69,7 +70,7 @@ export default function ClientSinglePage() {
   }
 
   const totalMinutes = temps.reduce((acc, t) => acc + t.dureeMinutes, 0)
-  const totalHeures = Math.floor(totalMinutes / 60)
+  const totalHeures = formatMinutes(totalMinutes)
   const totalMissions = new Set(temps.map((t) => t.missionId)).size
 
   return (
@@ -117,7 +118,7 @@ export default function ClientSinglePage() {
           <CardHeader>
             <CardTitle>Total de temps saisi</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">{totalHeures}h</CardContent>
+          <CardContent className="text-2xl font-bold">{totalHeures}</CardContent>
         </Card>
         <Card>
           <CardHeader>
