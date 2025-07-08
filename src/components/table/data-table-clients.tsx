@@ -36,7 +36,7 @@ import { useState } from "react"
 import Link from "next/link"
 
 type Props = {
-  data: Client[]
+  data: (Client & { nbProjets?: number; totalMinutes?: number })[]
   onEdit: (client: Client) => void
   onDelete: (id: number) => void
 }
@@ -47,7 +47,7 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const columns: ColumnDef<Client>[] = [
+  const columns: ColumnDef<Client & { nbProjets?: number; totalMinutes?: number }>[] = [
     {
       accessorKey: "nom",
       header: "Client",
@@ -72,6 +72,21 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
       accessorKey: "telephone",
       header: "Téléphone",
       cell: ({ cell }) => <span>{cell.getValue<string>() ?? "—"}</span>,
+    },
+    {
+      accessorKey: "nbProjets",
+      header: "Projets",
+      cell: ({ row }) => <span>{row.getValue("nbProjets") ?? 0}</span>,
+    },
+    {
+      accessorKey: "totalMinutes",
+      header: "Temps total",
+      cell: ({ row }) => {
+        const minutes = row.getValue<number>("totalMinutes") || 0
+        const h = Math.floor(minutes / 60)
+        const m = minutes % 60
+        return <span>{h}h{m > 0 ? ` ${m}min` : ""}</span>
+      },
     },
     {
       id: "voir",
@@ -136,9 +151,11 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
         <Input
           type="search"
           autoComplete="off"
-          placeholder="Filtrer par email..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
+          placeholder="Filtrer par nom..."
+          value={(table.getColumn("nom")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("nom")?.setFilterValue(event.target.value)
+          }
           className="max-w-sm"
         />
         <DropdownMenu>

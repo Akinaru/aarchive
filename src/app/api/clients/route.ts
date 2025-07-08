@@ -6,8 +6,36 @@ const prisma = new PrismaClient()
 export async function GET() {
   const clients = await prisma.client.findMany({
     orderBy: { nom: "asc" },
+    include: {
+      projets: {
+        include: {
+          projet: {
+            include: {
+              missions: {
+                include: {
+                  temps: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   })
-  return NextResponse.json(clients)
+
+  const enrichedClients = clients.map((client) => {
+    const missions = client.projets.flatMap((pc) => pc.projet?.missions || [])
+    const temps = missions.flatMap((m) => m.temps || [])
+    const totalMinutes = temps.reduce((sum, t) => sum + (t.dureeMinutes || 0), 0)
+
+    return {
+      ...client,
+      nbProjets: client.projets.length,
+      totalMinutes,
+    }
+  })
+
+  return NextResponse.json(enrichedClients)
 }
 
 export async function POST(req: Request) {

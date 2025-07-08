@@ -15,15 +15,16 @@ model Utilisateur {
 }
 
 model Client {
-  id        Int            @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   nom       String
   email     String?
   telephone String?
   siteWeb   String?
   photoPath String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @default(now()) @updatedAt
-  projets   ProjetClient[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  projets ProjetClient[]
 }
 
 model Projet {
@@ -35,13 +36,14 @@ model Projet {
 }
 
 model ProjetClient {
+  id       Int @id @default(autoincrement())
   projetId Int
   clientId Int
 
   projet Projet @relation(fields: [projetId], references: [id])
   client Client @relation(fields: [clientId], references: [id])
 
-  @@id([projetId, clientId])
+  @@unique([projetId, clientId])
 }
 
 model Mission {
