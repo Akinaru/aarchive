@@ -37,7 +37,6 @@ export default function MissionsPage() {
 
   const [titre, setTitre] = useState("")
   const [description, setDescription] = useState("")
-  const [prixEstime, setPrixEstime] = useState("")
   const [statut, setStatut] = useState("EN_COURS")
   const [projetId, setProjetId] = useState("")
   const [dateDebut, setDateDebut] = useState("")
@@ -46,7 +45,6 @@ export default function MissionsPage() {
   const [editMission, setEditMission] = useState<Mission | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [isLoadingProjets, setIsLoadingProjets] = useState(true)
-
 
   const fetchMissions = async () => {
     const res = await fetch("/api/missions")
@@ -62,44 +60,41 @@ export default function MissionsPage() {
     setIsLoadingProjets(false)
   }
 
+  const addMission = async () => {
+    if (!titre.trim() || !projetId) {
+      toast.error("Titre et projet requis")
+      return
+    }
 
-const addMission = async () => {
-  if (!titre.trim() || !projetId) {
-    toast.error("Titre et projet requis")
-    return
+    const [h, m] = dureePrevue.split(":").map(Number)
+    const dureePrevueMinutes = h * 60 + m
+
+    try {
+      const res = await fetch("/api/missions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titre,
+          description,
+          statut,
+          projetId: parseInt(projetId),
+          dateDebut: dateDebut ? new Date(dateDebut) : null,
+          dureePrevueMinutes,
+        }),
+      })
+      if (!res.ok) throw new Error()
+      toast.success("Mission ajoutée")
+      setAddDialogOpen(false)
+      setTitre("")
+      setDescription("")
+      setProjetId("")
+      setDateDebut("")
+      setDureePrevue("00:00")
+      await fetchMissions()
+    } catch {
+      toast.error("Erreur lors de l'ajout.")
+    }
   }
-
-  const [h, m] = dureePrevue.split(":").map(Number)
-  const dureePrevueMinutes = h * 60 + m
-
-  try {
-    const res = await fetch("/api/missions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        titre,
-        description,
-        statut,
-        prixEstime: parseFloat(prixEstime || "0"),
-        projetId: parseInt(projetId),
-        dateDebut: dateDebut ? new Date(dateDebut) : null,
-        dureePrevueMinutes,
-      }),
-    })
-    if (!res.ok) throw new Error()
-    toast.success("Mission ajoutée")
-    setAddDialogOpen(false)
-    setTitre("")
-    setDescription("")
-    setPrixEstime("")
-    setProjetId("")
-    setDateDebut("")
-    setDureePrevue("00:00")
-    await fetchMissions()
-  } catch {
-    toast.error("Erreur lors de l'ajout.")
-  }
-}
 
   const updateMission = async () => {
     if (!editMission) return
@@ -112,8 +107,6 @@ const addMission = async () => {
           titre: editMission.titre,
           description: editMission.description,
           statut: editMission.statut,
-          prixEstime: editMission.prixEstime,
-          prixReel: editMission.prixReel,
           projetId: editMission.projetId,
           dateDebut: editMission.dateDebut ? new Date(editMission.dateDebut) : null,
           dureePrevueMinutes: editMission.dureePrevueMinutes ?? 0,
@@ -155,24 +148,22 @@ const addMission = async () => {
         ]}
       />
 
-
-  {!isLoadingProjets && projets.length === 0 && (
-    <Alert variant="destructive">
-      <AlertCircle className="h-5 w-5" />
-      <AlertTitle>Impossible d’ajouter une mission</AlertTitle>
-      <AlertDescription>
-        <p className="mb-1">Vous devez d’abord créer un projet avant de pouvoir ajouter une mission.</p>
-        <ul className="list-inside list-disc text-sm space-y-1">
-          <li>
-            <a href="/projets" className="underline hover:opacity-85">
-              Créer un projet maintenant
-            </a>
-          </li>
-        </ul>
-      </AlertDescription>
-    </Alert>
-  )}
-
+      {!isLoadingProjets && projets.length === 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle>Impossible d’ajouter une mission</AlertTitle>
+          <AlertDescription>
+            <p className="mb-1">Vous devez d’abord créer un projet avant de pouvoir ajouter une mission.</p>
+            <ul className="list-inside list-disc text-sm space-y-1">
+              <li>
+                <a href="/projets" className="underline hover:opacity-85">
+                  Créer un projet maintenant
+                </a>
+              </li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex justify-end">
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -187,30 +178,23 @@ const addMission = async () => {
             </DialogHeader>
 
             {projets.length === 0 ? (
-              <div className="space-y-4">
-                <div className="rounded-md border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
-                  Aucun projet trouvé. Veuillez{" "}
-                  <a
-                    href="/projets"
-                    className="underline font-medium text-yellow-900 hover:text-yellow-700"
-                  >
-                    créer un projet
-                  </a>{" "}
-                  avant d’ajouter une mission.
-                </div>
+              <div className="rounded-md border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+                Aucun projet trouvé. Veuillez{" "}
+                <a href="/projets" className="underline font-medium text-yellow-900 hover:text-yellow-700">
+                  créer un projet
+                </a>{" "}
+                avant d’ajouter une mission.
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                                <div className="flex flex-col gap-1">
-                <label htmlFor="description">Titre</label>
+                <label htmlFor="titre">Titre</label>
                 <Input
                   placeholder="Titre"
                   value={titre}
                   id="titre"
                   onChange={(e) => setTitre(e.target.value)}
                 />
-                </div>
-                <div className="flex flex-col gap-1">
+
                 <label htmlFor="description">Description</label>
                 <Textarea
                   placeholder="Description"
@@ -218,8 +202,7 @@ const addMission = async () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
-                </div>
-                           <div className="flex flex-col gap-1">
+
                 <label>Projet associé</label>
                 <Select value={projetId} onValueChange={setProjetId}>
                   <SelectTrigger>
@@ -233,41 +216,25 @@ const addMission = async () => {
                     ))}
                   </SelectContent>
                 </Select>
-                </div>
-                {/* Date de début */}
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="dateDebut">Date de début</label>
-                  <Input
-                    type="date"
-                    id="dateDebut"
-                    value={dateDebut}
-                    onChange={(e) => setDateDebut(e.target.value)}
-                  />
-                </div>
 
-                {/* Durée prévisionnelle (hh:mm) */}
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="dureePrevue">Durée prévisionnelle</label>
-                  <Input
-                    type="time"
-                    id="dureePrevue"
-                    step="60"
-                    value={dureePrevue}
-                    onChange={(e) => setDureePrevue(e.target.value)}
-                    className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="prixestime">Prix estimé (€)</label>
-                  <Input
-                    type="number"
-                    id="prixestime"
-                    placeholder="Prix estimé (€)"
-                    value={prixEstime}
-                    onChange={(e) => setPrixEstime(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
+                <label htmlFor="dateDebut">Date de début</label>
+                <Input
+                  type="date"
+                  id="dateDebut"
+                  value={dateDebut}
+                  onChange={(e) => setDateDebut(e.target.value)}
+                />
+
+                <label htmlFor="dureePrevue">Durée prévisionnelle</label>
+                <Input
+                  type="time"
+                  id="dureePrevue"
+                  step="60"
+                  value={dureePrevue}
+                  onChange={(e) => setDureePrevue(e.target.value)}
+                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+                />
+
                 <label>Status</label>
                 <Select value={statut} onValueChange={setStatut}>
                   <SelectTrigger>
@@ -287,8 +254,7 @@ const addMission = async () => {
                     ))}
                   </SelectContent>
                 </Select>
-                </div>
-     
+
                 <Button onClick={addMission}>Créer</Button>
               </div>
             )}
@@ -309,145 +275,117 @@ const addMission = async () => {
         </CardContent>
       </Card>
 
-  <Dialog open={!!editMission} onOpenChange={(open) => !open && setEditMission(null)}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Modifier la mission</DialogTitle>
-      </DialogHeader>
-      {editMission && (
-        <div className="flex flex-col gap-4">
-                          <div className="flex flex-col gap-1">
-                <label>Titre</label>
-          <Input
-            placeholder="Titre"
-            value={editMission.titre}
-            onChange={(e) =>
-              setEditMission({ ...editMission, titre: e.target.value })
-            }
-          />
-          </div>
-                          <div className="flex flex-col gap-1">
-                <label>Description</label>
-          <Textarea
-            placeholder="Description"
-            value={editMission.description ?? ""}
-            onChange={(e) =>
-              setEditMission({ ...editMission, description: e.target.value })
-            }
-          />
-          </div>
-                          <div className="flex flex-col gap-1">
-                <label>Prix estimé (€)</label>
-          <Input
-            type="number"
-            placeholder="Prix estimé (€)"
-            value={editMission.prixEstime.toString()}
-            onChange={(e) =>
-              setEditMission({
-                ...editMission,
-                prixEstime: parseFloat(e.target.value),
-              })
-            }
-          />
-          </div>
+      <Dialog open={!!editMission} onOpenChange={(open) => !open && setEditMission(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier la mission</DialogTitle>
+          </DialogHeader>
+          {editMission && (
+            <div className="flex flex-col gap-4">
+              <label>Titre</label>
+              <Input
+                placeholder="Titre"
+                value={editMission.titre}
+                onChange={(e) =>
+                  setEditMission({ ...editMission, titre: e.target.value })
+                }
+              />
 
-          {/* Date de début */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor="dateDebut">Date de début</label>
-            <Input
-              type="date"
-              id="dateDebut"
-              value={editMission.dateDebut ? new Date(editMission.dateDebut).toISOString().slice(0, 10) : ""}
-              onChange={(e) =>
-                setEditMission({
-                  ...editMission,
-                  dateDebut: e.target.value ? new Date(e.target.value) : null,
-                })
-              }
-            />
-          </div>
+              <label>Description</label>
+              <Textarea
+                placeholder="Description"
+                value={editMission.description ?? ""}
+                onChange={(e) =>
+                  setEditMission({ ...editMission, description: e.target.value })
+                }
+              />
 
-          {/* Durée prévisionnelle (en temps hh:mm) */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor="dureePrevue">Durée prévisionnelle</label>
-            <Input
-              type="time"
-              id="dureePrevue"
-              step="60"
-              value={(() => {
-                const min = editMission.dureePrevueMinutes ?? 0
-                const h = String(Math.floor(min / 60)).padStart(2, "0")
-                const m = String(min % 60).padStart(2, "0")
-                return `${h}:${m}`
-              })()}
-              onChange={(e) => {
-                const [h, m] = e.target.value.split(":").map(Number)
-                setEditMission({
-                  ...editMission,
-                  dureePrevueMinutes: h * 60 + m,
-                })
-              }}
-              className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-            />
-          </div>
+              <label htmlFor="dateDebut">Date de début</label>
+              <Input
+                type="date"
+                id="dateDebut"
+                value={editMission.dateDebut ? new Date(editMission.dateDebut).toISOString().slice(0, 10) : ""}
+                onChange={(e) =>
+                  setEditMission({
+                    ...editMission,
+                    dateDebut: e.target.value ? new Date(e.target.value) : null,
+                  })
+                }
+              />
 
-          {/* Statut */}
-                                    <div className="flex flex-col gap-1">
-                <label>Status</label>
-          <Select
-            value={editMission.statut}
-            onValueChange={(value) =>
-              setEditMission({
-                ...editMission,
-                statut: value as Mission["statut"],
-              })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUTS.map((s: keyof typeof STATUT_ICONS) => {
-                const { icon: Icon, className, spin } = STATUT_ICONS[s]
-                return (
-                  <SelectItem key={s} value={s}>
-                    <div className="flex items-center gap-2 capitalize">
-                      <Icon className={`h-3 w-3 ${className} ${spin ? "animate-spin" : ""}`} />
-                      {s.replace("_", " ").toLowerCase()}
-                    </div>
-                  </SelectItem>
-                )
-              })}
-            </SelectContent>
-          </Select>
-          </div>
+              <label htmlFor="dureePrevue">Durée prévisionnelle</label>
+              <Input
+                type="time"
+                id="dureePrevue"
+                step="60"
+                value={(() => {
+                  const min = editMission.dureePrevueMinutes ?? 0
+                  const h = String(Math.floor(min / 60)).padStart(2, "0")
+                  const m = String(min % 60).padStart(2, "0")
+                  return `${h}:${m}`
+                })()}
+                onChange={(e) => {
+                  const [h, m] = e.target.value.split(":").map(Number)
+                  setEditMission({
+                    ...editMission,
+                    dureePrevueMinutes: h * 60 + m,
+                  })
+                }}
+                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+              />
 
-          {/* Projet associé */}
-                                    <div className="flex flex-col gap-1">
-                <label>Projet associé</label>
-          <Select
-            value={editMission.projetId.toString()}
-            onValueChange={(value) =>
-              setEditMission({ ...editMission, projetId: parseInt(value) })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Projet associé" />
-            </SelectTrigger>
-            <SelectContent>
-              {projets.map((p) => (
-                <SelectItem key={p.id} value={p.id.toString()}>
-                  {p.nom}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <label>Status</label>
+              <Select
+                value={editMission.statut}
+                onValueChange={(value) =>
+                  setEditMission({
+                    ...editMission,
+                    statut: value as Mission["statut"],
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUTS.map((s) => {
+                    const { icon: Icon, className, spin } = STATUT_ICONS[s]
+                    return (
+                      <SelectItem key={s} value={s}>
+                        <div className="flex items-center gap-2 capitalize">
+                          <Icon className={`h-3 w-3 ${className} ${spin ? "animate-spin" : ""}`} />
+                          {s.replace("_", " ").toLowerCase()}
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+
+              <label>Projet associé</label>
+              <Select
+                value={editMission.projetId.toString()}
+                onValueChange={(value) =>
+                  setEditMission({ ...editMission, projetId: parseInt(value) })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Projet associé" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projets.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button onClick={updateMission}>Mettre à jour</Button>
             </div>
-          <Button onClick={updateMission}>Mettre à jour</Button>
-        </div>
-      )}
-    </DialogContent>
-  </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

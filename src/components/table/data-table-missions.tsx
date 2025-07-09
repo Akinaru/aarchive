@@ -40,13 +40,6 @@ import {
 import { Mission } from "@/types/missions"
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { toast } from "sonner"
 import Link from "next/link"
 import { STATUT_ICONS } from "@/lib/status"
 
@@ -62,141 +55,99 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const [selectedMissionForValidation, setSelectedMissionForValidation] = useState<Mission | null>(null)
-  const [montantPaiement, setMontantPaiement] = useState("")
-
-  const handleValiderPaiement = async () => {
-    if (!selectedMissionForValidation) return
-
-    try {
-      const res = await fetch(`/api/missions/${selectedMissionForValidation.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prixReel: parseFloat(montantPaiement),
-        }),
-      })
-
-      if (!res.ok) throw new Error()
-      toast.success("Paiement validé")
-      setSelectedMissionForValidation(null)
-      setMontantPaiement("")
-    } catch {
-      toast.error("Erreur lors de la validation")
-    }
-  }
-
-const columns: ColumnDef<Mission>[] = [
-
-  {
-    accessorKey: "titre",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
-        Titre
-        <ChevronDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ cell }) => (
-      <div className="font-medium">{cell.getValue<string>()}</div>
-    ),
-  },
-      {
-    accessorKey: "projet.nom",
-    header: "Projet",
-    cell: ({ row }) => <div>{row.original.projet.nom}</div>,
-  },
-{
-  accessorKey: "statut",
-  header: "Statut",
-  cell: ({ row }) => {
-    const statut = row.original.statut
-    const { icon: Icon, className, spin } = STATUT_ICONS[statut] || {}
-    return (
-      <Badge variant="outline" className={`flex items-center gap-1 ${className}`}>
-        {Icon && <Icon className={`mr-1 h-3 w-3 ${className} ${spin ? "animate-spin" : ""}`} />}
-        {statut.replace("_", " ").toLowerCase()}
-      </Badge>
-    )
-  },
-},
-  {
-    accessorKey: "dateDebut",
-    header: "Début",
-    cell: ({ row }) => {
-      const date = row.original.dateDebut
-      return date ? new Date(date).toLocaleDateString("fr-FR") : "-"
-    },
-  },
-  {
-    accessorKey: "dureePrevueMinutes",
-    header: "Durée prévue",
-    cell: ({ row }) => {
-      const minutes = row.original.dureePrevueMinutes
-      if (!minutes) return "-"
-      const h = Math.floor(minutes / 60)
-      const m = minutes % 60
-      return `${h}h${m > 0 ? m : ""}`
-    },
-  },
-  {
-    accessorKey: "prixEstime",
-    header: "Prix estimé",
-    cell: ({ cell }) => <div>{cell.getValue<number>()} €</div>,
-  },
-  {
-    accessorKey: "prixReel",
-    header: "Prix réel",
-    cell: ({ cell }) => {
-      const value = cell.getValue<number | null>()
-      return <div>{value !== null ? `${value} €` : "-"}</div>
-    },
-  },
-
-  {
-    id: "voir",
-    header: "Détail",
-    cell: ({ row }) => (
-      <Link href={`/missions/${row.original.id}`}>
-        <Button variant="outline" size="sm" className="w-full">
-          Voir
+  const columns: ColumnDef<Mission>[] = [
+    {
+      accessorKey: "titre",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
+          Titre
+          <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
-      </Link>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    header: () => null,
-    cell: ({ row }) => (
-      <div className="flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSelectedMissionForValidation(row.original)}>
-              Valider le paiement
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(row.original.id)}
-              className="text-destructive"
-            >
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
-  },
-]
+      ),
+      cell: ({ cell }) => (
+        <div className="font-medium">{cell.getValue<string>()}</div>
+      ),
+    },
+    {
+      accessorKey: "projet.nom",
+      header: "Projet",
+      cell: ({ row }) => <div>{row.original.projet.nom}</div>,
+    },
+    {
+      accessorKey: "statut",
+      header: "Statut",
+      cell: ({ row }) => {
+        const statut = row.original.statut
+        const { icon: Icon, className, spin } = STATUT_ICONS[statut] || {}
+        return (
+          <Badge variant="outline" className={`flex items-center gap-1 ${className}`}>
+            {Icon && <Icon className={`mr-1 h-3 w-3 ${className} ${spin ? "animate-spin" : ""}`} />}
+            {statut.replace("_", " ").toLowerCase()}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "dateDebut",
+      header: "Début",
+      cell: ({ row }) => {
+        const date = row.original.dateDebut
+        return date ? new Date(date).toLocaleDateString("fr-FR") : "-"
+      },
+    },
+    {
+      accessorKey: "dureePrevueMinutes",
+      header: "Durée prévue",
+      cell: ({ row }) => {
+        const minutes = row.original.dureePrevueMinutes
+        if (!minutes) return "-"
+        const h = Math.floor(minutes / 60)
+        const m = minutes % 60
+        return `${h}h${m > 0 ? m : ""}`
+      },
+    },
+    {
+      id: "voir",
+      header: "Détail",
+      cell: ({ row }) => (
+        <Link href={`/missions/${row.original.id}`}>
+          <Button variant="outline" size="sm" className="w-full">
+            Voir
+          </Button>
+        </Link>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      header: () => null,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(row.original.id)}
+                className="text-destructive"
+              >
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ]
 
   const table = useReactTable({
     data,
@@ -218,101 +169,74 @@ const columns: ColumnDef<Mission>[] = [
   })
 
   return (
-    <>
-      <div className="w-full space-y-4">
-        <div className="flex items-center gap-2">
-          <Input
-            type="search"
-            placeholder="Filtrer par titre..."
-            value={(table.getColumn("titre")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("titre")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center h-24">
-                    Aucun résultat.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Précédent
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Suivant
-          </Button>
-        </div>
+    <div className="w-full space-y-4">
+      <div className="flex items-center gap-2">
+        <Input
+          type="search"
+          placeholder="Filtrer par titre..."
+          value={(table.getColumn("titre")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("titre")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
       </div>
 
-      <Dialog
-        open={!!selectedMissionForValidation}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedMissionForValidation(null)
-            setMontantPaiement("")
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Valider le paiement</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              type="number"
-              placeholder="Montant payé (€)"
-              value={montantPaiement}
-              onChange={(e) => setMontantPaiement(e.target.value)}
-            />
-            <Button onClick={handleValiderPaiement}>Valider</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center h-24">
+                  Aucun résultat.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Précédent
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Suivant
+        </Button>
+      </div>
+    </div>
   )
 }

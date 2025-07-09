@@ -3,13 +3,18 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  const missions = await prisma.mission.findMany({
-    include: {
-      projet: { select: { nom: true } },
-    },
-    orderBy: { id: "desc" },
-  })
-  return NextResponse.json(missions)
+  try {
+    const missions = await prisma.mission.findMany({
+      include: {
+        projet: { select: { nom: true } },
+      },
+      orderBy: { id: "desc" },
+    })
+    return NextResponse.json(missions)
+  } catch (error) {
+    console.error("Erreur GET /api/missions :", error)
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
@@ -24,8 +29,6 @@ export async function POST(req: Request) {
       titre: body.titre,
       description: body.description ?? null,
       statut: body.statut ?? "EN_COURS",
-      prixEstime: body.prixEstime ?? 0,
-      prixReel: body.prixReel ?? null,
       projetId: body.projetId,
       dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,

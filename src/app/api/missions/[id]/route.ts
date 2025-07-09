@@ -48,8 +48,6 @@ export const PUT = async (
       titre: body.titre,
       description: body.description ?? null,
       statut: body.statut ?? undefined,
-      prixEstime: body.prixEstime ?? undefined,
-      prixReel: body.prixReel ?? undefined,
       projetId: body.projetId,
       dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,

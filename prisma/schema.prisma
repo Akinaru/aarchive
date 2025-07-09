@@ -55,11 +55,9 @@ model Mission {
   dureePrevueMinutes Int?
   createdAt          DateTime      @default(now())
 
-  prixEstime Float   @default(0)
-  prixReel   Float?
-  projetId   Int
-  projet     Projet  @relation(fields: [projetId], references: [id])
-  temps      Temps[]
+  projetId Int
+  projet   Projet  @relation(fields: [projetId], references: [id])
+  temps    Temps[]
 }
 
 model Temps {
