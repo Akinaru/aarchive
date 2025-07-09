@@ -78,6 +78,18 @@ model TypeTache {
   temps Temps[]
 }
 
+model Parametre {
+  id    String @id // ex: "tjm"
+  value Float
+}
+
+model PaiementMensuel {
+  id        Int      @id @default(autoincrement())
+  mois      DateTime @unique
+  montant   Float
+  createdAt DateTime @default(now())
+}
+
 enum StatutMission {
   EN_COURS
   TERMINEE

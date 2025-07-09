@@ -21,7 +21,7 @@ export default function DashboardPage() {
           <SectionCards />
 
           <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-2 lg:px-6">
-            <DashboardGraphMissions navigation={false} />
+            <DashboardGraphMissions />
             <DashboardStatsTable />
           </div>
 

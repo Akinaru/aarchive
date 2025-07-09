@@ -156,16 +156,6 @@ export default function MissionSinglePage() {
                     : "-"}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span>Prix estimé :</span>
-                <span className="text-foreground">{mission.prixEstime} €</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Prix réel :</span>
-                <span className="text-foreground">
-                  {mission.prixReel !== null ? `${mission.prixReel} €` : "-"}
-                </span>
-              </div>
             </div>
 
             <ChartTachePie temps={temps} />
