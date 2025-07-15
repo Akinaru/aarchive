@@ -9,7 +9,7 @@ import { toast } from "sonner"
 export function BlocTjmEstimation() {
   const [tjm, setTjm] = useState(100)
   const [jours, setJours] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
 
   const fetchTJM = async () => {
     const res = await fetch("/api/monnaie/tjm")

@@ -26,25 +26,6 @@ function formatDuree(minutes: number): string {
   return h > 0 ? `${h}h${m > 0 ? m : ""}` : `${m}min`
 }
 
-// Palette shadcn/ui
-const COLOR_VARS = [
-  "--chart-1",
-  "--chart-2",
-  "--chart-3",
-  "--chart-4",
-  "--chart-5",
-  "--chart-6",
-  "--chart-7",
-  "--chart-8",
-  "--chart-9",
-  "--chart-10",
-]
-
-// Fonction de couleur déterministe par nom de type
-function getColorForType(typeName: string, allTypesSorted: string[]): string {
-  const index = allTypesSorted.indexOf(typeName)
-  return `var(${COLOR_VARS[index % COLOR_VARS.length]})`
-}
 
 export function ChartTachePie({ temps }: Props) {
   if (!temps.length) return null

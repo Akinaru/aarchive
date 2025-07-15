@@ -159,7 +159,7 @@ export default function TempsPage() {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Préparation incomplète</AlertTitle>
           <AlertDescription>
-            Vous devez d'abord ajouter :
+            Vous devez au préalable ajouter :
             <ul className="list-disc ml-6 mt-1 space-y-1 text-sm">
               {missions.length === 0 && (
                 <li>

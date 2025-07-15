@@ -63,7 +63,7 @@ export default function ClientSinglePage() {
       <div className="p-6">
         <Alert>
           <AlertTitle>Client introuvable</AlertTitle>
-          <AlertDescription>Le client demandé n'existe pas.</AlertDescription>
+          <AlertDescription>Le client demandé n&apos;existe pas.</AlertDescription>
         </Alert>
       </div>
     )

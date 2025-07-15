@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { STATUT_ICONS } from "@/lib/status"
+import Link from "next/link"
 
 const STATUTS: (keyof typeof STATUT_ICONS)[] = ["EN_COURS", "TERMINEE", "EN_ATTENTE", "ANNULEE"]
 
@@ -156,9 +157,9 @@ export default function MissionsPage() {
             <p className="mb-1">Vous devez d’abord créer un projet avant de pouvoir ajouter une mission.</p>
             <ul className="list-inside list-disc text-sm space-y-1">
               <li>
-                <a href="/projets" className="underline hover:opacity-85">
+                <Link href="/projets" className="underline hover:opacity-85">
                   Créer un projet maintenant
-                </a>
+                </Link>
               </li>
             </ul>
           </AlertDescription>
@@ -180,9 +181,9 @@ export default function MissionsPage() {
             {projets.length === 0 ? (
               <div className="rounded-md border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
                 Aucun projet trouvé. Veuillez{" "}
-                <a href="/projets" className="underline font-medium text-yellow-900 hover:text-yellow-700">
+                <Link href="/projets" className="underline font-medium text-yellow-900 hover:text-yellow-700">
                   créer un projet
-                </a>{" "}
+                </Link>{" "}
                 avant d’ajouter une mission.
               </div>
             ) : (

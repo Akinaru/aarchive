@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import Link from "next/link"
 
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { TempsParTypeBarChart } from "@/components/chart/temps-bar-chart"
 import { FormAddTemps } from "@/components/form/form-ajout-temps"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { Mission } from "@/types/missions"
@@ -21,7 +19,6 @@ import { TypeTache } from "@/types/taches"
 import { DataTableTempsMission } from "@/components/table/data-table-temps-mission"
 import { ChartTachePie } from "@/components/chart/chart-tache-pie"
 import { BreadcrumbSkeleton } from "@/components/skeleton/breadcrumb"
-import { CheckCircle, Clock, Loader2, XCircle } from "lucide-react"
 import { STATUT_ICONS } from "@/lib/status"
 
 export default function MissionSinglePage() {
@@ -75,7 +72,7 @@ export default function MissionSinglePage() {
       <Alert variant="destructive">
         <AlertTitle>Mission introuvable</AlertTitle>
         <AlertDescription>
-          Impossible de charger la mission avec l'identifiant : {id}
+          Impossible de charger la mission avec l&apos;identifiant : {id}
         </AlertDescription>
       </Alert>
     )

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { format } from "date-fns"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/page-header"
@@ -65,7 +64,7 @@ export default function ProjetSinglePage() {
       <div className="p-6">
         <Alert>
           <AlertTitle>Projet introuvable</AlertTitle>
-          <AlertDescription>Le projet demandé n'existe pas.</AlertDescription>
+          <AlertDescription>Le projet demandé est introuvable.</AlertDescription>
         </Alert>
       </div>
     )

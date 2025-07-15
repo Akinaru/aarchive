@@ -1,4 +1,4 @@
-import NextAuth from "next-auth"
+import NextAuth, { NextAuthOptions, Session, User } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 
 import bcrypt from "bcrypt"
@@ -6,7 +6,7 @@ import { JWT } from "next-auth/jwt"
 
 import { prisma } from "@/lib/prisma"
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -40,7 +40,7 @@ export const authOptions = {
   session: { strategy: "jwt" as const },
 
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }): Promise<JWT> {
+    async jwt({ token, user }: { token: JWT; user?: User | null }): Promise<JWT> {
       if (user) {
         token.id = user.id.toString()
       }
@@ -51,9 +51,9 @@ export const authOptions = {
       session,
       token,
     }: {
-      session: any
+      session: Session
       token: JWT
-    }): Promise<any> {
+    }): Promise<Session> {
       if (token?.id) {
         const userInDb = await prisma.utilisateur.findUnique({
           where: { id: parseInt(token.id as string) },
@@ -61,7 +61,6 @@ export const authOptions = {
 
         if (userInDb) {
           session.user = {
-            id: userInDb.id.toString(),
             name: userInDb.nom,
             email: userInDb.email,
           }
@@ -79,5 +78,4 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 }
 
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
+export default NextAuth(authOptions)

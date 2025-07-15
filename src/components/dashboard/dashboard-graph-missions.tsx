@@ -23,7 +23,7 @@ export function DashboardGraphMissions() {
         const dataTaches = await resTaches.json()
         setTemps(dataTemps)
         setTypeTaches(dataTaches)
-      } catch (err) {
+      } catch {
         toast.error("Erreur lors du chargement des données")
       } finally {
         setLoading(false)

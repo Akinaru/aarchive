@@ -30,8 +30,9 @@ import {
 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 import { cn } from "@/lib/utils"
+import { AppUser } from "@/types/appuser"
 
-export function AppSidebar({ user }: { user: any }) {
+export function AppSidebar({ user }: { user: AppUser }) {
   const pathname = usePathname()
   const isAdmin = user?.role === "admin"
   const isValidated = user?.isValidated

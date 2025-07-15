@@ -23,9 +23,12 @@ import { BlocHistoriquePaiements } from "@/components/monnaie/bloc-historique-pa
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { AlertePaiementManquant } from "@/components/monnaie/bloc-alerte-paiementmanquant"
+import { BlocStatsMonetaires } from "@/components/monnaie/bloc-stats-monetaires"
+import { ChartBarPaiementsAnnuels } from "@/components/monnaie/bloc-paiements-annuels"
 
 export default function PageMonnaie() {
-  const [paiements, setPaiements] = useState<Payment[]>([])
+  const [, setPaiements] = useState<Payment[]>([])
   const [editPayment, setEditPayment] = useState<Payment | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
 
@@ -114,11 +117,18 @@ export default function PageMonnaie() {
           { label: "Monnaie" },
         ]}
       />
+      <AlertePaiementManquant />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <BlocTjmEstimation />
         <BlocPaiementMensuel />
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BlocStatsMonetaires />
+        <ChartBarPaiementsAnnuels />
+      </div>
+
       <BlocHistoriquePaiements />
 
       {/* Bouton ajout paiement */}
@@ -184,74 +194,74 @@ export default function PageMonnaie() {
       </div>
 
       {/* Dialog d'édition */}
-<Dialog
-  open={!!editPayment}
-  onOpenChange={(open) => {
-    if (!open) setEditPayment(null)
-  }}
->
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Modifier le paiement</DialogTitle>
-    </DialogHeader>
+      <Dialog
+        open={!!editPayment}
+        onOpenChange={(open) => {
+          if (!open) setEditPayment(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le paiement</DialogTitle>
+          </DialogHeader>
 
-    {editPayment && (
-      <div className="flex flex-col gap-4">
-        {/* Date Picker style popover */}
-        <div className="flex flex-col gap-3">
-          <Label className="px-1">Date de paiement</Label>
-          <Popover
-            open={dateOpen}
-            onOpenChange={setDateOpen}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-48 justify-between font-normal"
-              >
-                {editPayment.mois
-                  ? format(new Date(editPayment.mois), "dd MMMM yyyy", { locale: fr })
-                  : "Sélectionner une date"}
-                <ChevronDownIcon className="ml-2 h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={new Date(editPayment.mois)}
-                captionLayout="dropdown"
-                onSelect={(d) => {
-                  if (d) {
-                    setEditPayment({
-                      ...editPayment,
-                      mois: d.toISOString(),
-                    })
-                    setDateOpen(false)
-                  }
-                }}
+          {editPayment && (
+            <div className="flex flex-col gap-4">
+              {/* Date Picker style popover */}
+              <div className="flex flex-col gap-3">
+                <Label className="px-1">Date de paiement</Label>
+                <Popover
+                  open={dateOpen}
+                  onOpenChange={setDateOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-48 justify-between font-normal"
+                    >
+                      {editPayment.mois
+                        ? format(new Date(editPayment.mois), "dd MMMM yyyy", { locale: fr })
+                        : "Sélectionner une date"}
+                      <ChevronDownIcon className="ml-2 h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={new Date(editPayment.mois)}
+                      captionLayout="dropdown"
+                      onSelect={(d) => {
+                        if (d) {
+                          setEditPayment({
+                            ...editPayment,
+                            mois: d.toISOString(),
+                          })
+                          setDateOpen(false)
+                        }
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Montant */}
+              <Label>Montant (€)</Label>
+              <Input
+                type="number"
+                value={editPayment.montant}
+                onChange={(e) =>
+                  setEditPayment({
+                    ...editPayment,
+                    montant: parseFloat(e.target.value),
+                  })
+                }
               />
-            </PopoverContent>
-          </Popover>
-        </div>
 
-        {/* Montant */}
-        <Label>Montant (€)</Label>
-        <Input
-          type="number"
-          value={editPayment.montant}
-          onChange={(e) =>
-            setEditPayment({
-              ...editPayment,
-              montant: parseFloat(e.target.value),
-            })
-          }
-        />
-
-        <Button onClick={updatePaiement}>Mettre à jour</Button>
-      </div>
-    )}
-  </DialogContent>
-</Dialog>
+              <Button onClick={updatePaiement}>Mettre à jour</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -53,3 +53,44 @@ export async function GET() {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
+
+export async function POST(req: Request) {
+  const body = await req.json()
+  const { mois, montant } = body
+
+  if (!mois || isNaN(parseFloat(montant))) {
+    return NextResponse.json({ error: "Données invalides" }, { status: 400 })
+  }
+
+  const date = new Date(new Date(mois).getFullYear(), new Date(mois).getMonth(), 1, 12)
+  const year = date.getFullYear()
+  const month = date.getMonth()
+
+  const premierJour = new Date(year, month, 1)
+  const dernierJour = new Date(year, month + 1, 0)
+
+  const existing = await prisma.paiementMensuel.findFirst({
+    where: {
+      mois: {
+        gte: premierJour,
+        lte: dernierJour,
+      },
+    },
+  })
+
+  if (existing) {
+    return NextResponse.json(
+      { error: "Un paiement est déjà enregistré pour ce mois." },
+      { status: 409 }
+    )
+  }
+
+  const paiement = await prisma.paiementMensuel.create({
+    data: {
+      mois: date,
+      montant: parseFloat(montant),
+    },
+  })
+
+  return NextResponse.json(paiement)
+}

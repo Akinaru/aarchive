@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { PageHeader } from "@/components/page-header"
 import { SectionCards } from "@/components/dashboard/dashboard-section-cards"
 import { ChartAreaInteractive } from "@/components/chart/chart-area-interactive"

@@ -30,7 +30,7 @@ type Props = {
   navigation?: boolean
 }
 
-export function TempsParTypeBarChart({ temps, typeTaches, navigation = true }: Props) {
+export function TempsParTypeBarChart({ temps, navigation = true }: Props) {
   const [weekOffset, setWeekOffset] = useState(0)
 
   const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset)
@@ -121,8 +121,8 @@ export function TempsParTypeBarChart({ temps, typeTaches, navigation = true }: P
             />
             <Tooltip
               cursor={{ fill: "transparent" }}
-              formatter={(value: any) => {
-                const v = parseInt(value)
+              formatter={(value: number | string) => {
+                const v = parseInt(value.toString())
                 const h = Math.floor(v / 60)
                 const m = v % 60
                 return `${h > 0 ? `${h}h` : ""}${m > 0 ? `${m}min` : ""}`

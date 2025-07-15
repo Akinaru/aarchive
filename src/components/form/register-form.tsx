@@ -56,7 +56,7 @@ export default function RegisterClientForm() {
         setError("Le compte a été créé mais la connexion a échoué.")
         setLoading(false)
       }
-    } catch (err) {
+    } catch {
       setError("Erreur inattendue. Veuillez réessayer.")
       setLoading(false)
     }
