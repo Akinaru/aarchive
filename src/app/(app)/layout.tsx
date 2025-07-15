@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/authOptions"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import Link from "next/link"
@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <AppSidebar user={session.user} />
+        <AppSidebar />
         <main className="flex-1 p-6">
           {children}
         </main>

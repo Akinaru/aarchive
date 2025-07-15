@@ -1,22 +1,41 @@
 import { NextResponse } from "next/server"
-
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(req: Request, context: { params: { id: string } }) {
+type ContextWithId = {
+  params: { id: string }
+}
+
+function isContextWithId(ctx: unknown): ctx is ContextWithId {
+  if (typeof ctx !== "object" || ctx === null) return false
+
+  const maybeContext = ctx as Record<string, unknown>
+  const params = maybeContext["params"]
+
+  if (typeof params !== "object" || params === null) return false
+
+  const maybeParams = params as Record<string, unknown>
+  const id = maybeParams["id"]
+
+  return typeof id === "string"
+}
+
+export async function PUT(req: Request, context: unknown) {
+  if (!isContextWithId(context)) {
+    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+  }
+
+  const id = parseInt(context.params.id, 10)
   const body = await req.json()
-  const id = parseInt(context.params.id)
 
   if (!body.nom) {
     return NextResponse.json({ error: "Nom requis" }, { status: 400 })
   }
 
   try {
-    // Supprimer les relations existantes (ProjetsClients)
     await prisma.projetClient.deleteMany({
       where: { projetId: id },
     })
 
-    // Mettre à jour le projet
     const updated = await prisma.projet.update({
       where: { id },
       data: {
@@ -41,25 +60,29 @@ export async function PUT(req: Request, context: { params: { id: string } }) {
     return NextResponse.json(updated)
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: "Erreur lors de la mise à jour." }, { status: 500 })
+    return NextResponse.json(
+      { error: "Erreur lors de la mise à jour." },
+      { status: 500 }
+    )
   }
 }
 
-export async function DELETE(req: Request, context: { params: { id: string } }) {
-  const id = parseInt(context.params.id)
+export async function DELETE(req: Request, context: unknown) {
+  if (!isContextWithId(context)) {
+    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+  }
+
+  const id = parseInt(context.params.id, 10)
 
   try {
-    // Supprimer les missions liées à ce projet
     await prisma.mission.deleteMany({
       where: { projetId: id },
     })
 
-    // Supprimer les relations projet-client
     await prisma.projetClient.deleteMany({
       where: { projetId: id },
     })
 
-    // Supprimer le projet une fois les dépendances supprimées
     const deleted = await prisma.projet.delete({
       where: { id },
     })
@@ -67,6 +90,9 @@ export async function DELETE(req: Request, context: { params: { id: string } }) 
     return NextResponse.json(deleted)
   } catch (error) {
     console.error("Erreur lors de la suppression du projet :", error)
-    return NextResponse.json({ error: "Suppression impossible. Vérifiez les dépendances." }, { status: 500 })
+    return NextResponse.json(
+      { error: "Suppression impossible. Vérifiez les dépendances." },
+      { status: 500 }
+    )
   }
 }

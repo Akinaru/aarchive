@@ -81,13 +81,13 @@ export function ChartBarPaiementsAnnuels() {
                 offset={10}
                 className="fill-foreground"
                 fontSize={12}
-                formatter={(label) =>
-                  `${(label as number).toLocaleString("fr-FR", {
+                formatter={(label: number) =>
+                  label.toLocaleString("fr-FR", {
                     style: "currency",
                     currency: "EUR",
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
-                  })}`
+                  })
                 }
               />
             </Bar>

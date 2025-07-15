@@ -7,7 +7,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarContent,
   SidebarHeader,
   SidebarFooter,
@@ -24,18 +23,13 @@ import {
   Flag,
   TimerReset,
   ListTodo,
-  PlusCircle,
-  ShieldCheck,
   Euro,
 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 import { cn } from "@/lib/utils"
-import { AppUser } from "@/types/appuser"
 
-export function AppSidebar({ user }: { user: AppUser }) {
+export function AppSidebar() {
   const pathname = usePathname()
-  const isAdmin = user?.role === "admin"
-  const isValidated = user?.isValidated
 
   const isActive = (href: string) => pathname.startsWith(href)
 
@@ -129,41 +123,6 @@ export function AppSidebar({ user }: { user: AppUser }) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isValidated && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Actions</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/timesheet") })}>
-                    <Link href="/timesheet">
-                      <PlusCircle className="mr-2 size-4" />
-                      Ma feuille de temps
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/admin/users") })}>
-                    <Link href="/admin/users">
-                      <ShieldCheck className="mr-2 size-4" />
-                      Utilisateurs
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>

@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from "next/server"
-
 import { prisma } from "@/lib/prisma"
 
-export const GET = async (
-  req: NextRequest,
-  context: { params: { id: string } }
-) => {
-  const id = parseInt(context.params.id)
+type ContextWithId = {
+  params: {
+    id: string
+  }
+}
 
+// ✅ version strictement typée sans `any`
+function isContextWithId(ctx: unknown): ctx is ContextWithId {
+  if (typeof ctx !== "object" || ctx === null) return false
+
+  const maybeContext = ctx as Record<string, unknown>
+  const params = maybeContext["params"]
+
+  if (typeof params !== "object" || params === null) return false
+
+  const maybeParams = params as Record<string, unknown>
+  const id = maybeParams["id"]
+
+  return typeof id === "string"
+}
+
+export const GET = async (req: NextRequest, context: unknown) => {
+  if (!isContextWithId(context)) {
+    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+  }
+
+  const id = parseInt(context.params.id, 10)
   if (isNaN(id)) {
     return NextResponse.json({ error: "ID invalide" }, { status: 400 })
   }
@@ -35,11 +55,12 @@ export const GET = async (
   return NextResponse.json(mission)
 }
 
-export const PUT = async (
-  req: NextRequest,
-  context: { params: { id: string } }
-) => {
-  const id = parseInt(context.params.id)
+export const PUT = async (req: NextRequest, context: unknown) => {
+  if (!isContextWithId(context)) {
+    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+  }
+
+  const id = parseInt(context.params.id, 10)
   const body = await req.json()
 
   const updated = await prisma.mission.update({
@@ -57,11 +78,12 @@ export const PUT = async (
   return NextResponse.json(updated)
 }
 
-export const DELETE = async (
-  req: NextRequest,
-  context: { params: { id: string } }
-) => {
-  const id = parseInt(context.params.id)
+export const DELETE = async (req: NextRequest, context: unknown) => {
+  if (!isContextWithId(context)) {
+    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+  }
+
+  const id = parseInt(context.params.id, 10)
 
   const deleted = await prisma.mission.delete({
     where: { id },

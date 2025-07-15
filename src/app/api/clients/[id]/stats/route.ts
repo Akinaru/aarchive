@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server"
-
 import { prisma } from "@/lib/prisma"
 
+type ContextWithId = {
+  params: { id: string }
+}
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const clientId = parseInt(params.id)
+export async function GET(req: Request, context: unknown) {
+  if (!isContextWithId(context)) {
+    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+  }
+
+  const clientId = parseInt(context.params.id, 10)
 
   if (isNaN(clientId)) {
     return NextResponse.json({ error: "ID invalide" }, { status: 400 })
@@ -68,4 +71,17 @@ export async function GET(
     temps: allTemps,
     typeTaches,
   })
+}
+
+// ✅ Type guard pour vérifier context.params.id sans utiliser `any`
+function isContextWithId(ctx: unknown): ctx is ContextWithId {
+  return (
+    typeof ctx === "object" &&
+    ctx !== null &&
+    "params" in ctx &&
+    typeof (ctx as { params?: unknown }).params === "object" &&
+    (ctx as { params: { id?: unknown } }).params !== null &&
+    "id" in (ctx as { params: { id?: unknown } }).params &&
+    typeof (ctx as { params: { id?: unknown } }).params.id === "string"
+  )
 }

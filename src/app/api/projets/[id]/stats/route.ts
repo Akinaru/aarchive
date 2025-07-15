@@ -1,8 +1,30 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const id = parseInt(params.id)
+type ContextWithId = {
+  params: { id: string }
+}
+
+function isContextWithId(ctx: unknown): ctx is ContextWithId {
+  if (typeof ctx !== "object" || ctx === null) return false
+
+  const maybeContext = ctx as Record<string, unknown>
+  const params = maybeContext["params"]
+
+  if (typeof params !== "object" || params === null) return false
+
+  const maybeParams = params as Record<string, unknown>
+  const id = maybeParams["id"]
+
+  return typeof id === "string"
+}
+
+export async function GET(_: Request, context: unknown) {
+  if (!isContextWithId(context)) {
+    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+  }
+
+  const id = parseInt(context.params.id, 10)
 
   if (isNaN(id)) {
     return NextResponse.json({ error: "ID invalide" }, { status: 400 })
