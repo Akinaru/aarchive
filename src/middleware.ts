@@ -13,7 +13,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Appel à l’API interne pour savoir s’il y a des utilisateurs
-  const res = await fetch(`${origin}/api/system/has-users`)
+  const res = await fetch(`/api/system/has-users`)
   const data = await res.json()
   const hasUsers = data.hasUsers
 
