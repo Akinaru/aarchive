@@ -10,14 +10,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-
-import { STATUT_ICONS } from "@/lib/status"
+import {
+  Clock,
+  CalendarCheck,
+  Gauge,
+  DollarSign,
+} from "lucide-react"
 
 type StatsDashboard = {
-  projetsActifs: number
-  missionsEnCours: number
-  totalTempsMinutes: number
-  clientsActifs: number
+  minutesAujourdHui: number
+  joursTravaillesMois: number
+  moyenneMinutesParJour: number
+  estimationSalaire: number
 }
 
 export function SectionCards() {
@@ -25,88 +29,94 @@ export function SectionCards() {
 
   useEffect(() => {
     fetch("/api/dashboard/overview")
-      .then((res) => res.json())
+      .then(res => res.json())
       .then(setStats)
-      .catch((err) => console.error("Erreur fetch stats:", err))
+      .catch(err => console.error("Erreur fetch stats:", err))
   }, [])
 
   if (!stats) return null
 
-  const heures = Math.floor(stats.totalTempsMinutes / 60)
-  const minutes = stats.totalTempsMinutes % 60
-  const tempsFormat = `${heures}h${minutes > 0 ? minutes.toString().padStart(2, "0") : ""}`
-
-  const statut = STATUT_ICONS["EN_COURS"]
-  const Icon = statut.icon
+  const formatHeuresMinutes = (minutes: number) => {
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return `${h}h${m > 0 ? m.toString().padStart(2, "0") : ""}`
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Projets actifs</CardDescription>
+          <CardDescription>Heures travaillées aujourd’hui</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.projetsActifs}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">Stable</Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="flex gap-2 font-medium">Projets liés à au moins une mission</div>
-          <div className="text-muted-foreground">Filtré côté API</div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Missions en cours</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.missionsEnCours}
+            {formatHeuresMinutes(stats.minutesAujourdHui)}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <Icon
-                className={`size-4 ${statut.className} ${statut.spin ? "animate-spin" : ""}`}
-              />
-              EN_COURS
+              <Clock className="size-4" />
+              Aujourd’hui
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="flex gap-2 font-medium">Statut = EN_COURS</div>
-          <div className="text-muted-foreground">Mise à jour en temps réel</div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Temps total saisi</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {tempsFormat}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">+ suivi</Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="flex gap-2 font-medium">Toutes missions confondues</div>
+          <div className="flex gap-2 font-medium">Somme des temps saisis</div>
           <div className="text-muted-foreground">Basé sur la table Temps</div>
         </CardFooter>
       </Card>
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Clients actifs</CardDescription>
+          <CardDescription>Jours travaillés ce mois</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.clientsActifs}
+            {stats.joursTravaillesMois}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">+ fidélité</Badge>
+            <Badge variant="outline">
+              <CalendarCheck className="size-4" />
+              Ce mois
+            </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="flex gap-2 font-medium">Ayant au moins 1 projet</div>
-          <div className="text-muted-foreground">Comptabilisé côté base</div>
+          <div className="flex gap-2 font-medium">Jours avec au moins 1 saisie</div>
+          <div className="text-muted-foreground">Filtré par date unique</div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Temps moyen / jour</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            {formatHeuresMinutes(stats.moyenneMinutesParJour)}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline">
+              <Gauge className="size-4" />
+              Moyenne
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="flex gap-2 font-medium">Sur les jours travaillés</div>
+          <div className="text-muted-foreground">Ce mois uniquement</div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Estimation salaire</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            € {stats.estimationSalaire.toLocaleString()}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline">
+              <DollarSign className="size-4" />
+              Brut
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="flex gap-2 font-medium">TJM × jours travaillés</div>
+          <div className="text-muted-foreground">Basé sur le mois courant</div>
         </CardFooter>
       </Card>
     </div>
