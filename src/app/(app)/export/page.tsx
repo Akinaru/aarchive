@@ -36,7 +36,7 @@ export default function ExportTempsPage() {
         const data: Mission[] = await res.json()
         setMissions(data)
       }
-    } catch (err) {
+    } catch {
       toast.error("Erreur chargement des missions")
     }
   }
@@ -54,7 +54,7 @@ export default function ExportTempsPage() {
       } else {
         toast.error("Erreur chargement des temps")
       }
-    } catch (err) {
+    } catch {
       toast.error("Erreur serveur")
     }
     setLoading(false)
@@ -87,75 +87,80 @@ export default function ExportTempsPage() {
     })
   })
 
-function exportToPDF() {
-  const doc = new jsPDF()
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(16)
-  doc.text("Rapport hebdomadaire des temps", 14, 20)
+  function exportToPDF() {
+    const doc = new jsPDF()
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(16)
+    doc.text("Rapport hebdomadaire des temps", 14, 20)
 
-  doc.setFontSize(12)
-  doc.setFont("helvetica", "bold")
-  doc.text("Semaine :", 14, 30)
-  doc.setFont("helvetica", "normal")
-  doc.text(`${format(weekStart, "dd/MM/yyyy")} -> ${format(weekEnd, "dd/MM/yyyy")}`, 40, 30)
-
-  doc.setFont("helvetica", "bold")
-  doc.text("Total semaine :", 14, 38)
-  doc.setFont("helvetica", "normal")
-  doc.text(`${formatMinutes(totalMinutes)}`, 50, 38)
-
-  // Résumé global
-  const globalData = Object.entries(byType).map(([type, minutes]) => [
-    type,
-    formatMinutes(minutes),
-    `${((minutes / totalMinutes) * 100).toFixed(1)}%`,
-  ])
-  autoTable(doc, {
-    head: [["Type", "Durée", "Pourcentage"]],
-    body: globalData,
-    startY: 45,
-  })
-
-  let currentY = doc.lastAutoTable.finalY + 10
-
-  // Détails par jour
-  weekDays.forEach((dayDate) => {
-    const dayKey = format(dayDate, "yyyy-MM-dd")
-    const entries = byDate[dayKey] || []
-    const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
+    doc.setFontSize(12)
+    doc.text("Semaine :", 14, 30)
+    doc.setFont("helvetica", "normal")
+    doc.text(`${format(weekStart, "dd/MM/yyyy")} - ${format(weekEnd, "dd/MM/yyyy")}`, 40, 30)
 
     doc.setFont("helvetica", "bold")
-    doc.text(`${format(dayDate, "EEEE dd/MM")} — ${formatMinutes(dayMinutes)}`, 14, currentY)
-    currentY += 6
+    doc.text("Total semaine :", 14, 38)
+    doc.setFont("helvetica", "normal")
+    doc.text(`${formatMinutes(totalMinutes)}`, 50, 38)
 
-    if (entries.length > 0) {
-      const dayData = entries.map((e) => [
-        e.mission.titre,
-        e.typeTache.nom,
-        formatMinutes(e.dureeMinutes),
-        e.description ? cleanText(e.description) : "",
-      ])
-      autoTable(doc, {
-        head: [["Mission", "Type", "Durée", "Description"]],
-        body: dayData,
-        startY: currentY,
-        theme: "grid",
-        styles: { fontSize: 10 },
-      })
-      currentY = doc.lastAutoTable.finalY + 10
-    } else {
-      doc.setFont("helvetica", "normal")
-      doc.text("Aucun temps enregistré", 20, currentY)
-      currentY += 10
-    }
-  })
+    const globalData = Object.entries(byType).map(([type, minutes]) => [
+      type,
+      formatMinutes(minutes),
+      `${((minutes / totalMinutes) * 100).toFixed(1)}%`,
+    ])
 
-  doc.save(`rapport-semaine-${format(weekStart, "yyyy-MM-dd")}.pdf`)
-}
+    autoTable(doc, {
+      head: [["Type", "Durée", "Pourcentage"]],
+      body: globalData,
+      startY: 45,
+    })
+
+    let currentY =
+      (doc as any).lastAutoTable?.finalY !== undefined
+        ? (doc as any).lastAutoTable.finalY + 10
+        : 55
+
+    weekDays.forEach((dayDate) => {
+      const dayKey = format(dayDate, "yyyy-MM-dd")
+      const entries = byDate[dayKey] || []
+      const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
+
+      doc.setFont("helvetica", "bold")
+      doc.text(`${format(dayDate, "EEEE dd/MM")} — ${formatMinutes(dayMinutes)}`, 14, currentY)
+      currentY += 6
+
+      if (entries.length > 0) {
+        const dayData = entries.map((e) => [
+          e.mission.titre,
+          e.typeTache.nom,
+          formatMinutes(e.dureeMinutes),
+          e.description ? cleanText(e.description) : "",
+        ])
+
+        autoTable(doc, {
+          head: [["Mission", "Type", "Durée", "Description"]],
+          body: dayData,
+          startY: currentY,
+          theme: "grid",
+          styles: { fontSize: 10 },
+        })
+
+        currentY =
+          (doc as any).lastAutoTable?.finalY !== undefined
+            ? (doc as any).lastAutoTable.finalY + 10
+            : currentY + 10
+      } else {
+        doc.setFont("helvetica", "normal")
+        doc.text("Aucun temps enregistré", 20, currentY)
+        currentY += 10
+      }
+    })
+
+    doc.save(`rapport-semaine-${format(weekStart, "yyyy-MM-dd")}.pdf`)
+  }
 
   return (
     <div className="container py-6 space-y-6">
-      {/* Navigation */}
       <Card>
         <CardHeader>
           <CardTitle>Filtres & navigation</CardTitle>
@@ -167,7 +172,7 @@ function exportToPDF() {
                 ← Semaine précédente
               </Button>
               <span className="text-sm font-medium">
-                {format(weekStart, "dd/MM/yyyy")} → {format(weekEnd, "dd/MM/yyyy")}
+                {format(weekStart, "dd/MM/yyyy")} - {format(weekEnd, "dd/MM/yyyy")}
               </span>
               <Button variant="outline" onClick={() => setSelectedDate(addWeeks(selectedDate, 1))}>
                 Semaine suivante →
@@ -191,12 +196,10 @@ function exportToPDF() {
         </CardContent>
       </Card>
 
-      {/* Loading */}
       {loading ? (
         <div className="p-4">Chargement...</div>
       ) : (
         <>
-          {/* Résumé global */}
           <Card>
             <CardHeader>
               <CardTitle>Résumé global</CardTitle>
@@ -213,7 +216,6 @@ function exportToPDF() {
             </CardContent>
           </Card>
 
-          {/* Détails par jour */}
           {weekDays.map((dayDate) => {
             const dayKey = format(dayDate, "yyyy-MM-dd")
             const entries = byDate[dayKey] || []
@@ -243,7 +245,6 @@ function exportToPDF() {
             )
           })}
 
-          {/* Bouton Export PDF */}
           <div className="flex justify-end pt-4">
             <Button onClick={exportToPDF}>Exporter en PDF</Button>
           </div>
