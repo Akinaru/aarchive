@@ -198,6 +198,9 @@ function RapportPDF({ temps }: { temps: Temps[] }) {
     byDate[dayKey].push({ ...t, typeTache: { ...t.typeTache, nom: cleanType } })
   })
 
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+
   return (
     <Document>
       <Page style={styles.page}>
@@ -213,19 +216,25 @@ function RapportPDF({ temps }: { temps: Temps[] }) {
           ))}
         </View>
 
-        {Object.entries(byDate).map(([day, entries]) => {
+        {weekDays.map((dayDate) => {
+          const dayKey = format(dayDate, "yyyy-MM-dd")
+          const entries = byDate[dayKey] || []
           const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
           return (
-            <View key={day} style={styles.section}>
+            <View key={dayKey} style={styles.section}>
               <Text style={styles.sectionTitle}>
-                {format(new Date(day), "EEEE dd/MM")} — {formatMinutes(dayMinutes)}
+                {format(dayDate, "EEEE dd/MM")} — {formatMinutes(dayMinutes)}
               </Text>
-              {entries.map((e) => (
-                <Text key={e.id} style={styles.line}>
-                  {e.mission.titre} — {e.typeTache.nom}: {formatMinutes(e.dureeMinutes)}
-                  {e.description ? ` — ${cleanText(e.description)}` : ""}
-                </Text>
-              ))}
+              {entries.length > 0 ? (
+                entries.map((e) => (
+                  <Text key={e.id} style={styles.line}>
+                    {e.mission.titre} — {e.typeTache.nom}: {formatMinutes(e.dureeMinutes)}
+                    {e.description ? ` — ${cleanText(e.description)}` : ""}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.line}>Aucun temps enregistré</Text>
+              )}
             </View>
           )
         })}
