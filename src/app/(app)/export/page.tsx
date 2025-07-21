@@ -18,6 +18,7 @@ import { Mission } from "@/types/missions"
 import { formatMinutes } from "@/lib/time"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
+import { PageHeader } from "@/components/page-header"
 
 function cleanText(input: string): string {
   return input.replace(/[^\p{L}\p{N}\s\-'.]/gu, "").trim()
@@ -162,6 +163,11 @@ export default function ExportTempsPage() {
 
   return (
     <div className="container py-6 space-y-6">
+     <PageHeader
+       title="Exporter les temps"
+       subtitle="Exporter les temps saisis pour une semaine donnée."
+       breadcrumb={[{ label: "Export" }]}
+     />
       <Card>
         <CardHeader>
           <CardTitle>Filtres & navigation</CardTitle>
