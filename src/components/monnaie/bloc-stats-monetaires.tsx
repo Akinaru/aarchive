@@ -13,6 +13,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { AlertTriangle, CheckCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type Paiement = {
   id: number | null
@@ -36,6 +37,7 @@ type Stats = {
 export function BlocStatsMonetaires() {
   const [, setData] = useState<Paiement[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetch("/api/monnaie/stats")
@@ -44,7 +46,26 @@ export function BlocStatsMonetaires() {
         setData(res.paiements)
         setStats(res.stats)
       })
+      .finally(() => setIsLoading(false))
   }, [])
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>📊 Statistiques monétaires</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-20 w-full rounded-lg" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (!stats) return null
 

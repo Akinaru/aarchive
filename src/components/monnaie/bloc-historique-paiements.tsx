@@ -17,6 +17,7 @@ import {
 } from "recharts"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type Paiement = {
   id: number
@@ -27,12 +28,14 @@ type Paiement = {
 
 export function BlocHistoriquePaiements() {
   const [data, setData] = useState<Paiement[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
       const res = await fetch("/api/monnaie/paiements")
       const json = await res.json()
       setData(json)
+      setIsLoading(false)
     }
     fetchData()
   }, [])
@@ -49,7 +52,9 @@ export function BlocHistoriquePaiements() {
         <CardTitle>Historique des paiements</CardTitle>
       </CardHeader>
       <CardContent className="h-[300px]">
-        {chartData.length === 0 ? (
+        {isLoading ? (
+          <Skeleton className="h-full w-full rounded-lg" />
+        ) : chartData.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aucun paiement enregistré.</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -66,12 +71,17 @@ export function BlocHistoriquePaiements() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="name" tickLine={false} axisLine={false} />
-            <Tooltip
-            formatter={(value: number, name: string) => {
-                const label = name === "montant" ? "Montant réel" : name === "estimation" ? "Estimation" : name
-                return [`${value.toFixed(2)} €`, label]
-            }}
-            />
+              <Tooltip
+                formatter={(value: number, name: string) => {
+                  const label =
+                    name === "montant"
+                      ? "Montant réel"
+                      : name === "estimation"
+                      ? "Estimation"
+                      : name
+                  return [`${value.toFixed(2)} €`, label]
+                }}
+              />
               <Area
                 type="monotone"
                 dataKey="montant"

@@ -16,6 +16,7 @@ import {
   ChartContainer,
   ChartConfig,
 } from "@/components/ui/chart"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const MONTHS_SHORT_FR = [
   "Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
@@ -36,13 +37,16 @@ const chartConfig = {
 
 export function ChartBarPaiementsAnnuels() {
   const [data, setData] = useState<{ month: string; montant: number }[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetch("/api/monnaie/paiements")
       .then((res) => res.json())
       .then((paiements: Paiement[]) => {
         const currentYear = new Date().getFullYear()
-        const filtered = paiements.filter((p) => new Date(p.mois).getFullYear() === currentYear)
+        const filtered = paiements.filter(
+          (p) => new Date(p.mois).getFullYear() === currentYear
+        )
 
         const mapped = Array.from({ length: 12 }, (_, i) => {
           const moisData = filtered.find(
@@ -56,7 +60,27 @@ export function ChartBarPaiementsAnnuels() {
 
         setData(mapped)
       })
+      .finally(() => setIsLoading(false))
   }, [])
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Paiements mensuels</CardTitle>
+          <CardDescription>Année {new Date().getFullYear()}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-80 w-full rounded-lg" />
+          <Skeleton className="h-3 w-full rounded-lg" />
+        </CardContent>
+        <CardFooter className="flex-col items-start gap-2 text-sm">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-4 w-2/3" />
+        </CardFooter>
+      </Card>
+    )
+  }
 
   return (
     <Card>
