@@ -1,22 +1,31 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { startOfWeek, endOfWeek } from "date-fns"
 
-export async function GET() {
-  const now = new Date()
-  const start = startOfWeek(now, { weekStartsOn: 1 }) // lundi
-  const end = endOfWeek(now, { weekStartsOn: 1 }) // dimanche
+export async function GET(req: NextRequest) {
+  const dateParam = req.nextUrl.searchParams.get("date")
+  const missionIdParam = req.nextUrl.searchParams.get("missionId")
+
+  const baseDate = dateParam ? new Date(dateParam) : new Date()
+  const start = startOfWeek(baseDate, { weekStartsOn: 1 })
+  const end = endOfWeek(baseDate, { weekStartsOn: 1 })
+
+  const where: any = {
+    date: {
+      gte: start,
+      lte: end,
+    },
+  }
+
+  if (missionIdParam) {
+    where.missionId = parseInt(missionIdParam)
+  }
 
   const temps = await prisma.temps.findMany({
-    where: {
-      date: {
-        gte: start,
-        lte: end,
-      },
-    },
+    where,
     include: {
-      mission: { select: { titre: true } },
-      typeTache: { select: { nom: true } },
+      mission: { select: { id: true, titre: true } },
+      typeTache: { select: { id: true, nom: true } },
     },
     orderBy: { date: "asc" },
   })

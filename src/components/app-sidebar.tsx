@@ -107,29 +107,30 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+
               <SidebarMenuItem>
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/export") })}>
+                  <Link href="/export">
+                    <FileText className="mr-2 size-4" />
+                    Exporter les temps
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/export") })}>
-                    <Link href="/export">
-                      <FileText className="mr-2 size-4" />
-                      Exporter les temps
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                  <SidebarMenuButton
-                    asChild
-                    className={cn({
-                      "bg-primary/10 text-primary": isActive("/monnaie"),
-                    })}
-                  >
-                    <Link href="/monnaie">
-                      <Euro className="mr-2 size-4" />
-                      Gestion monétaire
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className={cn({
+                    "bg-primary/10 text-primary": isActive("/monnaie"),
+                  })}
+                >
+                  <Link href="/monnaie">
+                    <Euro className="mr-2 size-4" />
+                    Gestion monétaire
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
