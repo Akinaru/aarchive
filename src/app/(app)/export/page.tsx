@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { format, addDays, startOfWeek, endOfWeek, subWeeks, addWeeks } from "date-fns"
 import { Temps } from "@/types/temps"
@@ -197,7 +198,34 @@ export default function ExportTempsPage() {
       </Card>
 
       {loading ? (
-        <div className="p-4">Chargement...</div>
+        <>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-1/3" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-1/2 mb-2" />
+              <Skeleton className="h-4 w-full mb-1" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+          </Card>
+
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-5 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardContent>
+            </Card>
+          ))}
+
+          <div className="flex justify-end">
+            <Skeleton className="h-10 w-40" />
+          </div>
+        </>
       ) : (
         <>
           <Card>
