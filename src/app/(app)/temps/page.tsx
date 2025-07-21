@@ -264,27 +264,6 @@ export default function TempsPage() {
             </CardContent>
           </Card>
 
-          {/* Résumé global */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Résumé global</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Temps total saisi</p>
-                <p className="text-lg font-bold">{formatMinutes(totalMinutes)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Missions différentes</p>
-                <p className="text-lg font-bold">{totalMissions}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Types de tâches</p>
-                <p className="text-lg font-bold">{totalTypes}</p>
-              </div>
-            </CardContent>
-          </Card>
-
           <FormEditTemps
             selectedTemps={selectedTemps}
             types={types}

@@ -41,7 +41,7 @@ export function DashboardGraphMissions() {
         <CardTitle>Temps saisi par type cette semaine</CardTitle>
       </CardHeader>
       <CardContent>
-        <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
+        <TempsParTypeBarChart temps={temps} navigation={false} typeTaches={typeTaches} />
       </CardContent>
     </Card>
   )
