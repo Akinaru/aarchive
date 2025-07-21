@@ -15,7 +15,8 @@ import { format, addDays, startOfWeek, endOfWeek, subWeeks, addWeeks } from "dat
 import { Temps } from "@/types/temps"
 import { Mission } from "@/types/missions"
 import { formatMinutes } from "@/lib/time"
-import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 function cleanText(input: string): string {
   return input.replace(/[^\p{L}\p{N}\s\-'.]/gu, "").trim()
@@ -29,24 +30,32 @@ export default function ExportTempsPage() {
   const [selectedMissionId, setSelectedMissionId] = useState<string>("all")
 
   async function fetchMissions() {
-    const res = await fetch("/api/missions")
-    if (res.ok) {
-      const data: Mission[] = await res.json()
-      setMissions(data)
+    try {
+      const res = await fetch("/api/missions")
+      if (res.ok) {
+        const data: Mission[] = await res.json()
+        setMissions(data)
+      }
+    } catch (err) {
+      toast.error("Erreur chargement des missions")
     }
   }
 
   async function fetchTemps() {
     setLoading(true)
-    const params = new URLSearchParams({ date: selectedDate.toISOString() })
-    if (selectedMissionId !== "all") params.append("missionId", selectedMissionId)
+    try {
+      const params = new URLSearchParams({ date: selectedDate.toISOString() })
+      if (selectedMissionId !== "all") params.append("missionId", selectedMissionId)
 
-    const res = await fetch(`/api/temps/semaine?${params.toString()}`)
-    if (res.ok) {
-      const data: Temps[] = await res.json()
-      setTemps(data)
-    } else {
-      toast.error("Erreur chargement des temps")
+      const res = await fetch(`/api/temps/semaine?${params.toString()}`)
+      if (res.ok) {
+        const data: Temps[] = await res.json()
+        setTemps(data)
+      } else {
+        toast.error("Erreur chargement des temps")
+      }
+    } catch (err) {
+      toast.error("Erreur serveur")
     }
     setLoading(false)
   }
@@ -59,6 +68,10 @@ export default function ExportTempsPage() {
     fetchTemps()
   }, [selectedDate, selectedMissionId])
 
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
+  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+
   const totalMinutes = temps.reduce((sum, t) => sum + t.dureeMinutes, 0)
   const byType: Record<string, number> = {}
   const byDate: Record<string, Temps[]> = {}
@@ -68,15 +81,81 @@ export default function ExportTempsPage() {
     byType[cleanType] = (byType[cleanType] || 0) + t.dureeMinutes
     const dayKey = format(new Date(t.date), "yyyy-MM-dd")
     byDate[dayKey] = byDate[dayKey] || []
-    byDate[dayKey].push({ ...t, typeTache: { ...t.typeTache, nom: cleanType } })
+    byDate[dayKey].push({
+      ...t,
+      typeTache: { ...t.typeTache, nom: cleanType },
+    })
   })
 
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
-  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+function exportToPDF() {
+  const doc = new jsPDF()
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(16)
+  doc.text("Rapport hebdomadaire des temps", 14, 20)
+
+  doc.setFontSize(12)
+  doc.setFont("helvetica", "bold")
+  doc.text("Semaine :", 14, 30)
+  doc.setFont("helvetica", "normal")
+  doc.text(`${format(weekStart, "dd/MM/yyyy")} -> ${format(weekEnd, "dd/MM/yyyy")}`, 40, 30)
+
+  doc.setFont("helvetica", "bold")
+  doc.text("Total semaine :", 14, 38)
+  doc.setFont("helvetica", "normal")
+  doc.text(`${formatMinutes(totalMinutes)}`, 50, 38)
+
+  // Résumé global
+  const globalData = Object.entries(byType).map(([type, minutes]) => [
+    type,
+    formatMinutes(minutes),
+    `${((minutes / totalMinutes) * 100).toFixed(1)}%`,
+  ])
+  autoTable(doc, {
+    head: [["Type", "Durée", "Pourcentage"]],
+    body: globalData,
+    startY: 45,
+  })
+
+  let currentY = doc.lastAutoTable.finalY + 10
+
+  // Détails par jour
+  weekDays.forEach((dayDate) => {
+    const dayKey = format(dayDate, "yyyy-MM-dd")
+    const entries = byDate[dayKey] || []
+    const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
+
+    doc.setFont("helvetica", "bold")
+    doc.text(`${format(dayDate, "EEEE dd/MM")} — ${formatMinutes(dayMinutes)}`, 14, currentY)
+    currentY += 6
+
+    if (entries.length > 0) {
+      const dayData = entries.map((e) => [
+        e.mission.titre,
+        e.typeTache.nom,
+        formatMinutes(e.dureeMinutes),
+        e.description ? cleanText(e.description) : "",
+      ])
+      autoTable(doc, {
+        head: [["Mission", "Type", "Durée", "Description"]],
+        body: dayData,
+        startY: currentY,
+        theme: "grid",
+        styles: { fontSize: 10 },
+      })
+      currentY = doc.lastAutoTable.finalY + 10
+    } else {
+      doc.setFont("helvetica", "normal")
+      doc.text("Aucun temps enregistré", 20, currentY)
+      currentY += 10
+    }
+  })
+
+  doc.save(`rapport-semaine-${format(weekStart, "yyyy-MM-dd")}.pdf`)
+}
 
   return (
     <div className="container py-6 space-y-6">
+      {/* Navigation */}
       <Card>
         <CardHeader>
           <CardTitle>Filtres & navigation</CardTitle>
@@ -112,10 +191,12 @@ export default function ExportTempsPage() {
         </CardContent>
       </Card>
 
+      {/* Loading */}
       {loading ? (
         <div className="p-4">Chargement...</div>
       ) : (
         <>
+          {/* Résumé global */}
           <Card>
             <CardHeader>
               <CardTitle>Résumé global</CardTitle>
@@ -132,6 +213,7 @@ export default function ExportTempsPage() {
             </CardContent>
           </Card>
 
+          {/* Détails par jour */}
           {weekDays.map((dayDate) => {
             const dayKey = format(dayDate, "yyyy-MM-dd")
             const entries = byDate[dayKey] || []
@@ -161,84 +243,12 @@ export default function ExportTempsPage() {
             )
           })}
 
-          <div className="flex justify-end">
-            <PDFDownloadLink
-              document={<RapportPDF temps={temps} />}
-              fileName={`rapport-semaine-${format(weekStart, "yyyy-MM-dd")}.pdf`}
-            >
-              {({ loading }: { loading: boolean }) => (
-                <Button>{loading ? "Génération PDF..." : "Exporter en PDF"}</Button>
-              )}
-            </PDFDownloadLink>
+          {/* Bouton Export PDF */}
+          <div className="flex justify-end pt-4">
+            <Button onClick={exportToPDF}>Exporter en PDF</Button>
           </div>
         </>
       )}
     </div>
-  )
-}
-
-function RapportPDF({ temps }: { temps: Temps[] }) {
-  const styles = StyleSheet.create({
-    page: { padding: 40, fontSize: 11, fontFamily: "Helvetica" },
-    header: { fontSize: 18, marginBottom: 20, textAlign: "center", fontWeight: "bold" },
-    section: { marginBottom: 14 },
-    sectionTitle: { fontSize: 13, marginBottom: 6, borderBottomWidth: 1, paddingBottom: 2 },
-    line: { marginBottom: 2 },
-  })
-
-  const totalMinutes = temps.reduce((sum, t) => sum + t.dureeMinutes, 0)
-  const byType: Record<string, number> = {}
-  const byDate: Record<string, Temps[]> = {}
-
-  temps.forEach((t) => {
-    const cleanType = cleanText(t.typeTache.nom)
-    byType[cleanType] = (byType[cleanType] || 0) + t.dureeMinutes
-    const dayKey = format(new Date(t.date), "yyyy-MM-dd")
-    byDate[dayKey] = byDate[dayKey] || []
-    byDate[dayKey].push({ ...t, typeTache: { ...t.typeTache, nom: cleanType } })
-  })
-
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-
-  return (
-    <Document>
-      <Page style={styles.page}>
-        <Text style={styles.header}>Rapport hebdomadaire des temps</Text>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Résumé global</Text>
-          <Text>Total semaine : {formatMinutes(totalMinutes)}</Text>
-          {Object.entries(byType).map(([type, minutes]) => (
-            <Text key={type} style={styles.line}>
-              {type} — {formatMinutes(minutes)} ({((minutes / totalMinutes) * 100).toFixed(1)}%)
-            </Text>
-          ))}
-        </View>
-
-        {weekDays.map((dayDate) => {
-          const dayKey = format(dayDate, "yyyy-MM-dd")
-          const entries = byDate[dayKey] || []
-          const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
-          return (
-            <View key={dayKey} style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                {format(dayDate, "EEEE dd/MM")} — {formatMinutes(dayMinutes)}
-              </Text>
-              {entries.length > 0 ? (
-                entries.map((e) => (
-                  <Text key={e.id} style={styles.line}>
-                    {e.mission.titre} — {e.typeTache.nom}: {formatMinutes(e.dureeMinutes)}
-                    {e.description ? ` — ${cleanText(e.description)}` : ""}
-                  </Text>
-                ))
-              ) : (
-                <Text style={styles.line}>Aucun temps enregistré</Text>
-              )}
-            </View>
-          )
-        })}
-      </Page>
-    </Document>
   )
 }
