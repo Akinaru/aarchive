@@ -22,10 +22,11 @@ import { Calendar } from "@/components/ui/calendar"
 import { ChevronDownIcon } from "lucide-react"
 import { Mission } from "@/types/missions"
 import { TypeTache } from "@/types/taches"
+import { cn } from "@/lib/utils"
 
 interface FormAddTempsProps {
-  missions?: Mission[]         // facultatif si missionId est fourni
-  missionId?: number           // priorité si défini
+  missions?: Mission[]
+  missionId?: number
   types: TypeTache[]
   onAdd: () => void
 }
@@ -35,23 +36,38 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
   const [typeTacheId, setTypeTacheId] = useState("")
   const [description, setDescription] = useState("")
   const [date, setDate] = useState<Date | undefined>(new Date())
+  const [mode, setMode] = useState<"duree" | "plage">("duree")
   const [time, setTime] = useState("00:30")
+  const [startTime, setStartTime] = useState("")
+  const [endTime, setEndTime] = useState("")
 
   const isDisabled = (missions.length === 0 && !missionId) || types.length === 0
 
+  const calculateDuration = () => {
+    if (mode === "duree") {
+      const [h, m] = time.split(":").map(Number)
+      return h * 60 + m
+    } else if (startTime && endTime) {
+      const [sh, sm] = startTime.split(":").map(Number)
+      const [eh, em] = endTime.split(":").map(Number)
+      const start = sh * 60 + sm
+      const end = eh * 60 + em
+      const diff = end - start
+      return diff > 0 ? diff : 0
+    }
+    return 0
+  }
+
   const addTemps = async () => {
     const finalMissionId = missionId ?? parseInt(selectedMissionId)
-    if (!finalMissionId || !typeTacheId || !time || !date) {
+    const dureeMinutes = calculateDuration()
+
+    if (!finalMissionId || !typeTacheId || !date || dureeMinutes <= 0) {
       toast.error("Tous les champs sont requis")
       return
     }
 
-    const [h, m] = time.split(":").map(Number)
-    const dureeMinutes = h * 60 + m
-
     const dateTime = new Date(date)
-    dateTime.setHours(h)
-    dateTime.setMinutes(m)
 
     const res = await fetch("/api/temps", {
       method: "POST",
@@ -69,6 +85,8 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
       toast.success("Temps ajouté")
       setDescription("")
       setTime("00:30")
+      setStartTime("")
+      setEndTime("")
       if (!missionId) setSelectedMissionId("")
       setTypeTacheId("")
       onAdd()
@@ -79,7 +97,6 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
 
   return (
     <div className="flex flex-col md:flex-row md:items-end md:gap-4 gap-4">
-      {/* Mission (seulement si missionId non fourni) */}
       {!missionId && (
         <div className="flex flex-col gap-1 min-w-[160px]">
           <Label>Mission</Label>
@@ -98,14 +115,13 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         </div>
       )}
 
-      {/* Date */}
       <div className="flex flex-col gap-1 min-w-[140px]">
         <Label>Date</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="justify-between" disabled={isDisabled}>
               {date ? format(date, "dd/MM/yyyy") : "Choisir"}
-              <ChevronDownIcon />
+              <ChevronDownIcon className="ml-2 h-4 w-4" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -119,7 +135,6 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         </Popover>
       </div>
 
-      {/* Type de tâche */}
       <div className="flex flex-col gap-1 min-w-[160px]">
         <Label>Type de tâche</Label>
         <Select value={typeTacheId} onValueChange={setTypeTacheId} disabled={isDisabled}>
@@ -136,7 +151,6 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         </Select>
       </div>
 
-      {/* Description */}
       <div className="flex flex-col gap-1 flex-1">
         <Label>Description</Label>
         <Input
@@ -147,21 +161,56 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         />
       </div>
 
-      {/* Durée */}
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="time-picker">Durée</Label>
-        <Input
-          type="time"
-          id="time-picker"
-          step="60"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-          disabled={isDisabled}
-        />
+      <div className="flex flex-col gap-1 min-w-[160px]">
+        <Label>Mode</Label>
+        <Select value={mode} onValueChange={(v) => setMode(v as "duree" | "plage")}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="duree">Durée définie</SelectItem>
+            <SelectItem value="plage">Plage horaire</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Bouton */}
+      {mode === "duree" ? (
+        <div className="flex flex-col gap-1 min-w-[120px]">
+          <Label>Durée</Label>
+          <Input
+            type="time"
+            step="60"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+            disabled={isDisabled}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1 min-w-[240px]">
+          <Label>Plage horaire</Label>
+          <div className="flex gap-2">
+            <Input
+              type="time"
+              step="60"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+              disabled={isDisabled}
+            />
+            <span className="self-center">→</span>
+            <Input
+              type="time"
+              step="60"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+              disabled={isDisabled}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex items-end">
         <Button onClick={addTemps} disabled={isDisabled}>Ajouter</Button>
       </div>
