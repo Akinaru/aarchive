@@ -9,6 +9,9 @@ cd $APP_DIR || exit
 echo "🔄 [Git] Pull latest code"
 git pull origin master
 
+echo "📦 [NPM] Install dependencies"
+npm install
+
 echo "🛠 [Prisma] Apply migrations"
 npx prisma migrate deploy
 
