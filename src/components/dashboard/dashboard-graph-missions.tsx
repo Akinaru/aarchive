@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { TempsParTypeBarChart } from "@/components/chart/temps-bar-chart"
 import { TypeTache } from "@/types/taches"
 import { Temps } from "@/types/temps"
@@ -33,15 +34,17 @@ export function DashboardGraphMissions() {
     fetchData()
   }, [])
 
-  if (loading) return null
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Temps saisi par type cette semaine</CardTitle>
       </CardHeader>
-      <CardContent>
-        <TempsParTypeBarChart temps={temps} navigation={false} typeTaches={typeTaches} />
+      <CardContent className="h-[300px]">
+        {loading ? (
+          <Skeleton className="h-full w-full rounded-lg" />
+        ) : (
+          <TempsParTypeBarChart temps={temps} navigation={false} typeTaches={typeTaches} />
+        )}
       </CardContent>
     </Card>
   )
