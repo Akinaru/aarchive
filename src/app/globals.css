@@ -3,18 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-:root{
-  --chart-1: oklch(0.6038 0.2363 344.4657); /* rose foncé */
-  --chart-2: oklch(0.4445 0.2251 300.6246); /* prune */
-  --chart-3: oklch(0.3790 0.0438 226.1538); /* bleu nuit doux */
-  --chart-4: oklch(0.8330 0.1185 88.3461);  /* jaune pâle */
-  --chart-5: oklch(0.7843 0.1256 58.9964);  /* jaune/vert clair */
-  --chart-6: oklch(0.7350 0.1700 170.0000); /* vert vif */
-  --chart-7: oklch(0.6500 0.1800 200.0000); /* turquoise */
-  --chart-8: oklch(0.5500 0.2000 250.0000); /* bleu doux */
-  --chart-9: oklch(0.6200 0.2200 20.0000);  /* rouge/orange léger */
-  --chart-10: oklch(0.4800 0.2300 340.0000);/* magenta sombre */
-}
 
 :root {
   --background: oklch(0.9821 0 0);
@@ -85,12 +73,6 @@
   --border: oklch(0.2351 0.0115 91.7467);
   --input: oklch(0.4017 0 0);
   --ring: oklch(0.9247 0.0524 66.1732);
-  --chart-1: oklch(0.9247 0.0524 66.1732);
-  --chart-2: oklch(0.3163 0.0190 63.6992);
-  --chart-3: oklch(0.2850 0 0);
-  --chart-4: oklch(0.3481 0.0219 67.0001);
-  --chart-5: oklch(0.9245 0.0533 67.0855);
-  --sidebar: oklch(0.2103 0.0059 285.8852);
   --sidebar-foreground: oklch(0.9674 0.0013 286.3752);
   --sidebar-primary: oklch(0.4882 0.2172 264.3763);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
@@ -173,4 +155,17 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+}
+
+:root{
+  --chart-1: oklch(0.6038 0.2363 344.4657); /* rose foncé */
+  --chart-2: oklch(0.4445 0.2251 300.6246); /* prune */
+  --chart-3: oklch(0.3790 0.0438 226.1538); /* bleu nuit doux */
+  --chart-4: oklch(0.8330 0.1185 88.3461);  /* jaune pâle */
+  --chart-5: oklch(0.7843 0.1256 58.9964);  /* jaune/vert clair */
+  --chart-6: oklch(0.7350 0.1700 170.0000); /* vert vif */
+  --chart-7: oklch(0.6500 0.1800 200.0000); /* turquoise */
+  --chart-8: oklch(0.5500 0.2000 250.0000); /* bleu doux */
+  --chart-9: oklch(0.6200 0.2200 20.0000);  /* rouge/orange léger */
+  --chart-10: oklch(0.4800 0.2300 340.0000);/* magenta sombre */
 }
