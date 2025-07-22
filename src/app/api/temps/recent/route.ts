@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { startOfWeek, endOfWeek } from "date-fns"
+import { startOfWeek, endOfWeek, startOfDay, endOfDay } from "date-fns"
 
 export async function GET() {
   const recentTemps = await prisma.temps.findMany({
@@ -12,12 +12,13 @@ export async function GET() {
     },
   })
 
-  // 🗓 Début et fin de la semaine en cours (lundi à dimanche)
   const now = new Date()
-  const start = startOfWeek(now, { weekStartsOn: 1 }) // lundi
-  const end = endOfWeek(now, { weekStartsOn: 1 })     // dimanche
+  const start = startOfWeek(now, { weekStartsOn: 1 })
+  const end = endOfWeek(now, { weekStartsOn: 1 })
 
-  // 🔢 Total minutes de la semaine
+  const todayStart = startOfDay(now)
+  const todayEnd = endOfDay(now)
+
   const tempsSemaine = await prisma.temps.aggregate({
     _sum: { dureeMinutes: true },
     where: {
@@ -28,12 +29,20 @@ export async function GET() {
     },
   })
 
-  const totalSemaineMinutes = tempsSemaine._sum.dureeMinutes ?? 0
-  const objectifMinutes = 360 // optionnel
+  const tempsAujourdHui = await prisma.temps.aggregate({
+    _sum: { dureeMinutes: true },
+    where: {
+      date: {
+        gte: todayStart,
+        lte: todayEnd,
+      },
+    },
+  })
 
   return NextResponse.json({
     temps: recentTemps,
-    totalSemaineMinutes,
-    objectifMinutes,
+    totalSemaineMinutes: tempsSemaine._sum.dureeMinutes ?? 0,
+    totalJourMinutes: tempsAujourdHui._sum.dureeMinutes ?? 0,
+    objectifMinutes: 360,
   })
 }

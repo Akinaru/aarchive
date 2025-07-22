@@ -38,6 +38,7 @@ export default function TempsPage() {
   })
 
   const [totalSemaineMinutes, setTotalSemaineMinutes] = useState(0)
+  const [totalJourMinutes, setTotalJourMinutes] = useState(0)
   const [objectifMinutes, setObjectifMinutes] = useState(360)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -52,6 +53,7 @@ export default function TempsPage() {
       const tempsData = await tempsRes.json()
       setTemps(tempsData.temps)
       setTotalSemaineMinutes(tempsData.totalSemaineMinutes)
+      setTotalJourMinutes(tempsData.totalJourMinutes)
       setObjectifMinutes(tempsData.objectifMinutes)
 
       setMissions(await missionRes.json())
@@ -92,7 +94,6 @@ export default function TempsPage() {
   const lastTemps = temps.slice(0, 5)
 
   const todayTemps = temps.filter((t) => isToday(new Date(t.date)))
-  const totalToday = todayTemps.reduce((sum, t) => sum + t.dureeMinutes, 0)
   const typesToday = todayTemps.map((t) => t.typeTache?.nom).filter(Boolean)
   const mostUsedTypeToday = typesToday.length
     ? typesToday.sort((a, b) =>
@@ -148,7 +149,7 @@ export default function TempsPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Temps aujourd’hui" value={formatMinutes(totalToday)} icon={<Clock3 className="h-4 w-4 text-muted-foreground" />} subtitle="Durée enregistrée" />
+              <StatCard title="Temps aujourd’hui" value={formatMinutes(totalJourMinutes)} icon={<Clock3 className="h-4 w-4 text-muted-foreground" />} subtitle="Durée enregistrée" />
               <StatCard title="Entrées aujourd’hui" value={todayTemps.length.toString()} icon={<ClipboardList className="h-4 w-4 text-muted-foreground" />} subtitle="temps saisis" />
               <StatCard title="Tâche la + utilisée" value={mostUsedTypeToday} icon={<Star className="h-4 w-4 text-muted-foreground" />} subtitle="aujourd’hui" />
               <StatCard title="Total cette semaine" value={formatMinutes(totalSemaineMinutes)} icon={<Timer className="h-4 w-4 text-muted-foreground" />} subtitle="du lundi au dimanche" />
