@@ -74,83 +74,85 @@ export default function ClientSinglePage() {
   const totalMissions = new Set(temps.map((t) => t.missionId)).size
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader
-        title={client.nom}
-        subtitle={`Email : ${client.email}`}
-        breadcrumb={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Clients", href: "/clients" },
-          { label: client.nom },
-        ]}
-      />
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <PageHeader
+          title={client.nom}
+          subtitle={`Email : ${client.email}`}
+          breadcrumb={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Clients", href: "/clients" },
+            { label: client.nom },
+          ]}
+        />
 
-      {/* Infos client */}
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={client.photoPath || ""} alt={client.nom} />
-            <AvatarFallback>{client.nom.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <CardTitle className="text-xl">{client.nom}</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-          {client.email && (
+        {/* Infos client */}
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+              <AvatarFallback>{client.nom.charAt(0)}</AvatarFallback>
+            </Avatar>
             <div>
-              <p className="font-semibold">Email</p>
-              <p>{client.email}</p>
+              <CardTitle className="text-xl">{client.nom}</CardTitle>
             </div>
-          )}
-          {client.telephone && (
-            <div>
-              <p className="font-semibold">Téléphone</p>
-              <p>{client.telephone}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            {client.email && (
+              <div>
+                <p className="font-semibold">Email</p>
+                <p>{client.email}</p>
+              </div>
+            )}
+            {client.telephone && (
+              <div>
+                <p className="font-semibold">Téléphone</p>
+                <p>{client.telephone}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Statistiques générales */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Statistiques générales */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Total de temps saisi</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">{totalHeures}</CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Nombre de missions</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">{totalMissions}</CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Types de tâches utilisés</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">{typeTaches.length}</CardContent>
+          </Card>
+        </div>
+
+        {/* Graphiques */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ChartTachePie temps={temps} />
+          <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
+        </div>
+
+        {/* Placeholder missions */}
         <Card>
           <CardHeader>
-            <CardTitle>Total de temps saisi</CardTitle>
+            <CardTitle>Historique des missions</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">{totalHeures}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Nombre de missions</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-bold">{totalMissions}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Types de tâches utilisés</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-bold">{typeTaches.length}</CardContent>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Cette section affichera toutes les missions associées à ce client.
+            </p>
+          </CardContent>
         </Card>
       </div>
-
-      {/* Graphiques */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ChartTachePie temps={temps} />
-        <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
-      </div>
-
-      {/* Placeholder missions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Historique des missions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Cette section affichera toutes les missions associées à ce client.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

@@ -53,6 +53,17 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
 
   const columns: ColumnDef<Mission>[] = [
     {
+      id: "voir",
+      header: "Détail",
+      cell: ({ row }) => (
+        <Link href={`/missions/${row.original.id}`}>
+          <Button variant="outline" size="sm" className="w-full">
+            Voir
+          </Button>
+        </Link>
+      ),
+    },
+    {
       accessorKey: "titre",
       header: ({ column }) => (
         <Button
@@ -106,17 +117,6 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
         const m = minutes % 60
         return `${h}h${m > 0 ? m : ""}`
       },
-    },
-    {
-      id: "voir",
-      header: "Détail",
-      cell: ({ row }) => (
-        <Link href={`/missions/${row.original.id}`}>
-          <Button variant="outline" size="sm" className="w-full">
-            Voir
-          </Button>
-        </Link>
-      ),
     },
     {
       id: "actions",

@@ -76,78 +76,80 @@ export default function ProjetSinglePage() {
   const totalClients = projet.clients.length
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader
-        title={projet.nom}
-        subtitle={projet.description || "Projet sans description."}
-        breadcrumb={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Projets", href: "/projets" },
-          { label: projet.nom },
-        ]}
-      />
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <PageHeader
+          title={projet.nom}
+          subtitle={projet.description || "Projet sans description."}
+          breadcrumb={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Projets", href: "/projets" },
+            { label: projet.nom },
+          ]}
+        />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total de temps saisi</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-bold">{totalHeures}h</CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Nombre de missions</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-bold">{totalMissions}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Types de tâches</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-bold">{typeTaches.length}</CardContent>
-        </Card>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Total de temps saisi</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">{totalHeures}h</CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Nombre de missions</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">{totalMissions}</CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Types de tâches</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">{typeTaches.length}</CardContent>
+          </Card>
+        </div>
 
-      {totalClients > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Clients liés au projet</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-4">
-            {projet.clients.map((pc) => (
-              <div
-                key={pc.client.id}
-                className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={pc.client.photoPath || ""} alt={pc.client.nom} />
-                  <AvatarFallback>{pc.client.nom[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="font-medium text-foreground">{pc.client.nom}</span>
-                  {pc.client.email && (
-                    <span className="text-xs text-muted-foreground">{pc.client.email}</span>
-                  )}
+        {totalClients > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Clients liés au projet</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-4">
+              {projet.clients.map((pc) => (
+                <div
+                  key={pc.client.id}
+                  className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={pc.client.photoPath || ""} alt={pc.client.nom} />
+                    <AvatarFallback>{pc.client.nom[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-foreground">{pc.client.nom}</span>
+                    {pc.client.email && (
+                      <span className="text-xs text-muted-foreground">{pc.client.email}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
+          <ChartTachePie temps={temps} />
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Historique des temps sur ce projet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Tableau des temps associés à toutes les missions de ce projet à venir...</p>
           </CardContent>
         </Card>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
-        <ChartTachePie temps={temps} />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Historique des temps sur ce projet</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Tableau des temps associés à toutes les missions de ce projet à venir...</p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

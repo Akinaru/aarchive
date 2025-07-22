@@ -83,135 +83,135 @@ export default function MissionSinglePage() {
   const joursUniques = [...new Set(temps.map(t => format(new Date(t.date), "yyyy-MM-dd")))]
 
   return (
-    <div className="p-6 mx-auto space-y-6">
-      <PageHeader
-        title={mission.titre}
-        subtitle={`Projet : ${mission.projet.nom}`}
-        breadcrumb={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Missions", href: "/missions" },
-          { label: mission.titre },
-        ]}
-      />
+     <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <PageHeader
+          title={mission.titre}
+          subtitle={`Projet : ${mission.projet.nom}`}
+          breadcrumb={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Missions", href: "/missions" },
+            { label: mission.titre },
+          ]}
+        />
 
+        <div className="flex flex-col md:flex-row gap-4">
+          <Card className="w-full md:w-[70%]">
+            <CardHeader>
+              <CardTitle>Graphique : Répartition de la semaine</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
+            </CardContent>
+          </Card>
 
-
-      <div className="flex flex-col md:flex-row gap-4">
-        <Card className="w-full md:w-[70%]">
-          <CardHeader>
-            <CardTitle>Graphique : Répartition de la semaine</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
-          </CardContent>
-        </Card>
-
-        <Card className="w-full md:w-[30%]">
-          <CardHeader>
-            <CardTitle>Résumé de la mission</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span>Total saisi :</span>
-                <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
+          <Card className="w-full md:w-[30%]">
+            <CardHeader>
+              <CardTitle>Résumé de la mission</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <span>Total saisi :</span>
+                  <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Jours travaillés :</span>
+                  <span className="font-medium text-foreground">{joursUniques.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Types de tâches utilisés :</span>
+                  <span className="font-medium text-foreground">
+                    {[...new Set(temps.map((t) => t.typeTache?.nom ?? "Inconnu"))].length}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Jours travaillés :</span>
-                <span className="font-medium text-foreground">{joursUniques.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Types de tâches utilisés :</span>
-                <span className="font-medium text-foreground">
-                  {[...new Set(temps.map((t) => t.typeTache?.nom ?? "Inconnu"))].length}
-                </span>
-              </div>
-            </div>
 
-            <div className="border-t pt-3 space-y-1">
-              <div className="flex justify-between">
-                <span>Statut :</span>
-                <span className="flex items-center gap-2 text-foreground capitalize">
-                  {(() => {
-                    const { icon: Icon, className, spin } = STATUT_ICONS[mission.statut]
-                    return <Icon className={`h-4 w-4 ${className} ${spin ? "animate-spin" : ""}`} />
-                  })()}
-                  {mission.statut.replace("_", " ").toLowerCase()}
-                </span>
+              <div className="border-t pt-3 space-y-1">
+                <div className="flex justify-between">
+                  <span>Statut :</span>
+                  <span className="flex items-center gap-2 text-foreground capitalize">
+                    {(() => {
+                      const { icon: Icon, className, spin } = STATUT_ICONS[mission.statut]
+                      return <Icon className={`h-4 w-4 ${className} ${spin ? "animate-spin" : ""}`} />
+                    })()}
+                    {mission.statut.replace("_", " ").toLowerCase()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Date de début :</span>
+                  <span className="text-foreground">
+                    {mission.dateDebut ? format(new Date(mission.dateDebut), "dd/MM/yyyy") : "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Durée prévue :</span>
+                  <span className="text-foreground">
+                    {mission.dureePrevueMinutes
+                      ? `${Math.floor(mission.dureePrevueMinutes / 60)}h${mission.dureePrevueMinutes % 60 || ""}`
+                      : "-"}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Date de début :</span>
-                <span className="text-foreground">
-                  {mission.dateDebut ? format(new Date(mission.dateDebut), "dd/MM/yyyy") : "-"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Durée prévue :</span>
-                <span className="text-foreground">
-                  {mission.dureePrevueMinutes
-                    ? `${Math.floor(mission.dureePrevueMinutes / 60)}h${mission.dureePrevueMinutes % 60 || ""}`
-                    : "-"}
-                </span>
-              </div>
-            </div>
 
-            <ChartTachePie temps={temps} />
-          </CardContent>
-        </Card>
-      </div>
+              <ChartTachePie temps={temps} />
+            </CardContent>
+          </Card>
+        </div>
 
-            {(mission.projet.clients?.length ?? 0) > 0 && (
-        <Card className="border-muted">
-          <CardHeader>
-            <CardTitle className="text-base">Clients liés à cette mission</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              {mission.projet.clients?.map((pc) => {
-                const client = pc.client
-                return (
-                  <div
-                    key={client.id}
-                    className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={client.photoPath || ""} alt={client.nom} />
-                      <AvatarFallback>{client.nom[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-foreground">{client.nom}</span>
-                      {client.email && (
-                        <span className="text-xs text-muted-foreground">{client.email}</span>
-                      )}
+        {(mission.projet.clients?.length ?? 0) > 0 && (
+          <Card className="border-muted">
+            <CardHeader>
+              <CardTitle className="text-base">Clients liés à cette mission</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                {mission.projet.clients?.map((pc) => {
+                  const client = pc.client
+                  return (
+                    <div
+                      key={client.id}
+                      className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={client.photoPath || ""} alt={client.nom} />
+                        <AvatarFallback>{client.nom[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-foreground">{client.nom}</span>
+                        {client.email && (
+                          <span className="text-xs text-muted-foreground">{client.email}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader><CardTitle>Ajouter un temps</CardTitle></CardHeader>
+          <CardContent>
+            <FormAddTemps
+              missionId={parseInt(id as string)}
+              types={typeTaches}
+              onAdd={fetchData}
+            />
           </CardContent>
         </Card>
-      )}
 
-      <Card>
-        <CardHeader><CardTitle>Ajouter un temps</CardTitle></CardHeader>
-        <CardContent>
-          <FormAddTemps
-            missionId={parseInt(id as string)}
-            types={typeTaches}
-            onAdd={fetchData}
-          />
-        </CardContent>
-      </Card>
-
-      <DataTableTempsMission
-        data={temps}
-        types={typeTaches}
-        onDelete={async (id) => {
-          await fetch(`/api/temps/${id}`, { method: "DELETE" })
-          await fetchData()
-        }}
-        onEdit={fetchData}
-      />
+        <DataTableTempsMission
+          data={temps}
+          types={typeTaches}
+          onDelete={async (id) => {
+            await fetch(`/api/temps/${id}`, { method: "DELETE" })
+            await fetchData()
+          }}
+          onEdit={fetchData}
+        />
+      </div>
     </div>
   )
 }

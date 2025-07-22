@@ -49,6 +49,17 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
 
   const columns: ColumnDef<Client & { nbProjets?: number; totalMinutes?: number }>[] = [
     {
+      id: "voir",
+      header: "Détail",
+      cell: ({ row }) => (
+        <Link href={`/clients/${row.original.id}`}>
+          <Button variant="outline" size="sm" className="w-full">
+            Voir
+          </Button>
+        </Link>
+      ),
+    },
+    {
       accessorKey: "nom",
       header: "Client",
       cell: ({ row }) => {
@@ -87,17 +98,6 @@ export function DataTableClients({ data, onEdit, onDelete }: Props) {
         const m = minutes % 60
         return <span>{h}h{m > 0 ? ` ${m}min` : ""}</span>
       },
-    },
-    {
-      id: "voir",
-      header: "Détail",
-      cell: ({ row }) => (
-        <Link href={`/clients/${row.original.id}`}>
-          <Button variant="outline" size="sm" className="w-full">
-            Voir
-          </Button>
-        </Link>
-      ),
     },
     {
       id: "actions",

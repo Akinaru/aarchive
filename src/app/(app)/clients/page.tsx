@@ -112,150 +112,152 @@ export default function ClientsPage() {
   }, [])
 
   return (
-    <div className="p-6 mx-auto space-y-6">
-      <PageHeader
-        title="Clients"
-        subtitle="Gérez ici la liste de vos clients."
-        breadcrumb={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Clients" },
-        ]}
-      />
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <PageHeader
+          title="Clients"
+          subtitle="Gérez ici la liste de vos clients."
+          breadcrumb={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Clients" },
+          ]}
+        />
 
-      <div className="flex justify-end">
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Ajouter un client</Button>
-          </DialogTrigger>
+        <div className="flex justify-end">
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>Ajouter un client</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter un client</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="text-sm font-medium">Nom</label>
+                  <Input value={newClient} onChange={(e) => setNewClient(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email</label>
+                  <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Téléphone</label>
+                  <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Site web</label>
+                  <Input value={newWebsite} onChange={(e) => setNewWebsite(e.target.value)} />
+                </div>
+                <div className="grid w-full max-w-sm gap-3">
+                  <label htmlFor="picture" className="text-sm font-medium">
+                    Photo (fichier)
+                  </label>
+                  <Input
+                    id="picture"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onloadend = () => {
+                          setNewPhoto(reader.result as string)
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                  {newPhoto && (
+                    <img
+                      src={newPhoto}
+                      alt="Preview"
+                      className="h-24 w-24 object-cover rounded border"
+                    />
+                  )}
+                </div>
+                <Button onClick={addClient} disabled={!isFormValid()}>
+                  Ajouter
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Liste des clients</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTableClients
+              data={clients}
+              onEdit={(client) => setEditClient(client)}
+              onDelete={deleteClient}
+            />
+          </CardContent>
+        </Card>
+
+        <Dialog open={!!editClient} onOpenChange={(open) => !open && setEditClient(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Ajouter un client</DialogTitle>
+              <DialogTitle>Modifier le client</DialogTitle>
             </DialogHeader>
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="text-sm font-medium">Nom</label>
-                <Input value={newClient} onChange={(e) => setNewClient(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Téléphone</label>
-                <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Site web</label>
-                <Input value={newWebsite} onChange={(e) => setNewWebsite(e.target.value)} />
-              </div>
-              <div className="grid w-full max-w-sm gap-3">
-                <label htmlFor="picture" className="text-sm font-medium">
-                  Photo (fichier)
-                </label>
-                <Input
-                  id="picture"
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      const reader = new FileReader()
-                      reader.onloadend = () => {
-                        setNewPhoto(reader.result as string) // base64 pour affichage/stockage temporaire
-                      }
-                      reader.readAsDataURL(file)
-                    }
-                  }}
-                />
-                {newPhoto && (
-                  <img
-                    src={newPhoto}
-                    alt="Preview"
-                    className="h-24 w-24 object-cover rounded border"
+            {editClient && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Nom</label>
+                  <Input
+                    value={editClient.nom}
+                    onChange={(e) => setEditClient({ ...editClient, nom: e.target.value })}
                   />
-                )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email</label>
+                  <Input
+                    value={editClient.email || ""}
+                    onChange={(e) => setEditClient({ ...editClient, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Téléphone</label>
+                  <Input
+                    value={editClient.telephone || ""}
+                    onChange={(e) => setEditClient({ ...editClient, telephone: e.target.value })}
+                  />
+                </div>
+                <div className="grid w-full max-w-sm gap-3">
+                  <label htmlFor="edit-picture" className="text-sm font-medium">
+                    Modifier la photo
+                  </label>
+                  <Input
+                    id="edit-picture"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onloadend = () => {
+                          setEditClient({ ...editClient, photoPath: reader.result as string })
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                  {editClient.photoPath && (
+                    <img
+                      src={editClient.photoPath}
+                      alt="Preview"
+                      className="h-24 w-24 object-cover rounded border"
+                    />
+                  )}
+                </div>
+                <Button onClick={updateClient}>Valider</Button>
               </div>
-              <Button onClick={addClient} disabled={!isFormValid()}>
-                Ajouter
-              </Button>
-            </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des clients</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTableClients
-            data={clients}
-            onEdit={(client) => setEditClient(client)}
-            onDelete={deleteClient}
-          />
-        </CardContent>
-      </Card>
-
-      <Dialog open={!!editClient} onOpenChange={(open) => !open && setEditClient(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier le client</DialogTitle>
-          </DialogHeader>
-          {editClient && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Nom</label>
-                <Input
-                  value={editClient.nom}
-                  onChange={(e) => setEditClient({ ...editClient, nom: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <Input
-                  value={editClient.email || ""}
-                  onChange={(e) => setEditClient({ ...editClient, email: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Téléphone</label>
-                <Input
-                  value={editClient.telephone || ""}
-                  onChange={(e) => setEditClient({ ...editClient, telephone: e.target.value })}
-                />
-              </div>
-              <div className="grid w-full max-w-sm gap-3">
-                <label htmlFor="edit-picture" className="text-sm font-medium">
-                  Modifier la photo
-                </label>
-                <Input
-                  id="edit-picture"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      const reader = new FileReader()
-                      reader.onloadend = () => {
-                        setEditClient({ ...editClient, photoPath: reader.result as string })
-                      }
-                      reader.readAsDataURL(file)
-                    }
-                  }}
-                />
-                {editClient.photoPath && (
-                  <img
-                    src={editClient.photoPath}
-                    alt="Preview"
-                    className="h-24 w-24 object-cover rounded border"
-                  />
-                )}
-              </div>
-              <Button onClick={updateClient}>Valider</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

@@ -82,78 +82,80 @@ export default function TypeTachePage() {
   }, [])
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader
-        title="Types de tâche"
-        subtitle="Gérez les catégories que vous pouvez assigner à vos temps de travail."
-        breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Types de tâche" }]}
-      />
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <PageHeader
+          title="Types de tâche"
+          subtitle="Gérez les catégories que vous pouvez assigner à vos temps de travail."
+          breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Types de tâche" }]}
+        />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ajouter un type</CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-2">
-          <Input
-            placeholder="Nom du type"
-            value={newNom}
-            onChange={(e) => setNewNom(e.target.value)}
-          />
-          <Button onClick={addType}>Ajouter</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des types</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {types.length === 0 && <p className="text-sm text-muted-foreground">Aucun type encore créé.</p>}
-
-          {types.map((t) => (
-            <div key={t.id} className="flex items-center gap-2">
-              <span className="flex-1">{t.nom}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedType(t)
-                  setEditNom(t.nom)
-                }}
-              >
-                Modifier
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => deleteType(t.id)}>
-                Supprimer
-              </Button>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Dialog
-        open={!!selectedType}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedType(null)
-            setEditNom("")
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier le type</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ajouter un type</CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-2">
             <Input
-              value={editNom}
-              onChange={(e) => setEditNom(e.target.value)}
-              placeholder="Nouveau nom"
+              placeholder="Nom du type"
+              value={newNom}
+              onChange={(e) => setNewNom(e.target.value)}
             />
-            <Button onClick={updateType}>Valider</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+            <Button onClick={addType}>Ajouter</Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Liste des types</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {types.length === 0 && <p className="text-sm text-muted-foreground">Aucun type encore créé.</p>}
+
+            {types.map((t) => (
+              <div key={t.id} className="flex items-center gap-2">
+                <span className="flex-1">{t.nom}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedType(t)
+                    setEditNom(t.nom)
+                  }}
+                >
+                  Modifier
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => deleteType(t.id)}>
+                  Supprimer
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Dialog
+          open={!!selectedType}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedType(null)
+              setEditNom("")
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier le type</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                value={editNom}
+                onChange={(e) => setEditNom(e.target.value)}
+                placeholder="Nouveau nom"
+              />
+              <Button onClick={updateType}>Valider</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   )
 }

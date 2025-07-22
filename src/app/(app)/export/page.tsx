@@ -1,3 +1,4 @@
+// app/(your-page)/export/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -11,14 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { format, addDays, startOfWeek, endOfWeek, subWeeks, addWeeks } from "date-fns"
 import { Temps } from "@/types/temps"
 import { Mission } from "@/types/missions"
 import { formatMinutes } from "@/lib/time"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
 import { PageHeader } from "@/components/page-header"
+import { generateTempsPDF } from "@/lib/exportpdf"
 
 function cleanText(input: string): string {
   return input.replace(/[^\p{L}\p{N}\s\-'.]/gu, "").trim()
@@ -27,15 +28,19 @@ function cleanText(input: string): string {
 export default function ExportTempsPage() {
   const [temps, setTemps] = useState<Temps[]>([])
   const [missions, setMissions] = useState<Mission[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [selectedMissionId, setSelectedMissionId] = useState<string>("all")
+  const [loading, setLoading] = useState(true)
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [selectedMissionId, setSelectedMissionId] = useState("all")
 
-  async function fetchMissions() {
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
+  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+
+  const fetchMissions = async () => {
     try {
       const res = await fetch("/api/missions")
       if (res.ok) {
-        const data: Mission[] = await res.json()
+        const data = await res.json()
         setMissions(data)
       }
     } catch {
@@ -43,7 +48,7 @@ export default function ExportTempsPage() {
     }
   }
 
-  async function fetchTemps() {
+  const fetchTemps = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({ date: selectedDate.toISOString() })
@@ -51,15 +56,16 @@ export default function ExportTempsPage() {
 
       const res = await fetch(`/api/temps/semaine?${params.toString()}`)
       if (res.ok) {
-        const data: Temps[] = await res.json()
+        const data = await res.json()
         setTemps(data)
       } else {
         toast.error("Erreur chargement des temps")
       }
     } catch {
       toast.error("Erreur serveur")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -70,10 +76,6 @@ export default function ExportTempsPage() {
     fetchTemps()
   }, [selectedDate, selectedMissionId])
 
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
-  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-
   const totalMinutes = temps.reduce((sum, t) => sum + t.dureeMinutes, 0)
   const byType: Record<string, number> = {}
   const byDate: Record<string, Temps[]> = {}
@@ -81,209 +83,137 @@ export default function ExportTempsPage() {
   temps.forEach((t) => {
     const cleanType = cleanText(t.typeTache.nom)
     byType[cleanType] = (byType[cleanType] || 0) + t.dureeMinutes
-    const dayKey = format(new Date(t.date), "yyyy-MM-dd")
-    byDate[dayKey] = byDate[dayKey] || []
-    byDate[dayKey].push({
-      ...t,
-      typeTache: { ...t.typeTache, nom: cleanType },
-    })
+    const key = format(new Date(t.date), "yyyy-MM-dd")
+    byDate[key] = byDate[key] || []
+    byDate[key].push({ ...t, typeTache: { ...t.typeTache, nom: cleanType } })
   })
 
-  function exportToPDF() {
-    const doc = new jsPDF()
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(16)
-    doc.text("Rapport hebdomadaire des temps", 14, 20)
-
-    doc.setFontSize(12)
-    doc.text("Semaine :", 14, 30)
-    doc.setFont("helvetica", "normal")
-    doc.text(`${format(weekStart, "dd/MM/yyyy")} - ${format(weekEnd, "dd/MM/yyyy")}`, 40, 30)
-
-    doc.setFont("helvetica", "bold")
-    doc.text("Total semaine :", 14, 38)
-    doc.setFont("helvetica", "normal")
-    doc.text(`${formatMinutes(totalMinutes)}`, 50, 38)
-
-    const globalData = Object.entries(byType).map(([type, minutes]) => [
-      type,
-      formatMinutes(minutes),
-      `${((minutes / totalMinutes) * 100).toFixed(1)}%`,
-    ])
-
-    autoTable(doc, {
-      head: [["Type", "Durée", "Pourcentage"]],
-      body: globalData,
-      startY: 45,
-    })
-
-    let currentY =
-      (doc as any).lastAutoTable?.finalY !== undefined
-        ? (doc as any).lastAutoTable.finalY + 10
-        : 55
-
-    weekDays.forEach((dayDate) => {
-      const dayKey = format(dayDate, "yyyy-MM-dd")
-      const entries = byDate[dayKey] || []
-      const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
-
-      doc.setFont("helvetica", "bold")
-      doc.text(`${format(dayDate, "EEEE dd/MM")} — ${formatMinutes(dayMinutes)}`, 14, currentY)
-      currentY += 6
-
-      if (entries.length > 0) {
-        const dayData = entries.map((e) => [
-          e.mission.titre,
-          e.typeTache.nom,
-          formatMinutes(e.dureeMinutes),
-          e.description ? cleanText(e.description) : "",
-        ])
-
-        autoTable(doc, {
-          head: [["Mission", "Type", "Durée", "Description"]],
-          body: dayData,
-          startY: currentY,
-          theme: "grid",
-          styles: { fontSize: 10 },
-        })
-
-        currentY =
-          (doc as any).lastAutoTable?.finalY !== undefined
-            ? (doc as any).lastAutoTable.finalY + 10
-            : currentY + 10
-      } else {
-        doc.setFont("helvetica", "normal")
-        doc.text("Aucun temps enregistré", 20, currentY)
-        currentY += 10
-      }
-    })
-
-    doc.save(`rapport-semaine-${format(weekStart, "yyyy-MM-dd")}.pdf`)
-  }
-
   return (
-    <div className="container py-6 space-y-6">
-     <PageHeader
-       title="Exporter les temps"
-       subtitle="Exporter les temps saisis pour une semaine donnée."
-       breadcrumb={[{ label: "Export" }]}
-     />
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtres & navigation</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => setSelectedDate(subWeeks(selectedDate, 1))}>
-                ← Semaine précédente
-              </Button>
-              <span className="text-sm font-medium">
-                {format(weekStart, "dd/MM/yyyy")} - {format(weekEnd, "dd/MM/yyyy")}
-              </span>
-              <Button variant="outline" onClick={() => setSelectedDate(addWeeks(selectedDate, 1))}>
-                Semaine suivante →
-              </Button>
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <PageHeader
+          title="Exporter les temps"
+          subtitle="Exporter les temps saisis pour une semaine donnée."
+          breadcrumb={[{ label: "Export" }]}
+        />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtres & Navigation</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 overflow-x-auto">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <Button variant="outline" onClick={() => setSelectedDate(subWeeks(selectedDate, 1))}>
+                  ← Semaine précédente
+                </Button>
+                <span className="text-sm font-medium whitespace-nowrap">
+                  {format(weekStart, "dd/MM/yyyy")} - {format(weekEnd, "dd/MM/yyyy")}
+                </span>
+                <Button variant="outline" onClick={() => setSelectedDate(addWeeks(selectedDate, 1))}>
+                  Semaine suivante →
+                </Button>
+              </div>
+              <Select value={selectedMissionId} onValueChange={setSelectedMissionId}>
+                <SelectTrigger className="w-full sm:w-[220px]">
+                  <SelectValue placeholder="Toutes les missions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les missions</SelectItem>
+                  {missions.map((m) => (
+                    <SelectItem key={m.id} value={m.id.toString()}>
+                      {m.titre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </CardContent>
+        </Card>
 
-            <Select value={selectedMissionId} onValueChange={setSelectedMissionId}>
-              <SelectTrigger className="w-[220px]">
-                <SelectValue placeholder="Toutes les missions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes les missions</SelectItem>
-                {missions.map((m) => (
-                  <SelectItem key={m.id} value={m.id.toString()}>
-                    {m.titre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/3" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-4 w-1/2 mb-2" />
-              <Skeleton className="h-4 w-full mb-1" />
-              <Skeleton className="h-4 w-2/3" />
-            </CardContent>
-          </Card>
-
-          {Array.from({ length: 7 }).map((_, i) => (
+        {loading ? (
+          [...Array(3)].map((_, i) => (
             <Card key={i}>
               <CardHeader>
-                <Skeleton className="h-5 w-1/2" />
+                <Skeleton className="h-6 w-1/3" />
               </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-3/4" />
+              <CardContent className="space-y-2">
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-full" />
               </CardContent>
             </Card>
-          ))}
+          ))
+        ) : (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Résumé global</CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <p className="font-medium mb-2">Total semaine : {formatMinutes(totalMinutes)}</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(byType).map(([type, minutes]) => (
+                    <Badge key={type} variant="outline" className="break-words">
+                      {type} — {formatMinutes(minutes)} ({((minutes / totalMinutes) * 100).toFixed(1)}%)
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          <div className="flex justify-end">
-            <Skeleton className="h-10 w-40" />
-          </div>
-        </>
-      ) : (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Résumé global</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-medium mb-2">Total semaine : {formatMinutes(totalMinutes)}</p>
-              <ul className="list-disc list-inside space-y-1">
-                {Object.entries(byType).map(([type, minutes]) => (
-                  <li key={type}>
-                    {type} — {formatMinutes(minutes)} ({((minutes / totalMinutes) * 100).toFixed(1)}%)
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+            {weekDays.map((dayDate) => {
+              const dayKey = format(dayDate, "yyyy-MM-dd")
+              const entries = byDate[dayKey] || []
+              const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
+              return (
+                <Card key={dayKey}>
+                  <CardHeader>
+                    <CardTitle className="text-lg break-words">
+                      {format(dayDate, "EEEE dd/MM")} — {formatMinutes(dayMinutes)}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="overflow-x-auto">
+                    {entries.length > 0 ? (
+                      <div className="grid gap-3">
+                        {entries.map((e) => (
+                          <div
+                            key={e.id}
+                            className="border rounded-lg p-3 shadow-sm bg-muted/50 break-words"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="text-sm text-muted-foreground italic">
+                                  {e.mission.projet.nom}
+                                </div>
+                                <div className="font-semibold">{e.mission.titre}</div>
+                              </div>
+                              <Badge className="w-fit">{e.typeTache.nom}</Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {formatMinutes(e.dureeMinutes)}
+                            </div>
+                            {e.description && (
+                              <div className="text-sm mt-1 break-words">{cleanText(e.description)}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Aucun temps enregistré</p>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
 
-          {weekDays.map((dayDate) => {
-            const dayKey = format(dayDate, "yyyy-MM-dd")
-            const entries = byDate[dayKey] || []
-            const dayMinutes = entries.reduce((sum, e) => sum + e.dureeMinutes, 0)
-            return (
-              <Card key={dayKey}>
-                <CardHeader>
-                  <CardTitle>
-                    {format(dayDate, "EEEE dd/MM")} — {formatMinutes(dayMinutes)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {entries.length > 0 ? (
-                    <ul className="list-disc list-inside space-y-1">
-                      {entries.map((e) => (
-                        <li key={e.id}>
-                          {e.mission.titre} — {e.typeTache.nom}: {formatMinutes(e.dureeMinutes)}
-                          {e.description ? ` — ${cleanText(e.description)}` : ""}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Aucun temps enregistré</p>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-
-          <div className="flex justify-end pt-4">
-            <Button onClick={exportToPDF}>Exporter en PDF</Button>
-          </div>
-        </>
-      )}
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => generateTempsPDF({ weekStart, weekEnd, temps, byType, byDate, weekDays })}>
+                Exporter en PDF
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

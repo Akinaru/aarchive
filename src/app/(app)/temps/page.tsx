@@ -37,6 +37,8 @@ export default function TempsPage() {
     description: "",
   })
 
+  const [totalSemaineMinutes, setTotalSemaineMinutes] = useState(0)
+  const [objectifMinutes, setObjectifMinutes] = useState(360)
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchData = async () => {
@@ -46,7 +48,12 @@ export default function TempsPage() {
         fetch("/api/missions"),
         fetch("/api/type-tache"),
       ])
-      setTemps(await tempsRes.json())
+
+      const tempsData = await tempsRes.json()
+      setTemps(tempsData.temps)
+      setTotalSemaineMinutes(tempsData.totalSemaineMinutes)
+      setObjectifMinutes(tempsData.objectifMinutes)
+
       setMissions(await missionRes.json())
       setTypes(await typeRes.json())
     } catch {
@@ -93,232 +100,211 @@ export default function TempsPage() {
       )[0]
     : "Aucun"
 
-  const totalMinutes = temps.reduce((sum, t) => sum + t.dureeMinutes, 0)
-
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader
-        title="Notation des temps"
-        subtitle="Saisissez vos temps de travail quotidiens par mission et type de tâche."
-        breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Temps" }]}
-      />
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <PageHeader
+          title="Notation des temps"
+          subtitle="Saisissez vos temps de travail quotidiens par mission et type de tâche."
+          breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Temps" }]}
+        />
 
-      {isLoading ? (
-        <>
-          {/* Skeleton des cartes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-1/3 mb-2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-6 w-1/2 mb-1" />
-                  <Skeleton className="h-4 w-1/3" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Skeleton formulaire ajout */}
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-16 w-full rounded-md" />
-            </CardContent>
-          </Card>
-
-          {/* Skeleton liste derniers temps */}
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/3" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-md" />
+        {isLoading ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-4 w-1/3 mb-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-6 w-1/2 mb-1" />
+                    <Skeleton className="h-4 w-1/3" />
+                  </CardContent>
+                </Card>
               ))}
-            </CardContent>
-          </Card>
-        </>
-      ) : (
-        <>
-          {/* Statistiques du jour */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            </div>
+
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Temps aujourd’hui</CardTitle>
-                <Clock3 className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <Skeleton className="h-6 w-1/4" />
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{formatMinutes(totalToday)}</p>
-                <p className="text-xs text-muted-foreground">Durée enregistrée</p>
+                <Skeleton className="h-16 w-full rounded-md" />
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Entrées aujourd’hui</CardTitle>
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <Skeleton className="h-6 w-1/3" />
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{todayTemps.length}</p>
-                <p className="text-xs text-muted-foreground">temps saisis</p>
+              <CardContent className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-md" />
+                ))}
               </CardContent>
             </Card>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard title="Temps aujourd’hui" value={formatMinutes(totalToday)} icon={<Clock3 className="h-4 w-4 text-muted-foreground" />} subtitle="Durée enregistrée" />
+              <StatCard title="Entrées aujourd’hui" value={todayTemps.length.toString()} icon={<ClipboardList className="h-4 w-4 text-muted-foreground" />} subtitle="temps saisis" />
+              <StatCard title="Tâche la + utilisée" value={mostUsedTypeToday} icon={<Star className="h-4 w-4 text-muted-foreground" />} subtitle="aujourd’hui" />
+              <StatCard title="Total cette semaine" value={formatMinutes(totalSemaineMinutes)} icon={<Timer className="h-4 w-4 text-muted-foreground" />} subtitle="du lundi au dimanche" />
+            </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tâche la + utilisée</CardTitle>
-                <Star className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-base font-semibold">{mostUsedTypeToday}</p>
-                <p className="text-xs text-muted-foreground">aujourd’hui</p>
-              </CardContent>
-            </Card>
+            {!isReady && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Préparation incomplète</AlertTitle>
+                <AlertDescription>
+                  Vous devez au préalable ajouter :
+                  <ul className="list-disc ml-6 mt-1 space-y-1 text-sm">
+                    {missions.length === 0 && (
+                      <li>
+                        <Link href="/missions" className="underline hover:opacity-85">
+                          au moins une mission
+                        </Link>
+                      </li>
+                    )}
+                    {types.length === 0 && (
+                      <li>
+                        <Link href="/type-taches" className="underline hover:opacity-85">
+                          au moins un type de tâche
+                        </Link>
+                      </li>
+                    )}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total cumulé</CardTitle>
-                <Timer className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{formatMinutes(totalMinutes)}</p>
-                <p className="text-xs text-muted-foreground">tous temps confondus</p>
-              </CardContent>
-            </Card>
-          </div>
+            {isReady && (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Ajouter un temps</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FormAddTemps missions={missions} types={types} onAdd={fetchData} />
+                  </CardContent>
+                </Card>
 
-          {/* Alerte si manquant */}
-          {!isReady && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Préparation incomplète</AlertTitle>
-              <AlertDescription>
-                Vous devez au préalable ajouter :
-                <ul className="list-disc ml-6 mt-1 space-y-1 text-sm">
-                  {missions.length === 0 && (
-                    <li>
-                      <Link href="/missions" className="underline hover:opacity-85">
-                        au moins une mission
-                      </Link>
-                    </li>
-                  )}
-                  {types.length === 0 && (
-                    <li>
-                      <Link href="/type-taches" className="underline hover:opacity-85">
-                        au moins un type de tâche
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl">5 derniers temps enregistrés</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {lastTemps.map((t) => {
+                      const createdAt = t.createdAt ? new Date(t.createdAt) : null
+                      const createdAtFormatted =
+                        createdAt && !isNaN(createdAt.getTime())
+                          ? format(createdAt, "dd/MM/yyyy à HH:mm")
+                          : null
 
-          {/* Formulaire ajout */}
-          {isReady && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ajouter un temps</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormAddTemps missions={missions} types={types} onAdd={fetchData} />
-                </CardContent>
-              </Card>
+                      return (
+                        <div
+                          key={t.id}
+                          className="rounded-xl border bg-muted/50 p-4 flex flex-col sm:flex-row sm:justify-between gap-2 hover:bg-muted transition"
+                        >
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <p className="text-base font-semibold text-primary break-words">
+                              {t.mission?.titre}
+                              <span className="text-muted-foreground font-normal">
+                                {" "}
+                                — {t.typeTache?.nom}
+                              </span>
+                            </p>
 
-              {/* Derniers temps */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl">5 derniers temps enregistrés</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {lastTemps.map((t) => {
-                    const createdAtDate = t.createdAt ? new Date(t.createdAt) : null
-                    const createdAtFormatted =
-                      createdAtDate && !isNaN(createdAtDate.getTime())
-                        ? format(createdAtDate, "dd/MM/yyyy à HH:mm")
-                        : null
+                            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                              <span className="inline-block rounded-full bg-primary/10 text-tertiary px-2 py-0.5 text-xs font-semibold">
+                                {formatMinutes(t.dureeMinutes)}
+                              </span>
+                              <span>·</span>
+                              <span>
+                                {format(new Date(t.date), "EEEE dd MMMM yyyy", { locale: fr })}
+                              </span>
+                            </div>
 
-                    return (
-                      <div
-                        key={t.id}
-                        className="rounded-xl border bg-muted/50 p-4 flex justify-between items-start hover:bg-muted transition"
-                      >
-                        <div className="space-y-1">
-                          <p className="text-base font-semibold text-primary">
-                            {t.mission?.titre}
-                            <span className="text-muted-foreground font-normal">
-                              {" "}
-                              — {t.typeTache?.nom}
-                            </span>
-                          </p>
+                            {t.description && (
+                              <p className="text-sm text-foreground break-words">{t.description}</p>
+                            )}
 
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="inline-block rounded-full bg-primary/10 text-tertiary px-2 py-0.5 text-xs font-semibold">
-                              {formatMinutes(t.dureeMinutes)}
-                            </span>
-                            <span className="text-muted-foreground">·</span>
-                            <span className="text-muted-foreground">
-                              {format(new Date(t.date), "EEEE dd MMMM yyyy", { locale: fr })}
-                            </span>
+                            {createdAtFormatted && (
+                              <p className="text-xs text-muted-foreground opacity-50">
+                                Enregistré le {createdAtFormatted}
+                              </p>
+                            )}
                           </div>
 
-                          {t.description && (
-                            <p className="text-sm text-foreground">{t.description}</p>
-                          )}
-
-                          {createdAtFormatted && (
-                            <p className="text-xs text-muted-foreground opacity-50 mt-1">
-                              Enregistré le {createdAtFormatted}
-                            </p>
-                          )}
+                          <div className="flex gap-2 justify-end sm:items-start">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedTemps(t)
+                                setEdited({
+                                  dureeMinutes: t.dureeMinutes,
+                                  typeTacheId: t.typeTache?.id.toString() ?? "",
+                                  description: t.description ?? "",
+                                })
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="destructive"
+                              onClick={() => deleteTemps(t.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
+                      )
+                    })}
+                  </CardContent>
+                </Card>
 
-                        <div className="flex gap-2">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedTemps(t)
-                              setEdited({
-                                dureeMinutes: t.dureeMinutes,
-                                typeTacheId: t.typeTache?.id.toString() ?? "",
-                                description: t.description ?? "",
-                              })
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            onClick={() => deleteTemps(t.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </CardContent>
-              </Card>
-
-              <FormEditTemps
-                selectedTemps={selectedTemps}
-                types={types}
-                edited={edited}
-                setEdited={setEdited}
-                setSelectedTemps={setSelectedTemps}
-                updateTemps={updateTemps}
-              />
-            </>
-          )}
-        </>
-      )}
+                <FormEditTemps
+                  selectedTemps={selectedTemps}
+                  types={types}
+                  edited={edited}
+                  setEdited={setEdited}
+                  setSelectedTemps={setSelectedTemps}
+                  updateTemps={updateTemps}
+                />
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
+  )
+}
+
+function StatCard({
+  title,
+  value,
+  icon,
+  subtitle,
+}: {
+  title: string
+  value: string
+  icon: React.ReactNode
+  subtitle: string
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </CardContent>
+    </Card>
   )
 }

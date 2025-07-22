@@ -13,45 +13,52 @@ import {
   SidebarRail,
   SidebarMenu,
   SidebarGroupContent,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
-  GalleryVerticalEnd,
-  Contact,
   LayoutDashboard,
+  TimerReset,
   Users,
   FolderGit2,
   Flag,
-  TimerReset,
   ListTodo,
-  Euro,
   FileText,
+  Euro,
+  BarChart3,
 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 import { cn } from "@/lib/utils"
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   const isActive = (href: string) => pathname.startsWith(href)
 
+  const handleLinkClick = () => {
+    if (isMobile) setOpenMobile(false)
+  }
+
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg" className="gap-3">
-              <Link href="/" className="flex w-full items-center gap-3">
-                <div className="bg-primary text-white flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <GalleryVerticalEnd className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm">
-                  <span className="truncate font-semibold">Aarchive</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+<SidebarHeader>
+  <SidebarMenu>
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild size="lg" className="px-2 py-1.5">
+        <Link
+          href="/dashboard"
+          onClick={handleLinkClick}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1 transition hover:bg-accent"
+        >
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-white">
+            <BarChart3 className="size-4" />
+          </div>
+          <div className="text-sm font-bold tracking-tight">Aarchive</div>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  </SidebarMenu>
+</SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
@@ -59,7 +66,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/dashboard") })}>
-                  <Link href="/dashboard">
+                  <Link href="/dashboard" onClick={handleLinkClick}>
                     <LayoutDashboard className="mr-2 size-4" />
                     Dashboard
                   </Link>
@@ -67,7 +74,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/temps") })}>
-                  <Link href="/temps">
+                  <Link href="/temps" onClick={handleLinkClick}>
                     <TimerReset className="mr-2 size-4" />
                     Notation des temps
                   </Link>
@@ -76,7 +83,7 @@ export function AppSidebar() {
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/clients") })}>
-                  <Link href="/clients">
+                  <Link href="/clients" onClick={handleLinkClick}>
                     <Users className="mr-2 size-4" />
                     Clients
                   </Link>
@@ -84,7 +91,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/projets") })}>
-                  <Link href="/projets">
+                  <Link href="/projets" onClick={handleLinkClick}>
                     <FolderGit2 className="mr-2 size-4" />
                     Projets
                   </Link>
@@ -92,7 +99,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/missions") })}>
-                  <Link href="/missions">
+                  <Link href="/missions" onClick={handleLinkClick}>
                     <Flag className="mr-2 size-4" />
                     Missions
                   </Link>
@@ -101,17 +108,16 @@ export function AppSidebar() {
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/type-taches") })}>
-                  <Link href="/type-taches">
+                  <Link href="/type-taches" onClick={handleLinkClick}>
                     <ListTodo className="mr-2 size-4" />
                     Types de tâche
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/export") })}>
-                  <Link href="/export">
+                  <Link href="/export" onClick={handleLinkClick}>
                     <FileText className="mr-2 size-4" />
                     Exporter les temps
                   </Link>
@@ -119,31 +125,10 @@ export function AppSidebar() {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className={cn({
-                    "bg-primary/10 text-primary": isActive("/monnaie"),
-                  })}
-                >
-                  <Link href="/monnaie">
+                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/monnaie") })}>
+                  <Link href="/monnaie" onClick={handleLinkClick}>
                     <Euro className="mr-2 size-4" />
                     Gestion monétaire
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-
-        <SidebarGroup className="mt-auto">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/contact") })}>
-                  <Link href="/contact">
-                    <Contact className="mr-2 size-4" />
-                    Contact
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -24,8 +24,24 @@ export async function GET(req: NextRequest) {
   const temps = await prisma.temps.findMany({
     where,
     include: {
-      mission: { select: { id: true, titre: true } },
-      typeTache: { select: { id: true, nom: true } },
+      mission: {
+        select: {
+          id: true,
+          titre: true,
+          projet: {
+            select: {
+              id: true,
+              nom: true,
+            },
+          },
+        },
+      },
+      typeTache: {
+        select: {
+          id: true,
+          nom: true,
+        },
+      },
     },
     orderBy: { date: "asc" },
   })

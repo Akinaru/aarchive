@@ -50,6 +50,17 @@ export function DataTableProjets({ data, onEdit, onDelete }: Props) {
 
 const columns: ColumnDef<Projet>[] = [
   {
+    id: "voir",
+    header: "Détail",
+    cell: ({ row }) => (
+      <Link href={`/projets/${row.original.id}`}>
+        <Button variant="outline" size="sm" className="w-full">
+          Voir
+        </Button>
+      </Link>
+    ),
+  },
+  {
     accessorKey: "nom",
     header: ({ column }) => (
       <Button
@@ -107,17 +118,6 @@ const columns: ColumnDef<Projet>[] = [
         </div>
       )
     },
-  },
-  {
-    id: "voir",
-    header: "Détail",
-    cell: ({ row }) => (
-      <Link href={`/projets/${row.original.id}`}>
-        <Button variant="outline" size="sm" className="w-full">
-          Voir
-        </Button>
-      </Link>
-    ),
   },
   {
     id: "actions",
