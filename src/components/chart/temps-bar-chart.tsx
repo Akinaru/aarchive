@@ -30,6 +30,34 @@ type Props = {
   navigation?: boolean
 }
 
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+
+  const total = payload.reduce((sum: number, p: any) => sum + p.value, 0)
+
+  const formatMinutes = (minutes: number) => {
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return `${h > 0 ? `${h}h` : ""}${m > 0 ? `${m}min` : ""}` || "0min"
+  }
+
+  return (
+    <div className="rounded-md border bg-white p-2 shadow-sm text-sm space-y-1">
+      <div className="font-semibold text-black">{label}</div>
+      {payload.map((p: any) => (
+        <div key={p.name} className="flex justify-between gap-4">
+          <span className="text-[13px]" style={{ color: p.color }}>{p.name}</span>
+          <span>{formatMinutes(p.value)}</span>
+        </div>
+      ))}
+      <div className="border-t pt-1 flex justify-between font-semibold text-black">
+        <span>Total</span>
+        <span>{formatMinutes(total)}</span>
+      </div>
+    </div>
+  )
+}
+
 export function TempsParTypeBarChart({ temps, navigation = true }: Props) {
   const [weekOffset, setWeekOffset] = useState(0)
 
@@ -119,15 +147,7 @@ export function TempsParTypeBarChart({ temps, navigation = true }: Props) {
               }
               interval={0}
             />
-            <Tooltip
-              cursor={{ fill: "transparent" }}
-              formatter={(value: number | string) => {
-                const v = parseInt(value.toString())
-                const h = Math.floor(v / 60)
-                const m = v % 60
-                return `${h > 0 ? `${h}h` : ""}${m > 0 ? `${m}min` : ""}`
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
             {Object.keys(chartConfig).map((key) => (
               <Bar
                 key={key}
