@@ -28,7 +28,7 @@ export function generateTempsPDF({
   const doc = new jsPDF()
 
   // Titre principal
-  doc.setFillColor(240)
+  doc.setFillColor(200,200,200)
   doc.rect(0, 0, 210, 30, 'F')
   doc.setFont("helvetica", "bold")
   doc.setFontSize(18)
