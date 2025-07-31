@@ -14,18 +14,25 @@ import {
 
 export async function GET(req: NextRequest) {
   const dateParam = req.nextUrl.searchParams.get("date")
-  const baseDate = dateParam ? new Date(dateParam) : new Date()
+  const missionIdParam = req.nextUrl.searchParams.get("missionId")
 
+  const baseDate = dateParam ? new Date(dateParam) : new Date()
   const monthStart = startOfMonth(baseDate)
   const monthEnd = endOfMonth(baseDate)
 
-  const allTemps = await prisma.temps.findMany({
-    where: {
-      date: {
-        gte: monthStart,
-        lte: monthEnd,
-      },
+  const where: any = {
+    date: {
+      gte: monthStart,
+      lte: monthEnd,
     },
+  }
+
+  if (missionIdParam) {
+    where.missionId = parseInt(missionIdParam)
+  }
+
+  const allTemps = await prisma.temps.findMany({
+    where,
     include: {
       mission: {
         select: {
@@ -39,7 +46,6 @@ export async function GET(req: NextRequest) {
     orderBy: { date: "asc" },
   })
 
-  // Générer dynamiquement toutes les semaines du mois
   const weeks = []
   let current = startOfWeek(monthStart, { weekStartsOn: 1 })
 
