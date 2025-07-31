@@ -155,10 +155,25 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/export") })}>
-                      <Link href="/export" onClick={handleLinkClick}>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn({ "bg-primary/10 text-primary": isActive("/export/semaine") })}
+                    >
+                      <Link href="/export/semaine" onClick={handleLinkClick}>
                         <FileText className="mr-2 size-4" />
-                        Exporter les temps
+                        Export semaine
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn({ "bg-primary/10 text-primary": isActive("/export/mois") })}
+                    >
+                      <Link href="/export/mois" onClick={handleLinkClick}>
+                        <FileText className="mr-2 size-4" />
+                        Export mois
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

@@ -92,9 +92,9 @@ export default function ExportTempsPage() {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <PageHeader
-          title="Exporter les temps"
-          subtitle="Exporter les temps saisis pour une semaine donnée."
-          breadcrumb={[{ label: "Export" }]}
+          title="Exporter la semaine"
+          subtitle="Générer un rapport hebdomadaire des temps."
+          breadcrumb={[{ label: "Export semaine" }]}
         />
 
         <Card>
