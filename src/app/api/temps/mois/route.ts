@@ -1,4 +1,3 @@
-// app/api/temps/mois/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import {
@@ -38,6 +37,7 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           titre: true,
+          tjm: true,
           projet: { select: { id: true, nom: true } },
         },
       },

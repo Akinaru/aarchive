@@ -1,4 +1,3 @@
-// app/(your-page)/export-mois/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -72,6 +71,32 @@ export default function ExportMoisPage() {
     }))
     generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks)
   }
+
+  const allTemps = data?.weeks?.flatMap((w: any) => w.temps) ?? []
+
+  const byMission: Record<string, { titre: string; totalMinutes: number; tjm: number }> = {}
+
+  allTemps.forEach((t: any) => {
+    const id = t.mission.id
+    if (!byMission[id]) {
+      byMission[id] = {
+        titre: t.mission.titre,
+        totalMinutes: 0,
+        tjm: t.mission.tjm ?? 0,
+      }
+    }
+    byMission[id].totalMinutes += t.dureeMinutes
+  })
+
+  const totalGlobalMinutes = Object.values(byMission).reduce(
+    (sum, m) => sum + m.totalMinutes,
+    0
+  )
+
+  const totalGlobalFacture = Object.values(byMission).reduce((sum, m) => {
+    const montantMinute = m.tjm ? m.tjm / 450 : 0
+    return sum + montantMinute * m.totalMinutes
+  }, 0)
 
   return (
     <div className="flex flex-col flex-1">
@@ -175,7 +200,57 @@ export default function ExportMoisPage() {
             )
           })}
 
-          <div className="flex justify-end">
+<Card>
+  <CardHeader>
+    <CardTitle>Récapitulatif mensuel</CardTitle>
+  </CardHeader>
+  <CardContent className="text-sm text-muted-foreground space-y-6">
+    {Object.entries(byMission).map(([id, mission]) => {
+      const heures = Math.floor(mission.totalMinutes / 60)
+      const minutes = mission.totalMinutes % 60
+      const jours = mission.totalMinutes / 450
+      const montant = mission.tjm ? (mission.tjm * mission.totalMinutes) / 450 : 0
+      return (
+        <div key={id} className="space-y-1">
+          <div className="font-medium text-foreground">{mission.titre}</div>
+          <div className="flex justify-between">
+            <span>TJM :</span>
+            <span>{mission.tjm.toFixed(2)} €</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Temps travaillé :</span>
+            <span>{heures}h{minutes > 0 ? minutes : ""}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Jours travaillés (7h30) :</span>
+            <span>{jours.toFixed(2)} j</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Montant facturé :</span>
+            <span>{montant.toFixed(2)} €</span>
+          </div>
+        </div>
+      )
+    })}
+
+    <div className="border-t pt-4 space-y-1 font-medium text-foreground">
+      <div className="flex justify-between">
+        <span>Total global :</span>
+        <span>{Math.floor(totalGlobalMinutes / 60)}h{totalGlobalMinutes % 60}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>Jours travaillés :</span>
+        <span>{(totalGlobalMinutes / 450).toFixed(2)} j</span>
+      </div>
+      <div className="flex justify-between">
+        <span>Total facturé :</span>
+        <span>{totalGlobalFacture.toFixed(2)} €</span>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
+          <div className="flex justify-end mt-4">
             <Button onClick={handleExport}>Exporter le PDF</Button>
           </div>
         </>

@@ -54,6 +54,7 @@ model Mission {
   dateDebut          DateTime      @default(now())
   dureePrevueMinutes Int?
   createdAt          DateTime      @default(now())
+  tjm                Int?
 
   projetId Int
   projet   Projet  @relation(fields: [projetId], references: [id])
@@ -79,7 +80,7 @@ model TypeTache {
 }
 
 model Parametre {
-  id    String @id // ex: "tjm"
+  id    String @id
   value Float
 }
 

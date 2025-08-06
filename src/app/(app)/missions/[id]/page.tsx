@@ -112,6 +112,12 @@ export default function MissionSinglePage() {
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <div className="space-y-1">
                 <div className="flex justify-between">
+                  <span>TJM appliqué :</span>
+                  <span className="text-foreground">
+                    {mission.tjm ? `${(mission.tjm / 100).toFixed(0)} €` : "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
                   <span>Total saisi :</span>
                   <span className="font-medium text-foreground">{totalHeures}h{totalReste}</span>
                 </div>

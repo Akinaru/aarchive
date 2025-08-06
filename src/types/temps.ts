@@ -10,6 +10,7 @@ export type Temps = {
   mission: {
     id: number
     titre: string
+    tjm: number
     projet: {
       id: number
       nom: string

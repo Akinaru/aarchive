@@ -7,7 +7,6 @@ type ContextWithId = {
   }
 }
 
-// ✅ version strictement typée sans `any`
 function isContextWithId(ctx: unknown): ctx is ContextWithId {
   if (typeof ctx !== "object" || ctx === null) return false
 
@@ -72,6 +71,7 @@ export const PUT = async (req: NextRequest, context: unknown) => {
       projetId: body.projetId,
       dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
+      tjm: body.tjm ?? null,
     },
   })
 

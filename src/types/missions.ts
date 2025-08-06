@@ -4,6 +4,7 @@ export type Mission = {
   description: string | null
   statut: "EN_COURS" | "TERMINEE" | "EN_ATTENTE" | "ANNULEE"
   projetId: number
+  tjm: number | null
   dateDebut: Date | null
   dureePrevueMinutes: number | null
   projet: {

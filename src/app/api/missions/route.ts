@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       projetId: body.projetId,
       dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
+      tjm: body.tjm ?? null,
     },
   })
 

@@ -42,6 +42,7 @@ export default function MissionsPage() {
   const [projetId, setProjetId] = useState("")
   const [dateDebut, setDateDebut] = useState("")
   const [dureePrevue, setDureePrevue] = useState("00:00")
+  const [tjm, setTjm] = useState("")
 
   const [editMission, setEditMission] = useState<Mission | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
@@ -81,6 +82,7 @@ export default function MissionsPage() {
           projetId: parseInt(projetId),
           dateDebut: dateDebut ? new Date(dateDebut) : null,
           dureePrevueMinutes,
+          tjm: tjm ? parseInt(tjm) : null,
         }),
       })
       if (!res.ok) throw new Error()
@@ -91,6 +93,7 @@ export default function MissionsPage() {
       setProjetId("")
       setDateDebut("")
       setDureePrevue("00:00")
+      setTjm("")
       await fetchMissions()
     } catch {
       toast.error("Erreur lors de l'ajout.")
@@ -111,6 +114,7 @@ export default function MissionsPage() {
           projetId: editMission.projetId,
           dateDebut: editMission.dateDebut ? new Date(editMission.dateDebut) : null,
           dureePrevueMinutes: editMission.dureePrevueMinutes ?? 0,
+          tjm: editMission.tjm ?? null,
         }),
       })
       if (!res.ok) throw new Error()
@@ -237,6 +241,15 @@ export default function MissionsPage() {
                     className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
                   />
 
+                  <label htmlFor="tjm">TJM (en €)</label>
+                  <Input
+                    type="number"
+                    id="tjm"
+                    value={tjm}
+                    onChange={(e) => setTjm(e.target.value)}
+                    placeholder="Par défaut : TJM global"
+                  />
+
                   <label>Status</label>
                   <Select value={statut} onValueChange={setStatut}>
                     <SelectTrigger>
@@ -334,6 +347,20 @@ export default function MissionsPage() {
                     })
                   }}
                   className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+                />
+
+                <label htmlFor="tjm">TJM (en €)</label>
+                <Input
+                  type="number"
+                  id="tjm"
+                  value={editMission.tjm ? editMission.tjm : ""}
+                  onChange={(e) =>
+                    setEditMission({
+                      ...editMission,
+                      tjm: e.target.value ? parseInt(e.target.value) : null,
+                    })
+                  }
+                  placeholder="Par défaut : TJM global"
                 />
 
                 <label>Status</label>

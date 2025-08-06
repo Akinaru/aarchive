@@ -119,6 +119,14 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
       },
     },
     {
+      accessorKey: "tjm",
+      header: "TJM",
+      cell: ({ row }) => {
+        const tjm = row.original.tjm
+        return tjm ? `${(tjm).toFixed(0)} €` : "—"
+      },
+    },
+    {
       id: "actions",
       enableHiding: false,
       header: () => null,
