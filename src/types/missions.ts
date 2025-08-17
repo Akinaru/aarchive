@@ -7,6 +7,7 @@ export type Mission = {
   tjm: number | null
   dateDebut: Date | null
   dureePrevueMinutes: number | null
+  requiredDailyMinutes: number | null
   projet: {
     nom: string
     clients?: {

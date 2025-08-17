@@ -55,14 +55,136 @@ export default function MissionSinglePage() {
   }, [id])
 
   if (isLoading) {
+    // ⚡️ Skeleton qui respecte exactement la même structure/tailles que le rendu final
     return (
-      <div className="p-6 space-y-4">
-        <BreadcrumbSkeleton />
-        <div className="grid grid-cols-[70%_30%] gap-4 mt-6">
-          <Skeleton className="h-[60vh]" />
-          <Skeleton className="h-[60vh]" />
+      <div className="flex flex-1 flex-col">
+        <div className="@container/main flex flex-1 flex-col gap-2">
+          {/* Header/Breadcrumb */}
+          <BreadcrumbSkeleton />
+
+          {/* Bloc 70/30 identique au rendu final */}
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Colonne gauche (70%) – Graphique */}
+            <Card className="w-full md:w-[70%]">
+              <CardHeader>
+                <Skeleton className="h-5 w-1/3" />
+              </CardHeader>
+              <CardContent>
+                {/* hauteur du chart comme en prod */}
+                <Skeleton className="h-[300px] w-full rounded-lg" />
+              </CardContent>
+            </Card>
+
+            {/* Colonne droite (30%) – Résumé */}
+            <Card className="w-full md:w-[30%]">
+              <CardHeader>
+                <Skeleton className="h-5 w-1/2" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* lignes de stats */}
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-4 w-10" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-4 w-10" />
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+
+                {/* camembert placeholder */}
+                <Skeleton className="h-40 w-full rounded-lg" />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Clients liés – placeholder (s’aligne sur la même largeur que le rendu final si présent) */}
+          <Card className="border-muted">
+            <CardHeader>
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 shadow-sm">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex flex-col">
+                      <Skeleton className="h-4 w-32 mb-1" />
+                      <Skeleton className="h-3 w-40" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Formulaire ajout temps */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-36" />
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full md:col-span-3" />
+              </div>
+              <div className="mt-4">
+                <Skeleton className="h-9 w-32" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tableau des temps */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-40" />
+            </CardHeader>
+            <CardContent>
+              <div className="w-full">
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="grid grid-cols-4 gap-2 py-2 border-b">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-24 justify-self-end" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <Skeleton className="h-60 w-full" />
       </div>
     )
   }
@@ -83,7 +205,7 @@ export default function MissionSinglePage() {
   const joursUniques = [...new Set(temps.map(t => format(new Date(t.date), "yyyy-MM-dd")))]
 
   return (
-     <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <PageHeader
           title={mission.titre}
@@ -101,7 +223,11 @@ export default function MissionSinglePage() {
               <CardTitle>Graphique : Répartition de la semaine</CardTitle>
             </CardHeader>
             <CardContent>
-              <TempsParTypeBarChart temps={temps} typeTaches={typeTaches} />
+              <TempsParTypeBarChart
+                temps={temps}
+                typeTaches={typeTaches}
+                requiredDailyMinutes={mission.requiredDailyMinutes ?? null}
+              />
             </CardContent>
           </Card>
 
@@ -151,10 +277,10 @@ export default function MissionSinglePage() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Durée prévue :</span>
+                  <span>Durée cible quotidienne :</span>
                   <span className="text-foreground">
-                    {mission.dureePrevueMinutes
-                      ? `${Math.floor(mission.dureePrevueMinutes / 60)}h${mission.dureePrevueMinutes % 60 || ""}`
+                    {mission.requiredDailyMinutes
+                      ? `${Math.floor(mission.requiredDailyMinutes / 60)}h${mission.requiredDailyMinutes % 60 || ""}`
                       : "-"}
                   </span>
                 </div>

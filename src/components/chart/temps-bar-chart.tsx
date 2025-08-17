@@ -20,7 +20,7 @@ import {
 import { fr } from "date-fns/locale"
 import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { getColorForTypeTacheStable } from "@/lib/colors"
 
@@ -28,18 +28,29 @@ type Props = {
   temps: Temps[]
   typeTaches: TypeTache[]
   navigation?: boolean
+  requiredDailyMinutes?: number | null
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function formatMinutesSigned(minutes: number) {
+  const sign = minutes < 0 ? "-" : minutes > 0 ? "+" : ""
+  const abs = Math.abs(minutes)
+  const h = Math.floor(abs / 60)
+  const m = abs % 60
+  const hm = `${h > 0 ? `${h}h` : ""}${m > 0 ? `${m}min` : h === 0 ? "0min" : ""}`
+  return `${sign}${hm}`
+}
+
+function formatMinutesPlain(minutes: number) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return `${h > 0 ? `${h}h` : ""}${m > 0 ? `${m}min` : h === 0 ? "0min" : ""}`
+}
+
+function CustomTooltip({ active, payload, label, requiredDailyMinutes }: any) {
   if (!active || !payload?.length) return null
-
-  const total = payload.reduce((sum: number, p: any) => sum + p.value, 0)
-
-  const formatMinutes = (minutes: number) => {
-    const h = Math.floor(minutes / 60)
-    const m = minutes % 60
-    return `${h > 0 ? `${h}h` : ""}${m > 0 ? `${m}min` : ""}` || "0min"
-  }
+  const total = payload.reduce((sum: number, p: any) => sum + (p.value || 0), 0)
+  const showTarget = typeof requiredDailyMinutes === "number" && requiredDailyMinutes > 0
+  const delta = showTarget ? total - requiredDailyMinutes : null
 
   return (
     <div className="rounded-md border bg-white p-2 shadow-sm text-sm space-y-1">
@@ -47,31 +58,53 @@ function CustomTooltip({ active, payload, label }: any) {
       {payload.map((p: any) => (
         <div key={p.name} className="flex justify-between gap-4">
           <span className="text-[13px]" style={{ color: p.color }}>{p.name}</span>
-          <span>{formatMinutes(p.value)}</span>
+          <span>{formatMinutesPlain(p.value)}</span>
         </div>
       ))}
       <div className="border-t pt-1 flex justify-between font-semibold text-black">
         <span>Total</span>
-        <span>{formatMinutes(total)}</span>
+        <span>{formatMinutesPlain(total)}</span>
       </div>
+      {showTarget && (
+        <>
+          <div className="flex justify-between text-black">
+            <span>Cible</span>
+            <span>{formatMinutesPlain(requiredDailyMinutes)}</span>
+          </div>
+          <div className="flex justify-between font-semibold text-black">
+            <span>Écart</span>
+            <span className={`${(delta ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+              {formatMinutesSigned(delta ?? 0)}
+            </span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
-export function TempsParTypeBarChart({ temps, navigation = true }: Props) {
+export function TempsParTypeBarChart({
+  temps,
+  navigation = true,
+  requiredDailyMinutes = null,
+}: Props) {
   const [weekOffset, setWeekOffset] = useState(0)
 
   const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset)
   const end = endOfDay(addDays(start, 6))
 
-  const jours = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(start, i)
-    return {
-      raw: date,
-      date: format(date, "dd/MM"),
-      label: format(date, "EEEE", { locale: fr }),
-    }
-  })
+  const jours = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(start, i)
+        return {
+          raw: date,
+          date: format(date, "dd/MM"),
+          label: format(date, "EEEE", { locale: fr }),
+        }
+      }),
+    [start]
+  )
 
   const grouped: Record<string, Record<string, number>> = {}
   jours.forEach(({ date }) => {
@@ -108,8 +141,47 @@ export function TempsParTypeBarChart({ temps, navigation = true }: Props) {
     }
   })
 
+  const weekTotals = useMemo(() => {
+    const totalsPerDay = data.map((d) =>
+      Object.entries(d).reduce((sum, [k, v]) => {
+        if (k === "date" || k === "label") return sum
+        return sum + (typeof v === "number" ? v : 0)
+      }, 0)
+    )
+    const worked = totalsPerDay.reduce((a, b) => a + b, 0)
+    const show = typeof requiredDailyMinutes === "number" && requiredDailyMinutes > 0
+    const target = show ? requiredDailyMinutes * 7 : null
+    const delta = show ? worked - (target as number) : null
+    return { show, worked, target, delta }
+  }, [data, requiredDailyMinutes])
+
   return (
     <div className="space-y-2">
+      {weekTotals.show && (
+        <div className="rounded-lg border p-3 flex flex-wrap gap-4 items-center justify-between">
+          <div className="text-sm">
+            <div className="text-muted-foreground">Cible quotidienne</div>
+            <div className="font-medium">{formatMinutesPlain(requiredDailyMinutes as number)}</div>
+          </div>
+          <div className="text-sm">
+            <div className="text-muted-foreground">Total semaine</div>
+            <div className="font-medium">{formatMinutesPlain(weekTotals.worked)}</div>
+          </div>
+          <div className="text-sm">
+            <div className="text-muted-foreground">Cible semaine</div>
+            <div className="font-medium">
+              {weekTotals.target !== null ? formatMinutesPlain(weekTotals.target) : "—"}
+            </div>
+          </div>
+          <div className="text-sm">
+            <div className="text-muted-foreground">Écart semaine</div>
+            <div className={`font-semibold ${weekTotals.delta !== null && weekTotals.delta >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+              {weekTotals.delta !== null ? formatMinutesSigned(weekTotals.delta) : "—"}
+            </div>
+          </div>
+        </div>
+      )}
+
       {navigation && (
         <div className="flex justify-between items-center mb-1 flex-wrap gap-2">
           <div className="flex flex-wrap gap-2">
@@ -143,11 +215,11 @@ export function TempsParTypeBarChart({ temps, navigation = true }: Props) {
               tickMargin={6}
               axisLine={false}
               tickFormatter={(value, index) =>
-                `${value}\n${jours[index].label.charAt(0).toUpperCase() + jours[index].label.slice(1)}`
+                `${value}`
               }
               interval={0}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip requiredDailyMinutes={requiredDailyMinutes} />} />
             {Object.keys(chartConfig).map((key) => (
               <Bar
                 key={key}

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select"
 import { STATUT_ICONS } from "@/lib/status"
 import Link from "next/link"
+import { Label } from "@/components/ui/label"
 
 const STATUTS: (keyof typeof STATUT_ICONS)[] = ["EN_COURS", "TERMINEE", "EN_ATTENTE", "ANNULEE"]
 
@@ -43,6 +44,7 @@ export default function MissionsPage() {
   const [dateDebut, setDateDebut] = useState("")
   const [dureePrevue, setDureePrevue] = useState("00:00")
   const [tjm, setTjm] = useState("")
+  const [requiredDaily, setRequiredDaily] = useState("00:00")
 
   const [editMission, setEditMission] = useState<Mission | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
@@ -71,6 +73,9 @@ export default function MissionsPage() {
     const [h, m] = dureePrevue.split(":").map(Number)
     const dureePrevueMinutes = h * 60 + m
 
+    const [rh, rm] = requiredDaily.split(":").map(Number)
+    const requiredDailyMinutes = rh * 60 + rm
+
     try {
       const res = await fetch("/api/missions", {
         method: "POST",
@@ -83,6 +88,7 @@ export default function MissionsPage() {
           dateDebut: dateDebut ? new Date(dateDebut) : null,
           dureePrevueMinutes,
           tjm: tjm ? parseInt(tjm) : null,
+          requiredDailyMinutes,
         }),
       })
       if (!res.ok) throw new Error()
@@ -93,6 +99,7 @@ export default function MissionsPage() {
       setProjetId("")
       setDateDebut("")
       setDureePrevue("00:00")
+      setRequiredDaily("00:00")
       setTjm("")
       await fetchMissions()
     } catch {
@@ -115,6 +122,7 @@ export default function MissionsPage() {
           dateDebut: editMission.dateDebut ? new Date(editMission.dateDebut) : null,
           dureePrevueMinutes: editMission.dureePrevueMinutes ?? 0,
           tjm: editMission.tjm ?? null,
+          requiredDailyMinutes: editMission.requiredDailyMinutes ?? 0,
         }),
       })
       if (!res.ok) throw new Error()
@@ -231,13 +239,13 @@ export default function MissionsPage() {
                     onChange={(e) => setDateDebut(e.target.value)}
                   />
 
-                  <label htmlFor="dureePrevue">Durée prévisionnelle</label>
+                  <label htmlFor="requiredDaily">Durée cible quotidienne</label>
                   <Input
                     type="time"
-                    id="dureePrevue"
+                    id="requiredDaily"
                     step="60"
-                    value={dureePrevue}
-                    onChange={(e) => setDureePrevue(e.target.value)}
+                    value={requiredDaily}
+                    onChange={(e) => setRequiredDaily(e.target.value)}
                     className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
                   />
 
@@ -328,13 +336,13 @@ export default function MissionsPage() {
                   }
                 />
 
-                <label htmlFor="dureePrevue">Durée prévisionnelle</label>
+                <label htmlFor="dureePrevue">Durée cible quotidienne</label>
                 <Input
                   type="time"
                   id="dureePrevue"
                   step="60"
-                  value={(() => {
-                    const min = editMission.dureePrevueMinutes ?? 0
+                   value={(() => {
+                    const min = editMission.requiredDailyMinutes ?? 0
                     const h = String(Math.floor(min / 60)).padStart(2, "0")
                     const m = String(min % 60).padStart(2, "0")
                     return `${h}:${m}`
@@ -343,7 +351,7 @@ export default function MissionsPage() {
                     const [h, m] = e.target.value.split(":").map(Number)
                     setEditMission({
                       ...editMission,
-                      dureePrevueMinutes: h * 60 + m,
+                      requiredDailyMinutes: h * 60 + m,
                     })
                   }}
                   className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"

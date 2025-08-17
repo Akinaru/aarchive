@@ -2,7 +2,6 @@
 
 import { PageHeader } from "@/components/page-header"
 import { SectionCards } from "@/components/dashboard/dashboard-section-cards"
-import { ChartAreaInteractive } from "@/components/chart/chart-area-interactive"
 import { DashboardGraphMissions } from "@/components/dashboard/dashboard-graph-missions"
 import { DashboardStatsTable } from "@/components/dashboard/dashboard-stats-table"
 
@@ -19,15 +18,8 @@ export default function DashboardPage() {
 
           <SectionCards />
 
-          <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-2 lg:px-6">
-            <DashboardGraphMissions  />
-            <DashboardStatsTable />
-          </div>
-
-
-          <div className="px-4 lg:px-6">
-            <ChartAreaInteractive />
-          </div>
+          <DashboardGraphMissions />
+          <DashboardStatsTable/>
         </div>
       </div>
     </div>

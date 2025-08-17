@@ -108,10 +108,10 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
       },
     },
     {
-      accessorKey: "dureePrevueMinutes",
-      header: "Durée prévue",
+      accessorKey: "requiredDailyMinutes",
+      header: "Durée quotidienne requise",
       cell: ({ row }) => {
-        const minutes = row.original.dureePrevueMinutes
+        const minutes = row.original.requiredDailyMinutes
         if (!minutes) return "-"
         const h = Math.floor(minutes / 60)
         const m = minutes % 60

@@ -47,14 +47,15 @@ model ProjetClient {
 }
 
 model Mission {
-  id                 Int           @id @default(autoincrement())
-  titre              String
-  description        String?
-  statut             StatutMission @default(EN_COURS)
-  dateDebut          DateTime      @default(now())
-  dureePrevueMinutes Int?
-  createdAt          DateTime      @default(now())
-  tjm                Int?
+  id                   Int           @id @default(autoincrement())
+  titre                String
+  description          String?
+  statut               StatutMission @default(EN_COURS)
+  dateDebut            DateTime      @default(now())
+  dureePrevueMinutes   Int?
+  createdAt            DateTime      @default(now())
+  tjm                  Int?
+  requiredDailyMinutes Int?
 
   projetId Int
   projet   Projet  @relation(fields: [projetId], references: [id])

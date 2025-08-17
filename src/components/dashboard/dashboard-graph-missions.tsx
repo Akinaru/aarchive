@@ -39,7 +39,7 @@ export function DashboardGraphMissions() {
       <CardHeader>
         <CardTitle>Temps saisi par type cette semaine</CardTitle>
       </CardHeader>
-      <CardContent className="h-[300px]">
+      <CardContent className="">
         {loading ? (
           <Skeleton className="h-full w-full rounded-lg" />
         ) : (

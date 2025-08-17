@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
@@ -33,6 +32,7 @@ export async function POST(req: Request) {
       dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
       tjm: body.tjm ?? null,
+      requiredDailyMinutes: body.requiredDailyMinutes ?? null,
     },
   })
 

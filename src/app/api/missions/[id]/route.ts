@@ -9,15 +9,11 @@ type ContextWithId = {
 
 function isContextWithId(ctx: unknown): ctx is ContextWithId {
   if (typeof ctx !== "object" || ctx === null) return false
-
   const maybeContext = ctx as Record<string, unknown>
   const params = maybeContext["params"]
-
   if (typeof params !== "object" || params === null) return false
-
   const maybeParams = params as Record<string, unknown>
   const id = maybeParams["id"]
-
   return typeof id === "string"
 }
 
@@ -72,6 +68,7 @@ export const PUT = async (req: NextRequest, context: unknown) => {
       dateDebut: body.dateDebut ? new Date(body.dateDebut) : undefined,
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
       tjm: body.tjm ?? null,
+      requiredDailyMinutes: body.requiredDailyMinutes ?? null,
     },
   })
 

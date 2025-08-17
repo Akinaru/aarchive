@@ -16,13 +16,21 @@ import {
   CalendarCheck,
   Gauge,
   DollarSign,
+  Star,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 type StatsDashboard = {
   minutesAujourdHui: number
   joursTravaillesMois: number
   moyenneMinutesParJour: number
   estimationSalaire: number
+  missionPopulaire?: {
+    id: string
+    titre: string
+    minutes: number
+  } | null
 }
 
 export function SectionCards() {
@@ -59,7 +67,7 @@ export function SectionCards() {
 
   if (isLoading || !stats) {
     return (
-      <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i}>{skeletonCard}</div>
         ))}
@@ -68,11 +76,11 @@ export function SectionCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Heures travaillées aujourd’hui</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          <CardDescription>Heures travaillées</CardDescription>
+          <CardTitle className="text-xl font-semibold tabular-nums">
             {formatHeuresMinutes(stats.minutesAujourdHui)}
           </CardTitle>
           <CardAction>
@@ -90,8 +98,8 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Jours travaillés ce mois</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          <CardDescription>Jours travaillés</CardDescription>
+          <CardTitle className="text-xl font-semibold tabular-nums">
             {stats.joursTravaillesMois}
           </CardTitle>
           <CardAction>
@@ -110,7 +118,7 @@ export function SectionCards() {
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Temps moyen / jour</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          <CardTitle className="text-xl font-semibold tabular-nums">
             {formatHeuresMinutes(stats.moyenneMinutesParJour)}
           </CardTitle>
           <CardAction>
@@ -128,20 +136,25 @@ export function SectionCards() {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Estimation salaire</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            € {stats.estimationSalaire.toLocaleString()}
+          <CardDescription>Mission populaire</CardDescription>
+          <CardTitle className="text-xl font-semibold tabular-nums">
+            {stats.missionPopulaire?.titre ?? "—"}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <DollarSign className="size-4" />
-              Brut
+              <Star className="size-4" />
+              Populaire
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="flex gap-2 font-medium">TJM × jours travaillés</div>
-          <div className="text-muted-foreground">Basé sur le mois courant</div>
+        <CardFooter className="flex-col items-start gap-2 text-sm">
+          {stats.missionPopulaire && (
+            <Link href={`/missions/${stats.missionPopulaire.id}`}>
+              <Button variant="outline" size="sm" className="w-full">
+                Voir la mission
+              </Button>
+            </Link>
+          )}
         </CardFooter>
       </Card>
     </div>

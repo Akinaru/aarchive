@@ -1,27 +1,26 @@
+// components/dashboard/DashboardStatsTable.tsx
 "use client"
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
-type Stat = {
+type StatItem = {
   label: string
   value: string
-  info: string
   avatar?: string | null
 }
 
 export function DashboardStatsTable() {
-  const [stats, setStats] = useState<Stat[]>([])
+  const [stats, setStats] = useState<StatItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetch("/api/dashboard/stats")
       .then((res) => res.json())
-      .then((data: Stat[]) => setStats(data))
+      .then((data: StatItem[]) => setStats(data))
       .catch(() => toast.error("Erreur chargement des statistiques"))
       .finally(() => setLoading(false))
   }, [])
@@ -33,46 +32,33 @@ export function DashboardStatsTable() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex justify-between items-center">
-                <Skeleton className="h-5 w-1/4 my-1" />
-                <Skeleton className="h-5 w-1/4 my-1" />
-                <Skeleton className="h-5 w-1/3 my-1" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className="rounded-md border p-3">
+                <Skeleton className="h-3 w-24 mb-2" />
+                <Skeleton className="h-4 w-40" />
               </div>
             ))}
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Stat</TableHead>
-                <TableHead>Valeur</TableHead>
-                <TableHead>Infos</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {stats.map((stat) => (
-                <TableRow key={stat.label}>
-                  <TableCell>{stat.label}</TableCell>
-                  <TableCell>
-                    {stat.avatar ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={stat.avatar} />
-                          <AvatarFallback>👤</AvatarFallback>
-                        </Avatar>
-                        {stat.value}
-                      </div>
-                    ) : (
-                      stat.value
-                    )}
-                  </TableCell>
-                  <TableCell>{stat.info}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {stats.map((item, idx) => (
+              <div key={idx} className="rounded-md border p-3">
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  {item.label}
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-sm">
+                  {item.avatar ? (
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={item.avatar} />
+                      <AvatarFallback>👤</AvatarFallback>
+                    </Avatar>
+                  ) : null}
+                  <span className="font-medium text-foreground">{item.value}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

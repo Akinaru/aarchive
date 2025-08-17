@@ -33,8 +33,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <main className="flex-1 p-6">
-          {children}
+        <main className="flex-1 p-4 md:p-6 flex justify-center">
+          <div className="w-full max-w-6xl">
+            {children}
+          </div>
         </main>
       </div>
     </SidebarProvider>
