@@ -47,7 +47,7 @@ export default function ExportMoisPage() {
       if (!res.ok) throw new Error("Erreur de chargement")
       const json = await res.json()
       setData(json)
-    } catch (e) {
+    } catch {
       toast.error("Erreur serveur")
     } finally {
       setLoading(false)
@@ -72,31 +72,9 @@ export default function ExportMoisPage() {
     generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks)
   }
 
-  const allTemps = data?.weeks?.flatMap((w: any) => w.temps) ?? []
-
-  const byMission: Record<string, { titre: string; totalMinutes: number; tjm: number }> = {}
-
-  allTemps.forEach((t: any) => {
-    const id = t.mission.id
-    if (!byMission[id]) {
-      byMission[id] = {
-        titre: t.mission.titre,
-        totalMinutes: 0,
-        tjm: t.mission.tjm ?? 0,
-      }
-    }
-    byMission[id].totalMinutes += t.dureeMinutes
-  })
-
-  const totalGlobalMinutes = Object.values(byMission).reduce(
-    (sum, m) => sum + m.totalMinutes,
-    0
-  )
-
-  const totalGlobalFacture = Object.values(byMission).reduce((sum, m) => {
-    const montantMinute = m.tjm ? m.tjm / 450 : 0
-    return sum + montantMinute * m.totalMinutes
-  }, 0)
+  const monthlyByMission = data?.monthlyByMission ?? {}
+  const totalGlobalMinutes = data?.monthlyTotals?.totalMinutes ?? 0
+  const totalGlobalFacture = data?.monthlyTotals?.totalAmount ?? 0
 
   return (
     <div className="flex flex-col flex-1">
@@ -163,6 +141,9 @@ export default function ExportMoisPage() {
             const weekDays = Array.from({ length: 7 }, (_, j) => addDays(startOfWeek(weekStart, { weekStartsOn: 1 }), j))
               .filter((d) => isWithinInterval(d, { start: monthStart, end: monthEnd }))
 
+            const byMission = w.byMission ?? {}
+            const totalAmountWeek = w.totals?.totalAmount ?? 0
+
             return (
               <Card key={i} className="mb-4">
                 <CardHeader>
@@ -174,10 +155,37 @@ export default function ExportMoisPage() {
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(byType).map(([type, minutes]) => (
                       <Badge key={type} variant="outline">
-                        {type} — {formatMinutes(minutes)} ({((minutes / totalMinutes) * 100).toFixed(1)}%)
+                        {type} — {formatMinutes(minutes)} ({((Number(minutes) / totalMinutes) * 100).toFixed(1)}%)
                       </Badge>
                     ))}
                   </div>
+
+                  {Object.keys(byMission).length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Gains par mission (semaine)</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {Object.values(byMission).map((m: any) => {
+                          const heures = Math.floor(m.totalMinutes / 60)
+                          const minutes = m.totalMinutes % 60
+                          return (
+                            <div key={m.missionId} className="border rounded-lg p-3 shadow-sm bg-muted/50">
+                              <div className="flex items-center justify-between">
+                                <div className="font-medium truncate pr-2">{m.titre}</div>
+                                <div className="text-foreground">{m.amount.toFixed(2)} €</div>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {heures}h{minutes > 0 ? minutes : ""} • TJM {m.tjm?.toFixed ? m.tjm.toFixed(2) : Number(m.tjm || 0).toFixed(2)} €
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <div className="flex justify-end text-sm text-muted-foreground">
+                        <span>Total semaine : {totalAmountWeek.toFixed(2)} €</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {weekDays.map((d) => {
                       const key = format(d, "yyyy-MM-dd")
@@ -200,55 +208,55 @@ export default function ExportMoisPage() {
             )
           })}
 
-<Card>
-  <CardHeader>
-    <CardTitle>Récapitulatif mensuel</CardTitle>
-  </CardHeader>
-  <CardContent className="text-sm text-muted-foreground space-y-6">
-    {Object.entries(byMission).map(([id, mission]) => {
-      const heures = Math.floor(mission.totalMinutes / 60)
-      const minutes = mission.totalMinutes % 60
-      const jours = mission.totalMinutes / 450
-      const montant = mission.tjm ? (mission.tjm * mission.totalMinutes) / 450 : 0
-      return (
-        <div key={id} className="space-y-1">
-          <div className="font-medium text-foreground">{mission.titre}</div>
-          <div className="flex justify-between">
-            <span>TJM :</span>
-            <span>{mission.tjm.toFixed(2)} €</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Temps travaillé :</span>
-            <span>{heures}h{minutes > 0 ? minutes : ""}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Jours travaillés (7h30) :</span>
-            <span>{jours.toFixed(2)} j</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Montant facturé :</span>
-            <span>{montant.toFixed(2)} €</span>
-          </div>
-        </div>
-      )
-    })}
+          <Card>
+            <CardHeader>
+              <CardTitle>Récapitulatif mensuel</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground space-y-6">
+              {Object.entries(monthlyByMission).map(([id, mission]: [string, any]) => {
+                const heures = Math.floor(mission.totalMinutes / 60)
+                const minutes = mission.totalMinutes % 60
+                const jours = mission.totalMinutes / 450
+                const montant = mission.amount ?? 0
+                return (
+                  <div key={id} className="space-y-1">
+                    <div className="font-medium text-foreground">{mission.titre}</div>
+                    <div className="flex justify-between">
+                      <span>TJM :</span>
+                      <span>{Number(mission.tjm || 0).toFixed(2)} €</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Temps travaillé :</span>
+                      <span>{heures}h{minutes > 0 ? minutes : ""}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Jours travaillés (7h30) :</span>
+                      <span>{jours.toFixed(2)} j</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Montant facturé :</span>
+                      <span>{montant.toFixed(2)} €</span>
+                    </div>
+                  </div>
+                )
+              })}
 
-    <div className="border-t pt-4 space-y-1 font-medium text-foreground">
-      <div className="flex justify-between">
-        <span>Total global :</span>
-        <span>{Math.floor(totalGlobalMinutes / 60)}h{totalGlobalMinutes % 60}</span>
-      </div>
-      <div className="flex justify-between">
-        <span>Jours travaillés :</span>
-        <span>{(totalGlobalMinutes / 450).toFixed(2)} j</span>
-      </div>
-      <div className="flex justify-between">
-        <span>Total facturé :</span>
-        <span>{totalGlobalFacture.toFixed(2)} €</span>
-      </div>
-    </div>
-  </CardContent>
-</Card>
+              <div className="border-t pt-4 space-y-1 font-medium text-foreground">
+                <div className="flex justify-between">
+                  <span>Total global :</span>
+                  <span>{Math.floor(totalGlobalMinutes / 60)}h{totalGlobalMinutes % 60}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Jours travaillés :</span>
+                  <span>{(totalGlobalMinutes / 450).toFixed(2)} j</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total facturé :</span>
+                  <span>{totalGlobalFacture.toFixed(2)} €</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="flex justify-end mt-4">
             <Button onClick={handleExport}>Exporter le PDF</Button>

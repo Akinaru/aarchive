@@ -36,6 +36,10 @@ export default function ProjetsPage() {
   const [editClientIds, setEditClientIds] = useState<number[]>([])
   const [addDialogOpen, setAddDialogOpen] = useState(false)
 
+  // Delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [projetToDelete, setProjetToDelete] = useState<Projet | null>(null)
+
   const isFormValid = () => newNom.trim() !== ""
 
   const fetchProjets = async () => {
@@ -121,14 +125,24 @@ export default function ProjetsPage() {
     }
   }
 
-  const deleteProjet = async (id: number) => {
+  const confirmDelete = (id: number) => {
+    const projet = projets.find((p) => p.id === id) || null
+    setProjetToDelete(projet)
+    setDeleteDialogOpen(true)
+  }
+
+  const deleteProjet = async () => {
+    if (!projetToDelete) return
     try {
-      const res = await fetch(`/api/projets/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/projets/${projetToDelete.id}`, { method: "DELETE" })
       if (!res.ok) throw new Error()
       await fetchProjets()
       toast.success("Projet supprimé")
     } catch {
       toast.error("Erreur lors de la suppression.")
+    } finally {
+      setProjetToDelete(null)
+      setDeleteDialogOpen(false)
     }
   }
 
@@ -243,7 +257,7 @@ export default function ProjetsPage() {
                 setEditProjet(projet)
                 setEditClientIds(projet.clients?.map((c) => c.client.id) || [])
               }}
-              onDelete={deleteProjet}
+              onDelete={(id) => confirmDelete(id)}
             />
           </CardContent>
         </Card>
@@ -340,6 +354,28 @@ export default function ProjetsPage() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                Êtes-vous sûr de vouloir supprimer{" "}
+                <span className="font-semibold">{projetToDelete?.nom}</span> ?
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" onClick={deleteProjet}>
+                  Supprimer
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { format } from "date-fns"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { ChevronDownIcon } from "lucide-react"
 import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
 
@@ -25,6 +33,7 @@ type Props = {
   selectedTemps: Temps | null
   types: TypeTache[]
   edited: {
+    date: string // "YYYY-MM-DD"
     dureeMinutes: number
     typeTacheId: string
     description: string
@@ -32,6 +41,21 @@ type Props = {
   setEdited: (val: Props["edited"]) => void
   setSelectedTemps: (val: Temps | null) => void
   updateTemps: () => void
+}
+
+function toYMD(d: Date) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
+function parseYMD(ymd?: string): Date | undefined {
+  if (!ymd) return undefined
+  const [y, m, d] = ymd.split("-").map(Number)
+  if (!y || !m || !d) return undefined
+  // Construit une date locale (évite les décalages de fuseau liés à l'ISO)
+  return new Date(y, m - 1, d, 0, 0, 0, 0)
 }
 
 export function FormEditTemps({
@@ -43,6 +67,9 @@ export function FormEditTemps({
   updateTemps,
 }: Props) {
   const [time, setTime] = useState("00:00")
+
+  // Date object pour le datepicker (à partir de edited.date en "YYYY-MM-DD")
+  const dateObj = useMemo(() => parseYMD(edited.date) ?? new Date(), [edited.date])
 
   useEffect(() => {
     const hours = String(Math.floor(edited.dureeMinutes / 60)).padStart(2, "0")
@@ -57,6 +84,11 @@ export function FormEditTemps({
     setEdited({ ...edited, dureeMinutes: total })
   }
 
+  const handleSelectDate = (d?: Date) => {
+    if (!d) return
+    setEdited({ ...edited, date: toYMD(d) })
+  }
+
   return (
     <Dialog
       open={!!selectedTemps}
@@ -66,7 +98,29 @@ export function FormEditTemps({
         <DialogHeader>
           <DialogTitle>Modifier le temps</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4 mt-2">
+          {/* Date (même UX que l'ajout : Popover + Calendar) */}
+          <div className="flex flex-col gap-1">
+            <Label>Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-between">
+                  {dateObj ? format(dateObj, "dd/MM/yyyy") : "Choisir"}
+                  <ChevronDownIcon className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateObj}
+                  captionLayout="dropdown"
+                  onSelect={handleSelectDate}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Durée */}
           <div className="flex flex-col gap-1">
             <Label htmlFor="time-picker">Durée</Label>

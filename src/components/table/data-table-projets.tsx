@@ -48,104 +48,106 @@ export function DataTableProjets({ data, onEdit, onDelete }: Props) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-const columns: ColumnDef<Projet>[] = [
-  {
-    id: "voir",
-    header: "Détail",
-    cell: ({ row }) => (
-      <Link href={`/projets/${row.original.id}`}>
-        <Button variant="outline" size="sm" className="w-full">
-          Voir
-        </Button>
-      </Link>
-    ),
-  },
-  {
-    accessorKey: "nom",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Nom
-        <ChevronDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ cell }) => <div className="font-medium">{cell.getValue<string>()}</div>,
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ cell }) => <div className="text-muted-foreground">{cell.getValue<string>()}</div>,
-  },
-  {
-    accessorKey: "missions",
-    header: "Missions",
-    cell: ({ row }) => (
-      <div>{row.original.missions.length}</div>
-    ),
-  },
-  {
-    accessorKey: "clients",
-    header: "Clients",
-    cell: ({ row }) => {
-      const clients = row.original.clients
-
-      if (!clients.length) return <span className="text-muted-foreground">Aucun</span>
-
-      const visibles = clients.slice(0, 3)
-      const hiddenCount = clients.length - visibles.length
-
-      return (
-        <div className="flex flex-wrap gap-3">
-          {visibles.map((c) => (
-            <div
-              key={c.client.id}
-              className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded"
-            >
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={c.client.photoPath || ""} alt={c.client.nom} />
-                <AvatarFallback>{c.client.nom[0]}</AvatarFallback>
-              </Avatar>
-              <span>{c.client.nom}</span>
-            </div>
-          ))}
-          {hiddenCount > 0 && (
-            <div className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded text-muted-foreground">
-              +{hiddenCount} autre{hiddenCount > 1 ? "s" : ""}
-            </div>
-          )}
-        </div>
-      )
+  const columns: ColumnDef<Projet>[] = [
+    {
+      id: "voir",
+      header: "Détail",
+      cell: ({ row }) => (
+        <Link href={`/projets/${row.original.id}`}>
+          <Button variant="outline" size="sm" className="w-full">
+            Voir
+          </Button>
+        </Link>
+      ),
     },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    header: () => null,
-    cell: ({ row }) => (
-      <div className="flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(row.original.id)}
-              className="text-destructive"
-            >
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
-  },
-]
+    {
+      accessorKey: "nom",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Nom
+          <ChevronDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ cell }) => <div className="font-medium">{cell.getValue<string>()}</div>,
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ cell }) => (
+        <div className="text-muted-foreground">{cell.getValue<string>()}</div>
+      ),
+    },
+    {
+      accessorKey: "missions",
+      header: "Missions",
+      cell: ({ row }) => <div>{row.original.missions.length}</div>,
+    },
+    {
+      accessorKey: "clients",
+      header: "Clients",
+      cell: ({ row }) => {
+        const clients = row.original.clients
 
+        if (!clients.length)
+          return <span className="text-muted-foreground">Aucun</span>
+
+        const visibles = clients.slice(0, 3)
+        const hiddenCount = clients.length - visibles.length
+
+        return (
+          <div className="flex flex-wrap gap-3">
+            {visibles.map((c) => (
+              <div
+                key={c.client.id}
+                className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded"
+              >
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={c.client.photoPath || ""} alt={c.client.nom} />
+                  <AvatarFallback>{c.client.nom[0]}</AvatarFallback>
+                </Avatar>
+                <span>{c.client.nom}</span>
+              </div>
+            ))}
+            {hiddenCount > 0 && (
+              <div className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded text-muted-foreground">
+                +{hiddenCount} autre{hiddenCount > 1 ? "s" : ""}
+              </div>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      header: () => null,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                Modifier
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(row.original.id)}
+                className="text-destructive"
+              >
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ]
 
   const table = useReactTable({
     data,
@@ -174,7 +176,9 @@ const columns: ColumnDef<Projet>[] = [
           autoComplete="off"
           placeholder="Filtrer par nom..."
           value={(table.getColumn("nom")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("nom")?.setFilterValue(event.target.value)}
+          onChange={(event) =>
+            table.getColumn("nom")?.setFilterValue(event.target.value)
+          }
           className="max-w-sm"
         />
         <DropdownMenu>
@@ -190,7 +194,9 @@ const columns: ColumnDef<Projet>[] = [
                 <DropdownMenuCheckboxItem
                   key={column.id}
                   checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  onCheckedChange={(value) =>
+                    column.toggleVisibility(!!value)
+                  }
                 >
                   {column.id}
                 </DropdownMenuCheckboxItem>
@@ -208,7 +214,10 @@ const columns: ColumnDef<Projet>[] = [
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>

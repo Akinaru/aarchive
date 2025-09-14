@@ -32,14 +32,16 @@ export async function PUT(req: NextRequest, context: unknown) {
     return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 })
   }
 
-  const updated = await prisma.temps.update({
-    where: { id },
-    data: {
-      dureeMinutes: body.dureeMinutes,
-      typeTacheId: parseInt(body.typeTacheId),
-      description: body.description || null,
-    },
-  })
+const updated = await prisma.temps.update({
+  where: { id },
+  data: {
+    dureeMinutes: body.dureeMinutes,
+    typeTacheId: parseInt(body.typeTacheId),
+    description: body.description || null,
+    date: body.date ? new Date(body.date) : undefined,
+  },
+})
+
 
   return NextResponse.json(updated)
 }

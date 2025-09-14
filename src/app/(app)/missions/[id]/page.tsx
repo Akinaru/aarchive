@@ -234,96 +234,96 @@ export default function MissionSinglePage() {
             </CardContent>
           </Card>
 
-<Card className="w-full md:w-[30%]">
-  <CardHeader>
-    <CardTitle>Résumé de la mission</CardTitle>
-  </CardHeader>
-  <CardContent className="space-y-4 text-sm text-muted-foreground">
-    <div className="space-y-1">
-      <div className="flex justify-between">
-        <span>TJM appliqué :</span>
-        <span className="text-foreground">
-          {mission.tjm != null ? `${Number(mission.tjm).toFixed(2)} €` : "-"}
-        </span>
-      </div>
+          <Card className="w-full md:w-[30%]">
+            <CardHeader>
+              <CardTitle>Résumé de la mission</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <span>TJM appliqué :</span>
+                  <span className="text-foreground">
+                    {mission.tjm != null ? `${Number(mission.tjm).toFixed(2)} €` : "-"}
+                  </span>
+                </div>
 
-      <div className="flex justify-between">
-        <span>Total saisi (mois courant) :</span>
-        <span className="font-medium text-foreground">
-          {(() => {
-            const now = new Date()
-            const monthStart = startOfMonth(now)
-            const monthEnd = endOfMonth(now)
-            const minutes = temps.reduce((sum: number, t: any) => {
-              const d = new Date(t.date)
-              return isWithinInterval(d, { start: monthStart, end: monthEnd })
-                ? sum + (t.dureeMinutes ?? 0)
-                : sum
-            }, 0)
-            const h = Math.floor(minutes / 60)
-            const m = minutes % 60 || ""
-            return `${h}h${m}`
-          })()}
-        </span>
-      </div>
+                <div className="flex justify-between">
+                  <span>Total saisi (mois courant) :</span>
+                  <span className="font-medium text-foreground">
+                    {(() => {
+                      const now = new Date()
+                      const monthStart = startOfMonth(now)
+                      const monthEnd = endOfMonth(now)
+                      const minutes = temps.reduce((sum: number, t: any) => {
+                        const d = new Date(t.date)
+                        return isWithinInterval(d, { start: monthStart, end: monthEnd })
+                          ? sum + (t.dureeMinutes ?? 0)
+                          : sum
+                      }, 0)
+                      const h = Math.floor(minutes / 60)
+                      const m = minutes % 60 || ""
+                      return `${h}h${m}`
+                    })()}
+                  </span>
+                </div>
 
-      <div className="flex justify-between">
-        <span>Estimation salaire (mois courant) :</span>
-        <span className="font-medium text-foreground">
-          {(() => {
-            const now = new Date()
-            const monthStart = startOfMonth(now)
-            const monthEnd = endOfMonth(now)
-            const minutes = temps.reduce((sum: number, t: any) => {
-              const d = new Date(t.date)
-              return isWithinInterval(d, { start: monthStart, end: monthEnd })
-                ? sum + (t.dureeMinutes ?? 0)
-                : sum
-            }, 0)
-            const montant = mission.tjm ? (Number(mission.tjm) * minutes) / 450 : 0
-            return `${montant.toFixed(2)} €`
-          })()}
-        </span>
-      </div>
+                <div className="flex justify-between">
+                  <span>Estimation salaire (mois courant) :</span>
+                  <span className="font-medium text-foreground">
+                    {(() => {
+                      const now = new Date()
+                      const monthStart = startOfMonth(now)
+                      const monthEnd = endOfMonth(now)
+                      const minutes = temps.reduce((sum: number, t: any) => {
+                        const d = new Date(t.date)
+                        return isWithinInterval(d, { start: monthStart, end: monthEnd })
+                          ? sum + (t.dureeMinutes ?? 0)
+                          : sum
+                      }, 0)
+                      const montant = mission.tjm ? (Number(mission.tjm) * minutes) / 450 : 0
+                      return `${montant.toFixed(2)} €`
+                    })()}
+                  </span>
+                </div>
 
-      <div className="flex justify-between">
-        <span>Types de tâches utilisés :</span>
-        <span className="font-medium text-foreground">
-          {[...new Set(temps.map((t: any) => t.typeTache?.nom ?? "Inconnu"))].length}
-        </span>
-      </div>
-    </div>
+                <div className="flex justify-between">
+                  <span>Types de tâches utilisés :</span>
+                  <span className="font-medium text-foreground">
+                    {[...new Set(temps.map((t: any) => t.typeTache?.nom ?? "Inconnu"))].length}
+                  </span>
+                </div>
+              </div>
 
-    <div className="border-t pt-3 space-y-1">
-      <div className="flex justify-between">
-        <span>Statut :</span>
-        <span className="flex items-center gap-2 text-foreground capitalize">
-          {(() => {
-            const { icon: Icon, className, spin } = STATUT_ICONS[mission.statut]
-            return <Icon className={`h-4 w-4 ${className} ${spin ? "animate-spin" : ""}`} />
-          })()}
-          {mission.statut.replace("_", " ").toLowerCase()}
-        </span>
-      </div>
-      <div className="flex justify-between">
-        <span>Date de début :</span>
-        <span className="text-foreground">
-          {mission.dateDebut ? format(new Date(mission.dateDebut), "dd/MM/yyyy") : "-"}
-        </span>
-      </div>
-      <div className="flex justify-between">
-        <span>Durée cible quotidienne :</span>
-        <span className="text-foreground">
-          {mission.requiredDailyMinutes
-            ? `${Math.floor(mission.requiredDailyMinutes / 60)}h${mission.requiredDailyMinutes % 60 || ""}`
-            : "-"}
-        </span>
-      </div>
-    </div>
+              <div className="border-t pt-3 space-y-1">
+                <div className="flex justify-between">
+                  <span>Statut :</span>
+                  <span className="flex items-center gap-2 text-foreground capitalize">
+                    {(() => {
+                      const { icon: Icon, className, spin } = STATUT_ICONS[mission.statut]
+                      return <Icon className={`h-4 w-4 ${className} ${spin ? "animate-spin" : ""}`} />
+                    })()}
+                    {mission.statut.replace("_", " ").toLowerCase()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Date de début :</span>
+                  <span className="text-foreground">
+                    {mission.dateDebut ? format(new Date(mission.dateDebut), "dd/MM/yyyy") : "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Durée cible quotidienne :</span>
+                  <span className="text-foreground">
+                    {mission.requiredDailyMinutes
+                      ? `${Math.floor(mission.requiredDailyMinutes / 60)}h${mission.requiredDailyMinutes % 60 || ""}`
+                      : "-"}
+                  </span>
+                </div>
+              </div>
 
-    <ChartTachePie temps={temps} />
-  </CardContent>
-</Card>
+              <ChartTachePie temps={temps} />
+            </CardContent>
+          </Card>
 
 
         </div>

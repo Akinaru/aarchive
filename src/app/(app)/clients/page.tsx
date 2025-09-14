@@ -19,6 +19,8 @@ export default function ClientsPage() {
   const [newPhoto, setNewPhoto] = useState("")
   const [editClient, setEditClient] = useState<Client | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
 
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -96,14 +98,24 @@ export default function ClientsPage() {
     }
   }
 
-  const deleteClient = async (id: number) => {
+  const confirmDelete = (id: number) => {
+    const client = clients.find((c) => c.id === id) || null
+    setClientToDelete(client)
+    setDeleteDialogOpen(true)
+  }
+
+  const deleteClient = async () => {
+    if (!clientToDelete) return
     try {
-      const res = await fetch(`/api/clients/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/clients/${clientToDelete.id}`, { method: "DELETE" })
       if (!res.ok) throw new Error()
       await fetchClients()
       toast.success("Client supprimé")
     } catch {
       toast.error("Erreur lors de la suppression.")
+    } finally {
+      setClientToDelete(null)
+      setDeleteDialogOpen(false)
     }
   }
 
@@ -192,7 +204,7 @@ export default function ClientsPage() {
             <DataTableClients
               data={clients}
               onEdit={(client) => setEditClient(client)}
-              onDelete={deleteClient}
+              onDelete={(id) => confirmDelete(id)}
             />
           </CardContent>
         </Card>
@@ -255,6 +267,28 @@ export default function ClientsPage() {
                 <Button onClick={updateClient}>Valider</Button>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                Êtes-vous sûr de vouloir supprimer{" "}
+                <span className="font-semibold">{clientToDelete?.nom}</span> ?
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" onClick={deleteClient}>
+                  Supprimer
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

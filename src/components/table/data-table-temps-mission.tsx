@@ -37,6 +37,13 @@ type Props = {
   onEdit: () => void
 }
 
+function toYMD(value: string | Date) {
+  const d = typeof value === "string" ? new Date(value) : value
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 10) // YYYY-MM-DD
+}
+
 export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -45,6 +52,7 @@ export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) 
   const [selectedTemps, setSelectedTemps] = useState<Temps | null>(null)
 
   const [edited, setEdited] = useState({
+    date: "",
     dureeMinutes: 0,
     typeTacheId: "",
     description: "",
@@ -57,9 +65,7 @@ export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) 
       header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Type de tâche
           <ChevronDown className="ml-2 h-4 w-4" />
@@ -81,8 +87,8 @@ export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) 
       accessorKey: "date",
       header: "Date",
       cell: ({ cell }) =>
-        format(new Date(cell.getValue<string>()), "dd MMM yyyy (EEEE)", { locale: fr })
-// → 08 juil. 2024 (lundi)
+        format(new Date(cell.getValue<string>()), "dd MMM yyyy (EEEE)", { locale: fr }),
+      // → 08 juil. 2024 (lundi)
     },
     {
       accessorKey: "description",
@@ -99,12 +105,16 @@ export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) 
             variant="outline"
             size="icon"
             onClick={() => {
-              const temps = row.original
-              setSelectedTemps(temps)
+              const t = row.original
+              setSelectedTemps(t)
               setEdited({
-                dureeMinutes: temps.dureeMinutes,
-                typeTacheId: temps.typeTacheId.toString(),
-                description: temps.description || "",
+                date: toYMD(t.date as any),
+                dureeMinutes: Number(t.dureeMinutes ?? 0),
+                typeTacheId:
+                  (t as any).typeTacheId != null
+                    ? String((t as any).typeTacheId)
+                    : "",
+                description: (t as any).description || "",
               })
             }}
           >
@@ -156,7 +166,10 @@ export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) 
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -168,14 +181,20 @@ export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) 
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center h-24">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="text-center h-24"
+                  >
                     Aucun résultat.
                   </TableCell>
                 </TableRow>
@@ -217,9 +236,10 @@ export function DataTableTempsMission({ data, types, onDelete, onEdit }: Props) 
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              date: edited.date,
               description: edited.description,
-              typeTacheId: edited.typeTacheId,
-              dureeMinutes: edited.dureeMinutes,
+              typeTacheId: edited.typeTacheId ? Number(edited.typeTacheId) : null,
+              dureeMinutes: Number(edited.dureeMinutes),
             }),
           })
 
