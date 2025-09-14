@@ -26,12 +26,20 @@ function formatMinutes(minutes: number): string {
   return `${m}min`
 }
 
+function toYMD(value: string | Date) {
+  const d = typeof value === "string" ? new Date(value) : value
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 10) // YYYY-MM-DD
+}
+
 export default function TempsPage() {
   const [temps, setTemps] = useState<Temps[]>([])
   const [missions, setMissions] = useState<Mission[]>([])
   const [types, setTypes] = useState<TypeTache[]>([])
   const [selectedTemps, setSelectedTemps] = useState<Temps | null>(null)
   const [edited, setEdited] = useState({
+    date: "",
     dureeMinutes: 0,
     typeTacheId: "",
     description: "",
@@ -75,7 +83,9 @@ export default function TempsPage() {
     if (!selectedTemps) return
     await fetch(`/api/temps/${selectedTemps.id}`, {
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        date: edited.date,
         description: edited.description,
         typeTacheId: edited.typeTacheId,
         dureeMinutes: edited.dureeMinutes,
@@ -125,7 +135,6 @@ export default function TempsPage() {
                 </Card>
               ))}
             </div>
-
             <Card>
               <CardHeader>
                 <Skeleton className="h-6 w-1/4" />
@@ -134,7 +143,6 @@ export default function TempsPage() {
                 <Skeleton className="h-16 w-full rounded-md" />
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <Skeleton className="h-6 w-1/3" />
@@ -246,6 +254,7 @@ export default function TempsPage() {
                               onClick={() => {
                                 setSelectedTemps(t)
                                 setEdited({
+                                  date: toYMD(t.date),
                                   dureeMinutes: t.dureeMinutes,
                                   typeTacheId: t.typeTache?.id.toString() ?? "",
                                   description: t.description ?? "",
