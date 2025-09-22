@@ -1,0 +1,27 @@
+/* charts — LIGHT THEME */
+:root {
+  --chart-1:  oklch(0.62 0.18 255); /* bleu */
+  --chart-2:  oklch(0.60 0.24  25); /* rouge — très distinct */
+  --chart-3:  oklch(0.70 0.16 150); /* vert — très distinct */
+  --chart-4:  oklch(0.76 .14  70); /* orange */
+  --chart-5:  oklch(0.58 0.20 300); /* violet */
+  --chart-6:  oklch(0.68 0.13 200); /* teal */
+  --chart-7:  oklch(0.86 0.14  95); /* ambre */
+  --chart-8:  oklch(0.55 0.17 275); /* indigo */
+  --chart-9:  oklch(0.66 0.05 250); /* ardoise */
+  --chart-10: oklch(0.58 0.10  35); /* brun — très distinct des 2 & 3 */
+}
+
+/* charts — DARK THEME (un peu plus clairs/saturés) */
+.dark {
+  --chart-1:  oklch(0.80 0.22 255); /* bleu */
+  --chart-2:  #003f5c; /* rouge — distinct */
+  --chart-3:  #ff6361; /* vert — distinct */
+  --chart-4:  oklch(0.86 0.18  70); /* orange */
+  --chart-5:  oklch(0.78 0.24 300); /* violet */
+  --chart-6:  oklch(0.84 0.18 200); /* teal */
+  --chart-7:  oklch(0.90 0.18  95); /* ambre */
+  --chart-8:  oklch(0.76 0.22 275); /* indigo */
+  --chart-9:  oklch(0.78 0.07 250); /* ardoise */
+  --chart-10: #bc5090; /* brun — distinct des 2 & 3 */
+}

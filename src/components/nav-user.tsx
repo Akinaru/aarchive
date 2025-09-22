@@ -9,10 +9,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, Sun, Moon } from "lucide-react"
+import { LogOut, Sun, Moon, User } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { useUser } from "@/context/user-provider"
 import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link"
 
 export function NavUser() {
   const { user } = useUser()
@@ -48,18 +49,17 @@ export function NavUser() {
 
       {!isLoading && (
         <DropdownMenuContent className="w-56" align="end">
-
-          <DropdownMenuLabel>Thème</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => setTheme("light")}>
-            <Sun className="mr-2 size-4" /> Clair
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("dark")}>
+          {/* <DropdownMenuItem onClick={() => setTheme("dark")}>
             <Moon className="mr-2 size-4" /> Sombre
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
 
-          <DropdownMenuSeparator />
+          <Link href="/profil" className="flex w-full">
+            <DropdownMenuItem className="flex w-full">
+              <User className="mr-2 size-4" /> Mon profil
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-            <LogOut className="mr-2 size-4" /> Déconnexion
+            <LogOut className="mr-2 size-4 text-red-500" /> <span className="text-red-500">Déconnexion</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       )}
