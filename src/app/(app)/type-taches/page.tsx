@@ -13,33 +13,42 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { DataTableTypeTaches } from "@/components/table/data-table-type-taches"
 
 export default function TypeTachePage() {
   const [types, setTypes] = useState<TypeTache[]>([])
   const [newNom, setNewNom] = useState("")
   const [editNom, setEditNom] = useState("")
   const [selectedType, setSelectedType] = useState<TypeTache | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const fetchTypes = async () => {
-    const res = await fetch("/api/type-tache")
-    const data = await res.json()
-    setTypes(data)
+    try {
+      setIsLoading(true)
+      const res = await fetch("/api/type-tache", { cache: "no-store" })
+      if (!res.ok) throw new Error("Fetch error")
+      const data = await res.json()
+      setTypes(data)
+    } catch {
+      toast.error("Impossible de charger les types")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const addType = async () => {
     if (!newNom.trim()) return toast.error("Nom requis")
-
-    const res = await fetch("/api/type-tache", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nom: newNom }),
-    })
-
-    if (res.ok) {
+    try {
+      const res = await fetch("/api/type-tache", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nom: newNom }),
+      })
+      if (!res.ok) throw new Error()
       setNewNom("")
       toast.success("Type ajouté")
       await fetchTypes()
-    } else {
+    } catch {
       toast.error("Erreur lors de l’ajout")
     }
   }
@@ -47,32 +56,29 @@ export default function TypeTachePage() {
   const updateType = async () => {
     if (!selectedType) return
     if (!editNom.trim()) return toast.error("Nom requis")
-
-    const res = await fetch(`/api/type-tache/${selectedType.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nom: editNom }),
-    })
-
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/type-tache/${selectedType.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nom: editNom }),
+      })
+      if (!res.ok) throw new Error()
       toast.success("Type modifié")
       setSelectedType(null)
       setEditNom("")
       await fetchTypes()
-    } else {
+    } catch {
       toast.error("Erreur lors de la modification")
     }
   }
 
   const deleteType = async (id: number) => {
-    const res = await fetch(`/api/type-tache/${id}`, {
-      method: "DELETE",
-    })
-
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/type-tache/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
       toast.success("Supprimé")
       await fetchTypes()
-    } else {
+    } catch {
       toast.error("Erreur lors de la suppression")
     }
   }
@@ -108,27 +114,16 @@ export default function TypeTachePage() {
           <CardHeader>
             <CardTitle>Liste des types</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {types.length === 0 && <p className="text-sm text-muted-foreground">Aucun type encore créé.</p>}
-
-            {types.map((t) => (
-              <div key={t.id} className="flex items-center gap-2">
-                <span className="flex-1">{t.nom}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedType(t)
-                    setEditNom(t.nom)
-                  }}
-                >
-                  Modifier
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => deleteType(t.id)}>
-                  Supprimer
-                </Button>
-              </div>
-            ))}
+          <CardContent>
+            <DataTableTypeTaches
+              data={types}
+              isLoading={isLoading}
+              onEdit={(t) => {
+                setSelectedType(t)
+                setEditNom(t.nom)
+              }}
+              onDelete={(id) => deleteType(id)}
+            />
           </CardContent>
         </Card>
 
@@ -151,7 +146,15 @@ export default function TypeTachePage() {
                 onChange={(e) => setEditNom(e.target.value)}
                 placeholder="Nouveau nom"
               />
-              <Button onClick={updateType}>Valider</Button>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => {
+                  setSelectedType(null)
+                  setEditNom("")
+                }}>
+                  Annuler
+                </Button>
+                <Button onClick={updateType}>Valider</Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

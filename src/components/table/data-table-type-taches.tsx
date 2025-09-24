@@ -2,17 +2,16 @@
 
 import {
   ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
 } from "@tanstack/react-table"
-
 import {
   Table,
   TableBody,
@@ -31,25 +30,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Projet } from "@/types/projets"
-import { useEffect, useMemo, useState } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
-import Link from "next/link"
+import { TypeTache } from "@/types/taches"
+import { useEffect, useMemo, useState } from "react"
 
 type Props = {
-  data: Projet[]
-  onEdit: (projet: Projet) => void
+  data: TypeTache[]
+  onEdit: (type: TypeTache) => void
   onDelete: (id: number) => void
   isLoading?: boolean
 }
 
-export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
+export function DataTableTypeTaches({ data, onEdit, onDelete, isLoading }: Props) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
+  // Anti-flash: petit délai pour laisser apparaître le skeleton au 1er rendu
   const [initializing, setInitializing] = useState(true)
   useEffect(() => {
     const t = setTimeout(() => setInitializing(false), 600)
@@ -61,18 +59,7 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
     [isLoading, initializing, data]
   )
 
-  const columns: ColumnDef<Projet>[] = [
-    {
-      id: "voir",
-      header: "Détail",
-      cell: ({ row }) => (
-        <Link href={`/projets/${row.original.id}`}>
-          <Button variant="outline" size="sm" className="w-[64px]">
-            Voir
-          </Button>
-        </Link>
-      ),
-    },
+  const columns: ColumnDef<TypeTache>[] = [
     {
       accessorKey: "nom",
       header: ({ column }) => (
@@ -86,57 +73,10 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
         </Button>
       ),
       cell: ({ cell }) => (
-        <div className="font-medium truncate max-w-[320px]">
+        <div className="font-medium truncate max-w-[620px]">
           {cell.getValue<string>()}
         </div>
       ),
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ cell }) => (
-        <div className="text-muted-foreground truncate max-w-[520px]">
-          {cell.getValue<string>()}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "missions",
-      header: "Missions",
-      cell: ({ row }) => <div className="tabular-nums">{row.original.missions.length}</div>,
-    },
-    {
-      accessorKey: "clients",
-      header: "Clients",
-      cell: ({ row }) => {
-        const clients = row.original.clients
-        if (!clients.length) return <span className="text-muted-foreground">Aucun</span>
-
-        const visibles = clients.slice(0, 3)
-        const hiddenCount = clients.length - visibles.length
-
-        return (
-          <div className="flex flex-wrap gap-2">
-            {visibles.map((c) => (
-              <div
-                key={c.client.id}
-                className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded"
-              >
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={c.client.photoPath || ""} alt={c.client.nom} />
-                  <AvatarFallback>{c.client.nom[0]}</AvatarFallback>
-                </Avatar>
-                <span className="truncate max-w-[140px]">{c.client.nom}</span>
-              </div>
-            ))}
-            {hiddenCount > 0 && (
-              <div className="flex items-center gap-2 text-sm bg-muted px-2 py-1 rounded text-muted-foreground">
-                +{hiddenCount} autre{hiddenCount > 1 ? "s" : ""}
-              </div>
-            )}
-          </div>
-        )
-      },
     },
     {
       id: "actions",
@@ -186,46 +126,13 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
     onRowSelectionChange: setRowSelection,
   })
 
-  const renderSkeletonRows = () => {
-    return Array.from({ length: 5 }).map((_, i) => (
-      <TableRow key={`skeleton-${i}`} className="h-[52px]">
-        {/* Détail */}
-        <TableCell className="w-[96px] py-1">
-          <Skeleton className="h-8 w-[64px] rounded-md" />
-        </TableCell>
-
+  const renderSkeletonRows = () =>
+    Array.from({ length: 6 }).map((_, i) => (
+      <TableRow key={`sk-${i}`} className="h-[52px]">
         {/* Nom */}
-        <TableCell className="w-[360px] py-1">
-          <Skeleton className="h-4 w-[320px] rounded" />
+        <TableCell className="w-[720px] py-1">
+          <Skeleton className="h-4 w-[420px] rounded" />
         </TableCell>
-
-        {/* Description */}
-        <TableCell className="w-[560px] py-1">
-          <Skeleton className="h-4 w-[520px] rounded" />
-        </TableCell>
-
-        {/* Missions */}
-        <TableCell className="w-[120px] py-1">
-          <Skeleton className="h-4 w-[32px] rounded" />
-        </TableCell>
-
-        {/* Clients (1 ligne fixe, pas de wrap) */}
-        <TableCell className="w-[420px] py-1">
-          <div className="flex flex-nowrap items-center gap-2 overflow-hidden">
-            <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <Skeleton className="h-4 w-[100px] rounded" />
-            </div>
-            <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <Skeleton className="h-4 w-[90px] rounded" />
-            </div>
-            <div className="ml-1 bg-muted px-2 py-1 rounded">
-              <Skeleton className="h-4 w-[48px] rounded" />
-            </div>
-          </div>
-        </TableCell>
-
         {/* Actions */}
         <TableCell className="w-[80px] py-1">
           <div className="flex justify-end">
@@ -234,20 +141,20 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
         </TableCell>
       </TableRow>
     ))
-  }
 
   return (
     <div className="w-full space-y-3">
       <div className="flex items-center gap-2">
         <Input
           type="search"
-          autoComplete="off"
           placeholder="Filtrer par nom..."
+          autoComplete="off"
           value={(table.getColumn("nom")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("nom")?.setFilterValue(event.target.value)}
+          onChange={(e) => table.getColumn("nom")?.setFilterValue(e.target.value)}
           className="max-w-sm"
           disabled={showLoading}
         />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto" disabled={showLoading}>
@@ -256,14 +163,14 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {table.getAllColumns()
-              .filter((col) => col.getCanHide())
-              .map((column) => (
+              .filter((c) => c.getCanHide())
+              .map((c) => (
                 <DropdownMenuCheckboxItem
-                  key={column.id}
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  key={c.id}
+                  checked={c.getIsVisible()}
+                  onCheckedChange={(v) => c.toggleVisibility(!!v)}
                 >
-                  {column.id}
+                  {c.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>
@@ -272,23 +179,18 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
 
       <div className="rounded-md border">
         <Table className="table-fixed text-sm">
+          {/* Grille figée pour parité skeleton / contenu */}
           <colgroup>
-            <col style={{ width: "96px" }} />
-            <col style={{ width: "360px" }} />
-            <col style={{ width: "560px" }} />
-            <col style={{ width: "120px" }} />
-            <col style={{ width: "420px" }} />
+            <col style={{ width: "720px" }} />
             <col style={{ width: "80px" }} />
           </colgroup>
 
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="h-[44px]">
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="py-1 whitespace-nowrap">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id} className="h-[44px]">
+                {hg.headers.map((h) => (
+                  <TableHead key={h.id} className="py-1 whitespace-nowrap">
+                    {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
                   </TableHead>
                 ))}
               </TableRow>

@@ -23,10 +23,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  ChevronDown,
-  MoreHorizontal,
-} from "lucide-react"
+import { ChevronDown, MoreHorizontal } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -34,22 +31,36 @@ import {
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu"
 import { Mission } from "@/types/missions"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { STATUT_ICONS } from "@/lib/status"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type Props = {
   data: Mission[]
   onEdit: (mission: Mission) => void
   onDelete: (id: number) => void
+  isLoading?: boolean
 }
 
-export function DataTableMissions({ data, onEdit, onDelete }: Props) {
+export function DataTableMissions({ data, onEdit, onDelete, isLoading }: Props) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+
+  // Anti-flash skeleton (même logique que clients)
+  const [initializing, setInitializing] = useState(true)
+  useEffect(() => {
+    const t = setTimeout(() => setInitializing(false), 600)
+    return () => clearTimeout(t)
+  }, [])
+
+  const showLoading = useMemo(
+    () => isLoading === true || (initializing && (!data || data.length === 0)),
+    [isLoading, initializing, data]
+  )
 
   const columns: ColumnDef<Mission>[] = [
     {
@@ -57,7 +68,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
       header: "Détail",
       cell: ({ row }) => (
         <Link href={`/missions/${row.original.id}`}>
-          <Button variant="outline" size="sm" className="w-full">
+          <Button variant="outline" size="sm" className="w-[64px]">
             Voir
           </Button>
         </Link>
@@ -68,22 +79,21 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
       header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-0"
         >
           Titre
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ cell }) => (
-        <div className="font-medium">{cell.getValue<string>()}</div>
+        <div className="font-medium truncate max-w-[320px]">{cell.getValue<string>()}</div>
       ),
     },
     {
       accessorKey: "projet.nom",
       header: "Projet",
-      cell: ({ row }) => <div>{row.original.projet.nom}</div>,
+      cell: ({ row }) => <div className="truncate max-w-[220px]">{row.original.projet.nom}</div>,
     },
     {
       accessorKey: "statut",
@@ -93,7 +103,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
         const { icon: Icon, className, spin } = STATUT_ICONS[statut] || {}
         return (
           <Badge variant="outline" className={`flex items-center gap-1 ${className}`}>
-            {Icon && <Icon className={`mr-1 h-3 w-3 ${className} ${spin ? "animate-spin" : ""}`} />}
+            {Icon && <Icon className={`mr-1 h-3 w-3 ${spin ? "animate-spin" : ""}`} />}
             {statut.replace("_", " ").toLowerCase()}
           </Badge>
         )
@@ -104,7 +114,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
       header: "Début",
       cell: ({ row }) => {
         const date = row.original.dateDebut
-        return date ? new Date(date).toLocaleDateString("fr-FR") : "-"
+        return <span className="tabular-nums">{date ? new Date(date).toLocaleDateString("fr-FR") : "-"}</span>
       },
     },
     {
@@ -115,7 +125,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
         if (!minutes) return "-"
         const h = Math.floor(minutes / 60)
         const m = minutes % 60
-        return `${h}h${m > 0 ? m : ""}`
+        return <span className="tabular-nums">{h}h{m > 0 ? m : ""}</span>
       },
     },
     {
@@ -123,7 +133,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
       header: "TJM",
       cell: ({ row }) => {
         const tjm = row.original.tjm
-        return tjm ? `${(tjm).toFixed(0)} €` : "—"
+        return <span className="tabular-nums">{tjm ? `${tjm.toFixed(0)} €` : "—"}</span>
       },
     },
     {
@@ -134,7 +144,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
         <div className="flex justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -172,6 +182,57 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
     onRowSelectionChange: setRowSelection,
   })
 
+  const renderSkeletonRows = () => {
+    return Array.from({ length: 5 }).map((_, i) => (
+      <TableRow key={`skeleton-${i}`} className="h-[64px]">
+        {/* Détail */}
+        <TableCell className="w-[96px]">
+          <Skeleton className="h-8 w-[64px] rounded-md" />
+        </TableCell>
+
+        {/* Titre */}
+        <TableCell className="w-[360px]">
+          <Skeleton className="h-4 w-[320px] rounded" />
+        </TableCell>
+
+        {/* Projet */}
+        <TableCell className="w-[240px]">
+          <Skeleton className="h-4 w-[200px] rounded" />
+        </TableCell>
+
+        {/* Statut (mimique Badge) */}
+        <TableCell className="w-[160px]">
+          <div className="inline-flex items-center gap-2">
+            <Skeleton className="h-3 w-3 rounded-full" />
+            <Skeleton className="h-6 w-[110px] rounded-md" />
+          </div>
+        </TableCell>
+
+        {/* Début */}
+        <TableCell className="w-[140px]">
+          <Skeleton className="h-4 w-[90px] rounded" />
+        </TableCell>
+
+        {/* Durée quotidienne requise */}
+        <TableCell className="w-[220px]">
+          <Skeleton className="h-4 w-[120px] rounded" />
+        </TableCell>
+
+        {/* TJM */}
+        <TableCell className="w-[120px]">
+          <Skeleton className="h-4 w-[60px] rounded" />
+        </TableCell>
+
+        {/* Actions */}
+        <TableCell className="w-[80px]">
+          <div className="flex justify-end">
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        </TableCell>
+      </TableRow>
+    ))
+  }
+
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center gap-2">
@@ -179,20 +240,32 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
           type="search"
           placeholder="Filtrer par titre..."
           value={(table.getColumn("titre")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("titre")?.setFilterValue(event.target.value)
-          }
+          onChange={(event) => table.getColumn("titre")?.setFilterValue(event.target.value)}
           className="max-w-sm"
+          autoComplete="off"
+          disabled={showLoading}
         />
       </div>
 
       <div className="rounded-md border">
-        <Table>
+        <Table className="table-fixed">
+          {/* Grille fixe pour parité skeleton/contenu */}
+          <colgroup>
+            <col style={{ width: "96px" }} />
+            <col style={{ width: "360px" }} />
+            <col style={{ width: "240px" }} />
+            <col style={{ width: "160px" }} />
+            <col style={{ width: "140px" }} />
+            <col style={{ width: "220px" }} />
+            <col style={{ width: "120px" }} />
+            <col style={{ width: "80px" }} />
+          </colgroup>
+
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="whitespace-nowrap">
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -201,10 +274,13 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
-            {table.getRowModel().rows.length ? (
+            {showLoading ? (
+              renderSkeletonRows()
+            ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="h-[64px]">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -228,7 +304,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
           variant="outline"
           size="sm"
           onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          disabled={showLoading || !table.getCanPreviousPage()}
         >
           Précédent
         </Button>
@@ -236,7 +312,7 @@ export function DataTableMissions({ data, onEdit, onDelete }: Props) {
           variant="outline"
           size="sm"
           onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          disabled={showLoading || !table.getCanNextPage()}
         >
           Suivant
         </Button>

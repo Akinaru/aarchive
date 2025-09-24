@@ -1,15 +1,12 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/authOptions"
 import { redirect } from "next/navigation"
-import LoginClientForm from "@/components/form/login-form"
 import { prisma } from "@/lib/prisma"
+import { LoginForm } from "@/components/form/login-form"
 
 export default async function LoginPage() {
   const session = await getServerSession(authOptions)
   if (session) redirect("/dashboard")
-
-  const userCount = await prisma.utilisateur.count()
-  if (userCount === 0) redirect("/register")
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-muted/50 to-background px-4">
@@ -20,7 +17,7 @@ export default async function LoginPage() {
             Accès réservé aux utilisateurs autorisés
           </p>
         </div>
-        <LoginClientForm />
+        <LoginForm />
       </div>
     </div>
   )

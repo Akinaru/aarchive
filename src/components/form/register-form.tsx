@@ -1,7 +1,9 @@
+// app/(auth)/register/RegisterClientForm.tsx
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -43,7 +45,6 @@ export default function RegisterClientForm() {
         return
       }
 
-      // 🔐 Connexion automatique après création
       const signInResult = await signIn("credentials", {
         email,
         password,
@@ -63,12 +64,12 @@ export default function RegisterClientForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
+    <main className="flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-xl text-center">Créer un compte</CardTitle>
           <CardDescription className="text-center">
-            Ce sera le premier compte administrateur d’AArchive
+            Crée ton compte pour accéder à AArchive
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -122,6 +123,13 @@ export default function RegisterClientForm() {
                 "Créer le compte"
               )}
             </Button>
+
+            <p className="text-sm text-center text-muted-foreground">
+              Déjà un compte ?{" "}
+              <Link href="/login" className="underline underline-offset-4">
+                Se connecter
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>
