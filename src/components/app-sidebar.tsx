@@ -1,8 +1,12 @@
-'use client'
+// src/components/app-sidebar.tsx
+"use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +37,7 @@ import {
 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 import { cn } from "@/lib/utils"
+import { getLocalVersion, getRemoteVersion, compareVersions } from "@/lib/versioning"
 
 type CountResponse = {
   clients: number
@@ -72,7 +77,6 @@ export function AppSidebar() {
 
     load()
 
-    // Optionnel: rafraîchir quand on revient sur l’onglet
     const onFocus = () => load()
     window.addEventListener("visibilitychange", onFocus)
     window.addEventListener("focus", onFocus)
@@ -84,6 +88,8 @@ export function AppSidebar() {
   }, [])
 
   const badge = (value?: number) => (loading ? "…" : typeof value === "number" ? value : "—")
+
+  const localVersion = getLocalVersion()
 
   return (
     <Sidebar collapsible="icon">
@@ -99,7 +105,13 @@ export function AppSidebar() {
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-md">
                   <BarChart3 className="size-4" />
                 </div>
-                <div className="text-lg font-bold tracking-tight">Aarchive</div>
+                {/* Titre + versions */}
+                <div className="flex min-w-0 flex-col">
+                  <div className="text-lg font-bold tracking-tight">Aarchive</div>
+                  <div className="text-xs text-muted-foreground leading-none">
+                    {localVersion}
+                  </div>
+                </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
