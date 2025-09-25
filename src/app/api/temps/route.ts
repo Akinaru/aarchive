@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
-
 import { prisma } from "@/lib/prisma"
 
 // GET: /api/temps ou /api/temps?missionId=1
 export async function GET(req: NextRequest) {
   const missionId = req.nextUrl.searchParams.get("missionId")
-
-  const where = missionId
-    ? { missionId: parseInt(missionId) }
-    : undefined
+  const where = missionId ? { missionId: parseInt(missionId) } : undefined
 
   const temps = await prisma.temps.findMany({
     where,
     include: {
-      mission: { select: { titre: true } },
-      typeTache: { select: { nom: true } },
+      mission: {
+        select: {
+          id: true,
+          titre: true,
+          tjm: true,
+          requiredDailyMinutes: true,
+        },
+      },
+      typeTache: { select: { id: true, nom: true } },
     },
     orderBy: { date: "desc" },
   })
@@ -25,7 +28,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: Request) {
   const body = await req.json()
 
-  if (!body.missionId || !body.typeTacheId || !body.dureeMinutes) {
+  if (!body.missionId || !body.typeTacheId || !body.dureeMinutes || !body.date) {
     return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 })
   }
 
@@ -38,8 +41,15 @@ export async function POST(req: Request) {
       description: body.description || null,
     },
     include: {
-      mission: { select: { titre: true } },
-      typeTache: { select: { nom: true } },
+      mission: {
+        select: {
+          id: true,
+          titre: true,
+          tjm: true,
+          requiredDailyMinutes: true,
+        },
+      },
+      typeTache: { select: { id: true, nom: true } },
     },
   })
 

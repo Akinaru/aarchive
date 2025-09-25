@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TempsParTypeBarChart } from "@/components/chart/temps-bar-chart"
+import { toast } from "sonner"
+
+import { TempsBarDashboard } from "@/components/chart/temps-bar-chart-dashboard"
 import { TypeTache } from "@/types/taches"
 import { Temps } from "@/types/temps"
-import { toast } from "sonner"
 
 export function DashboardGraphMissions() {
   const [temps, setTemps] = useState<Temps[]>([])
@@ -30,20 +31,19 @@ export function DashboardGraphMissions() {
         setLoading(false)
       }
     }
-
     fetchData()
   }, [])
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Temps saisi par type cette semaine</CardTitle>
+        <CardTitle>Temps saisi par mission et type (semaine en cours)</CardTitle>
       </CardHeader>
-      <CardContent className="">
+      <CardContent>
         {loading ? (
-          <Skeleton className="h-full w-full rounded-lg" />
+          <Skeleton className="h-[320px] w-full rounded-lg" />
         ) : (
-          <TempsParTypeBarChart temps={temps} navigation={false} typeTaches={typeTaches} />
+          <TempsBarDashboard temps={temps} typeTaches={typeTaches} />
         )}
       </CardContent>
     </Card>

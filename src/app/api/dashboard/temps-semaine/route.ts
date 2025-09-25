@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { startOfWeek, endOfWeek } from "date-fns"
-
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
@@ -16,7 +15,12 @@ export async function GET() {
     },
     include: {
       mission: {
-        select: { id: true, titre: true },
+        select: {
+          id: true,
+          titre: true,
+          tjm: true,
+          requiredDailyMinutes: true,
+        },
       },
       typeTache: {
         select: { id: true, nom: true },

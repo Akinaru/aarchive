@@ -11,6 +11,7 @@ export type Temps = {
     id: number
     titre: string
     tjm: number
+    requiredDailyMinutes: number
     projet: {
       id: number
       nom: string

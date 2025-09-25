@@ -9,7 +9,6 @@ import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { TempsParTypeBarChart } from "@/components/chart/temps-bar-chart"
 import { FormAddTemps } from "@/components/form/form-ajout-temps"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -22,7 +21,7 @@ import { BreadcrumbSkeleton } from "@/components/skeleton/breadcrumb"
 import { STATUT_ICONS } from "@/lib/status"
 
 import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns"
-
+import { TempsBarMission } from "@/components/chart/temps-bar-chart-mission"
 
 export default function MissionSinglePage() {
   const { id } = useParams()
@@ -58,33 +57,24 @@ export default function MissionSinglePage() {
   }, [id])
 
   if (isLoading) {
-    // ⚡️ Skeleton qui respecte exactement la même structure/tailles que le rendu final
     return (
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
-          {/* Header/Breadcrumb */}
           <BreadcrumbSkeleton />
-
-          {/* Bloc 70/30 identique au rendu final */}
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Colonne gauche (70%) – Graphique */}
             <Card className="w-full md:w-[70%]">
               <CardHeader>
                 <Skeleton className="h-5 w-1/3" />
               </CardHeader>
               <CardContent>
-                {/* hauteur du chart comme en prod */}
                 <Skeleton className="h-[300px] w-full rounded-lg" />
               </CardContent>
             </Card>
-
-            {/* Colonne droite (30%) – Résumé */}
             <Card className="w-full md:w-[30%]">
               <CardHeader>
                 <Skeleton className="h-5 w-1/2" />
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* lignes de stats */}
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <Skeleton className="h-4 w-1/3" />
@@ -103,7 +93,6 @@ export default function MissionSinglePage() {
                     <Skeleton className="h-4 w-10" />
                   </div>
                 </div>
-
                 <div className="border-t pt-3 space-y-2">
                   <div className="flex justify-between">
                     <Skeleton className="h-4 w-20" />
@@ -118,14 +107,10 @@ export default function MissionSinglePage() {
                     <Skeleton className="h-4 w-16" />
                   </div>
                 </div>
-
-                {/* camembert placeholder */}
                 <Skeleton className="h-40 w-full rounded-lg" />
               </CardContent>
             </Card>
           </div>
-
-          {/* Clients liés – placeholder (s’aligne sur la même largeur que le rendu final si présent) */}
           <Card className="border-muted">
             <CardHeader>
               <Skeleton className="h-4 w-48" />
@@ -144,8 +129,6 @@ export default function MissionSinglePage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Formulaire ajout temps */}
           <Card>
             <CardHeader>
               <Skeleton className="h-5 w-36" />
@@ -162,8 +145,6 @@ export default function MissionSinglePage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Tableau des temps */}
           <Card>
             <CardHeader>
               <Skeleton className="h-5 w-40" />
@@ -223,10 +204,10 @@ export default function MissionSinglePage() {
         <div className="flex flex-col md:flex-row gap-4">
           <Card className="w-full md:w-[70%]">
             <CardHeader>
-              <CardTitle>Graphique : Répartition de la semaine</CardTitle>
+              <CardTitle>Graphique : Répartition de la semaine (par type)</CardTitle>
             </CardHeader>
             <CardContent>
-              <TempsParTypeBarChart
+              <TempsBarMission
                 temps={temps}
                 typeTaches={typeTaches}
                 requiredDailyMinutes={mission.requiredDailyMinutes ?? null}
@@ -324,8 +305,6 @@ export default function MissionSinglePage() {
               <ChartTachePie temps={temps} />
             </CardContent>
           </Card>
-
-
         </div>
 
         {(mission.projet.clients?.length ?? 0) > 0 && (
