@@ -13,14 +13,16 @@ import {
   format,
   startOfWeek,
   addDays,
+  addWeeks,
   isWithinInterval,
   endOfDay,
 } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Temps } from "@/types/temps"
 import { TypeTache } from "@/types/taches"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { getColorForTypeTacheStable } from "@/lib/colors"
+import { Button } from "@/components/ui/button"
 
 type Props = {
   temps: Temps[]
@@ -107,8 +109,9 @@ export function TempsBarMission({
   typeTaches,
   requiredDailyMinutes = null,
 }: Props) {
-  // Semaine courante (lundi → dimanche)
-  const start = startOfWeek(new Date(), { weekStartsOn: 1 })
+  // === Navigation semaines ===
+  const [weekOffset, setWeekOffset] = useState(0)
+  const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset)
   const end = endOfDay(addDays(start, 6))
 
   // Nom mission (unique) pour la couleur de contour
@@ -142,12 +145,10 @@ export function TempsBarMission({
       typeof requiredDailyMinutes === "number" && requiredDailyMinutes > 0
         ? requiredDailyMinutes
         : null
-    // fallback 450 si non fourni
-    return Math.max(1, Number(fromProp ?? 450))
+    return Math.max(1, Number(fromProp ?? 450)) // fallback 7h30
   }, [requiredDailyMinutes])
 
   const tjm = useMemo(() => {
-    // On prend le premier tjm présent (toutes les lignes sont la même mission)
     const val = temps.find((t) => t.mission?.tjm != null)?.mission?.tjm ?? 0
     return Number(val) || 0
   }, [temps])
@@ -179,7 +180,7 @@ export function TempsBarMission({
       else metaByDay[jour].types.push({ type, minutes })
     }
 
-    // Calcul des montants par jour (à partir de totalMinutes)
+    // Calcul des montants par jour
     for (const [, meta] of Object.entries(metaByDay)) {
       const amount = (meta.totalMinutes / (baseline || 450)) * (tjm || 0)
       meta.totalAmount = Number(amount.toFixed(2))
@@ -199,7 +200,6 @@ export function TempsBarMission({
       }
     }
 
-    // Totaux semaine (minutes + €)
     const totalMinutesWeek = Object.values(metaByDay).reduce(
       (acc, d) => acc + d.totalMinutes,
       0
@@ -264,6 +264,28 @@ export function TempsBarMission({
         </div>
       </div>
 
+      {/* Navigation semaines */}
+      <div className="flex justify-between items-center mb-1 flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setWeekOffset((prev) => prev - 1)}>
+            ⬅ Semaine précédente
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setWeekOffset(0)}
+            disabled={weekOffset === 0}
+          >
+            🔄 Semaine actuelle
+          </Button>
+          <Button variant="outline" onClick={() => setWeekOffset((prev) => prev + 1)}>
+            Semaine suivante ➡
+          </Button>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {format(start, "dd MMM yyyy")} – {format(end, "dd MMM yyyy")}
+        </div>
+      </div>
+
       {/* Chart */}
       <ChartContainer config={chartConfig} className="w-full">
         <ResponsiveContainer width="100%" height={180}>
@@ -289,7 +311,7 @@ export function TempsBarMission({
                 key={key}
                 dataKey={key}
                 fill={chartConfig[key].color} // TYPE (remplissage)
-                stroke={missionStroke}       // MISSION (contour)
+                stroke={missionStroke}       // MISSION (contour stable)
                 strokeWidth={1.5}
                 stackId="a"
                 radius={[4, 4, 0, 0]}
