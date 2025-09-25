@@ -1,3 +1,4 @@
+// src/components/table/data-table-type-taches.tsx
 "use client"
 
 import {
@@ -47,7 +48,6 @@ export function DataTableTypeTaches({ data, onEdit, onDelete, isLoading }: Props
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  // Anti-flash: petit délai pour laisser apparaître le skeleton au 1er rendu
   const [initializing, setInitializing] = useState(true)
   useEffect(() => {
     const t = setTimeout(() => setInitializing(false), 600)
@@ -95,7 +95,7 @@ export function DataTableTypeTaches({ data, onEdit, onDelete, isLoading }: Props
                 Modifier
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onDelete(row.original.id)}
+                onClick={() => onDelete(row.original.id)} // ouvre la modale côté page
                 className="text-destructive"
               >
                 Supprimer
@@ -129,11 +129,9 @@ export function DataTableTypeTaches({ data, onEdit, onDelete, isLoading }: Props
   const renderSkeletonRows = () =>
     Array.from({ length: 6 }).map((_, i) => (
       <TableRow key={`sk-${i}`} className="h-[52px]">
-        {/* Nom */}
         <TableCell className="w-[720px] py-1">
           <Skeleton className="h-4 w-[420px] rounded" />
         </TableCell>
-        {/* Actions */}
         <TableCell className="w-[80px] py-1">
           <div className="flex justify-end">
             <Skeleton className="h-8 w-8 rounded-md" />
@@ -179,7 +177,6 @@ export function DataTableTypeTaches({ data, onEdit, onDelete, isLoading }: Props
 
       <div className="rounded-md border">
         <Table className="table-fixed text-sm">
-          {/* Grille figée pour parité skeleton / contenu */}
           <colgroup>
             <col style={{ width: "720px" }} />
             <col style={{ width: "80px" }} />

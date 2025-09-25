@@ -1,3 +1,4 @@
+// src/app/type-tache/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -21,6 +22,10 @@ export default function TypeTachePage() {
   const [editNom, setEditNom] = useState("")
   const [selectedType, setSelectedType] = useState<TypeTache | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Confirmation de suppression
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [typeToDelete, setTypeToDelete] = useState<TypeTache | null>(null)
 
   const fetchTypes = async () => {
     try {
@@ -72,14 +77,26 @@ export default function TypeTachePage() {
     }
   }
 
-  const deleteType = async (id: number) => {
+  // Ouvre la modale de confirmation
+  const confirmDelete = (id: number) => {
+    const t = types.find((x) => x.id === id) || null
+    setTypeToDelete(t)
+    setDeleteDialogOpen(true)
+  }
+
+  // Supprime après confirmation
+  const deleteType = async () => {
+    if (!typeToDelete) return
     try {
-      const res = await fetch(`/api/type-tache/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/type-tache/${typeToDelete.id}`, { method: "DELETE" })
       if (!res.ok) throw new Error()
       toast.success("Supprimé")
       await fetchTypes()
     } catch {
       toast.error("Erreur lors de la suppression")
+    } finally {
+      setTypeToDelete(null)
+      setDeleteDialogOpen(false)
     }
   }
 
@@ -122,11 +139,12 @@ export default function TypeTachePage() {
                 setSelectedType(t)
                 setEditNom(t.nom)
               }}
-              onDelete={(id) => deleteType(id)}
+              onDelete={(id) => confirmDelete(id)}
             />
           </CardContent>
         </Card>
 
+        {/* Édition */}
         <Dialog
           open={!!selectedType}
           onOpenChange={(open) => {
@@ -147,13 +165,39 @@ export default function TypeTachePage() {
                 placeholder="Nouveau nom"
               />
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => {
-                  setSelectedType(null)
-                  setEditNom("")
-                }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedType(null)
+                    setEditNom("")
+                  }}
+                >
                   Annuler
                 </Button>
                 <Button onClick={updateType}>Valider</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmation de suppression */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                Êtes-vous sûr de vouloir supprimer{" "}
+                <span className="font-semibold">{typeToDelete?.nom}</span> ?
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" onClick={deleteType}>
+                  Supprimer
+                </Button>
               </div>
             </div>
           </DialogContent>

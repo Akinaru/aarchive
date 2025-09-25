@@ -1,3 +1,4 @@
+// src/app/temps/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -12,6 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 import { Temps } from "@/types/temps"
 import { Mission } from "@/types/missions"
@@ -28,9 +35,7 @@ function formatMinutes(minutes: number): string {
 
 function toYMD(value: string | Date) {
   const d = typeof value === "string" ? new Date(value) : value
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 10) // YYYY-MM-DD
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
 }
 
 export default function TempsPage() {
@@ -49,6 +54,10 @@ export default function TempsPage() {
   const [totalJourMinutes, setTotalJourMinutes] = useState(0)
   const [objectifMinutes, setObjectifMinutes] = useState(360)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Confirmation suppression
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [tempsToDelete, setTempsToDelete] = useState<Temps | null>(null)
 
   const fetchData = async () => {
     try {
@@ -73,10 +82,25 @@ export default function TempsPage() {
     }
   }
 
-  const deleteTemps = async (id: number) => {
-    await fetch(`/api/temps/${id}`, { method: "DELETE" })
-    toast.success("Supprimé")
-    await fetchData()
+  const confirmDelete = (id: number) => {
+    const t = temps.find((x) => x.id === id) || null
+    setTempsToDelete(t)
+    setDeleteDialogOpen(true)
+  }
+
+  const deleteTempsConfirmed = async () => {
+    if (!tempsToDelete) return
+    try {
+      const res = await fetch(`/api/temps/${tempsToDelete.id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
+      toast.success("Supprimé")
+      await fetchData()
+    } catch {
+      toast.error("Erreur lors de la suppression")
+    } finally {
+      setTempsToDelete(null)
+      setDeleteDialogOpen(false)
+    }
   }
 
   const updateTemps = async () => {
@@ -104,11 +128,9 @@ export default function TempsPage() {
   const lastTemps = temps.slice(0, 5)
 
   const todayTemps = temps.filter((t) => isToday(new Date(t.date)))
-  const typesToday = todayTemps.map((t) => t.typeTache?.nom).filter(Boolean)
+  const typesToday = todayTemps.map((t) => t.typeTache?.nom).filter(Boolean) as string[]
   const mostUsedTypeToday = typesToday.length
-    ? typesToday.sort((a, b) =>
-        typesToday.filter((v) => v === b).length - typesToday.filter((v) => v === a).length
-      )[0]
+    ? typesToday.sort((a, b) => typesToday.filter((v) => v === b).length - typesToday.filter((v) => v === a).length)[0]
     : "Aucun"
 
   return (
@@ -220,10 +242,7 @@ export default function TempsPage() {
                           <div className="space-y-1 flex-1 min-w-0">
                             <p className="text-base font-semibold text-primary break-words">
                               {t.mission?.titre}
-                              <span className="text-muted-foreground font-normal">
-                                {" "}
-                                — {t.typeTache?.nom}
-                              </span>
+                              <span className="text-muted-foreground font-normal"> — {t.typeTache?.nom}</span>
                             </p>
 
                             <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
@@ -266,7 +285,7 @@ export default function TempsPage() {
                             <Button
                               size="icon"
                               variant="destructive"
-                              onClick={() => deleteTemps(t.id)}
+                              onClick={() => confirmDelete(t.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -290,6 +309,32 @@ export default function TempsPage() {
           </>
         )}
       </div>
+
+      {/* Modale de confirmation de suppression */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>
+              Supprimer l’entrée{" "}
+              <span className="font-semibold">
+                {tempsToDelete ? `${tempsToDelete.mission?.titre ?? "—"} — ${formatMinutes(tempsToDelete.dureeMinutes)}` : ""}
+              </span>{" "}
+              ?
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button variant="destructive" onClick={deleteTempsConfirmed}>
+                Supprimer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

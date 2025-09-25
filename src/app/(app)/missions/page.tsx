@@ -1,3 +1,4 @@
+// src/app/missions/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -47,6 +48,11 @@ export default function MissionsPage() {
   const [requiredDaily, setRequiredDaily] = useState("00:00")
 
   const [editMission, setEditMission] = useState<Mission | null>(null)
+
+  // NEW: confirmation de suppression (pattern identique à Clients)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [missionToDelete, setMissionToDelete] = useState<Mission | null>(null)
+
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [isLoadingProjets, setIsLoadingProjets] = useState(true)
 
@@ -134,14 +140,26 @@ export default function MissionsPage() {
     }
   }
 
-  const deleteMission = async (id: number) => {
+  // NEW: ouvre la modale de confirmation
+  const confirmDelete = (id: number) => {
+    const mission = missions.find((m) => m.id === id) || null
+    setMissionToDelete(mission)
+    setDeleteDialogOpen(true)
+  }
+
+  // NEW: suppression après confirmation
+  const deleteMission = async () => {
+    if (!missionToDelete) return
     try {
-      const res = await fetch(`/api/missions/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/missions/${missionToDelete.id}`, { method: "DELETE" })
       if (!res.ok) throw new Error()
       toast.success("Mission supprimée")
       await fetchMissions()
     } catch {
       toast.error("Erreur lors de la suppression.")
+    } finally {
+      setMissionToDelete(null)
+      setDeleteDialogOpen(false)
     }
   }
 
@@ -293,7 +311,7 @@ export default function MissionsPage() {
             <DataTableMissions
               data={missions}
               onEdit={setEditMission}
-              onDelete={deleteMission}
+              onDelete={(id) => confirmDelete(id)}
             />
           </CardContent>
         </Card>
@@ -421,6 +439,29 @@ export default function MissionsPage() {
                 <Button onClick={updateMission}>Mettre à jour</Button>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* NEW: Modale de confirmation de suppression */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                Êtes-vous sûr de vouloir supprimer{" "}
+                <span className="font-semibold">{missionToDelete?.titre}</span> ?
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" onClick={deleteMission}>
+                  Supprimer
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

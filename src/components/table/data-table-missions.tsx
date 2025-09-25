@@ -1,3 +1,4 @@
+// src/components/table/data-table-missions.tsx
 "use client"
 
 import {
@@ -50,7 +51,6 @@ export function DataTableMissions({ data, onEdit, onDelete, isLoading }: Props) 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  // Anti-flash skeleton (même logique que clients)
   const [initializing, setInitializing] = useState(true)
   useEffect(() => {
     const t = setTimeout(() => setInitializing(false), 600)
@@ -151,7 +151,7 @@ export function DataTableMissions({ data, onEdit, onDelete, isLoading }: Props) 
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(row.original)}>Modifier</DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onDelete(row.original.id)}
+                onClick={() => onDelete(row.original.id)} // ouvre la modale côté page
                 className="text-destructive"
               >
                 Supprimer
@@ -185,45 +185,30 @@ export function DataTableMissions({ data, onEdit, onDelete, isLoading }: Props) 
   const renderSkeletonRows = () => {
     return Array.from({ length: 5 }).map((_, i) => (
       <TableRow key={`skeleton-${i}`} className="h-[64px]">
-        {/* Détail */}
         <TableCell className="w-[96px]">
           <Skeleton className="h-8 w-[64px] rounded-md" />
         </TableCell>
-
-        {/* Titre */}
         <TableCell className="w-[360px]">
           <Skeleton className="h-4 w-[320px] rounded" />
         </TableCell>
-
-        {/* Projet */}
         <TableCell className="w-[240px]">
           <Skeleton className="h-4 w-[200px] rounded" />
         </TableCell>
-
-        {/* Statut (mimique Badge) */}
         <TableCell className="w-[160px]">
           <div className="inline-flex items-center gap-2">
             <Skeleton className="h-3 w-3 rounded-full" />
             <Skeleton className="h-6 w-[110px] rounded-md" />
           </div>
         </TableCell>
-
-        {/* Début */}
         <TableCell className="w-[140px]">
           <Skeleton className="h-4 w-[90px] rounded" />
         </TableCell>
-
-        {/* Durée quotidienne requise */}
         <TableCell className="w-[220px]">
           <Skeleton className="h-4 w-[120px] rounded" />
         </TableCell>
-
-        {/* TJM */}
         <TableCell className="w-[120px]">
           <Skeleton className="h-4 w-[60px] rounded" />
         </TableCell>
-
-        {/* Actions */}
         <TableCell className="w-[80px]">
           <div className="flex justify-end">
             <Skeleton className="h-8 w-8 rounded-md" />
@@ -249,7 +234,6 @@ export function DataTableMissions({ data, onEdit, onDelete, isLoading }: Props) 
 
       <div className="rounded-md border">
         <Table className="table-fixed">
-          {/* Grille fixe pour parité skeleton/contenu */}
           <colgroup>
             <col style={{ width: "96px" }} />
             <col style={{ width: "360px" }} />
