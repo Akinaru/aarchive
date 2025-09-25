@@ -1,3 +1,4 @@
+// src/components/form/form-ajout-temps.tsx
 "use client"
 
 import { useState } from "react"
@@ -22,7 +23,6 @@ import { Calendar } from "@/components/ui/calendar"
 import { ChevronDownIcon } from "lucide-react"
 import { Mission } from "@/types/missions"
 import { TypeTache } from "@/types/taches"
-import { cn } from "@/lib/utils"
 
 interface FormAddTempsProps {
   missions?: Mission[]
@@ -67,8 +67,6 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
       return
     }
 
-    const dateTime = new Date(date)
-
     const res = await fetch("/api/temps", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -77,7 +75,7 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         typeTacheId: parseInt(typeTacheId),
         dureeMinutes,
         description,
-        date: dateTime.toISOString(),
+        date: date.toISOString(),
       }),
     })
 
@@ -96,12 +94,12 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
   }
 
   return (
-    <div className="flex flex-col md:flex-row md:items-end md:gap-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {!missionId && (
-        <div className="flex flex-col gap-1 min-w-[160px]">
+        <div className="flex flex-col gap-1 w-full md:col-span-2">
           <Label>Mission</Label>
           <Select value={selectedMissionId} onValueChange={setSelectedMissionId} disabled={isDisabled}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Choisir une mission" />
             </SelectTrigger>
             <SelectContent>
@@ -115,11 +113,11 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         </div>
       )}
 
-      <div className="flex flex-col gap-1 min-w-[140px]">
+      <div className="flex flex-col gap-1 w-full">
         <Label>Date</Label>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="justify-between" disabled={isDisabled}>
+            <Button variant="outline" className="justify-between w-full" disabled={isDisabled}>
               {date ? format(date, "dd/MM/yyyy") : "Choisir"}
               <ChevronDownIcon className="ml-2 h-4 w-4" />
             </Button>
@@ -135,10 +133,10 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         </Popover>
       </div>
 
-      <div className="flex flex-col gap-1 min-w-[160px]">
+      <div className="flex flex-col gap-1 w-full">
         <Label>Type de tâche</Label>
         <Select value={typeTacheId} onValueChange={setTypeTacheId} disabled={isDisabled}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Choisir un type" />
           </SelectTrigger>
           <SelectContent>
@@ -151,7 +149,8 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1 flex-1">
+      {/* Description sur une ligne à elle seule (col-span-2) */}
+      <div className="flex flex-col gap-1 w-full md:col-span-2">
         <Label>Description</Label>
         <Input
           placeholder="Détails de la tâche..."
@@ -161,10 +160,10 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         />
       </div>
 
-      <div className="flex flex-col gap-1 min-w-[160px]">
+      <div className="flex flex-col gap-1 w-full">
         <Label>Mode</Label>
         <Select value={mode} onValueChange={(v) => setMode(v as "duree" | "plage")}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -175,11 +174,11 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
       </div>
 
       {mode === "duree" ? (
-        <div className="flex flex-col gap-1 min-w-[120px]">
+        <div className="flex flex-col gap-1 w-full">
           <Label>Durée</Label>
           <Input
             type="time"
-            step="60"
+            step={60}
             value={time}
             onChange={(e) => setTime(e.target.value)}
             className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
@@ -187,12 +186,12 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
           />
         </div>
       ) : (
-        <div className="flex flex-col gap-1 min-w-[240px]">
+        <div className="flex flex-col gap-1 w-full">
           <Label>Plage horaire</Label>
           <div className="flex gap-2">
             <Input
               type="time"
-              step="60"
+              step={60}
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
@@ -201,7 +200,7 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
             <span className="self-center">→</span>
             <Input
               type="time"
-              step="60"
+              step={60}
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
               className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
@@ -211,8 +210,13 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
         </div>
       )}
 
-      <div className="flex items-end">
-        <Button onClick={addTemps} disabled={isDisabled}>Ajouter</Button>
+      {/* Bouton en dernier :
+          - mobile: pleine largeur
+          - desktop: largeur du contenu, aligné à droite de sa ligne */}
+      <div className="flex items-end w-full md:col-span-2 md:justify-end">
+        <Button onClick={addTemps} disabled={isDisabled} className="w-full md:w-auto">
+          Ajouter
+        </Button>
       </div>
     </div>
   )
