@@ -41,19 +41,30 @@ export async function PUT(req: Request, context: unknown) {
   return NextResponse.json(updated)
 }
 
-export async function DELETE(req: Request, context: unknown) {
-  if (!isContextWithId(context)) {
-    return NextResponse.json({ error: "Invalid context" }, { status: 400 })
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const parsedId = Number.parseInt(id, 10)
+  if (Number.isNaN(parsedId)) {
+    return NextResponse.json({ error: "ID invalide" }, { status: 400 })
   }
 
-  const parsedId = parseInt(context.params.id, 10)
-
-  const deleted = await prisma.client.delete({
-    where: { id: parsedId },
-  })
-
-  return NextResponse.json(deleted)
+  try {
+    const [_, deleted] = await prisma.$transaction([
+      prisma.projetClient.deleteMany({ where: { clientId: parsedId } }),
+      prisma.client.delete({ where: { id: parsedId } }),
+    ])
+    return NextResponse.json(deleted)
+  } catch (e) {
+    return NextResponse.json(
+      { error: "Erreur lors de la suppression du client." },
+      { status: 500 }
+    )
+  }
 }
+
 
 // ✅ type guard pour éviter tout any
 function isContextWithId(ctx: unknown): ctx is ContextWithId {
