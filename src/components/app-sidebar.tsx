@@ -3,10 +3,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import React, { useEffect, useRef, useState } from "react"
-import { Input } from "@/components/ui/input"
+import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import {
   Sidebar,
   SidebarContent,
@@ -34,10 +32,11 @@ import {
   Euro,
   BarChart3,
   ChevronDown,
+  TrendingUp,
 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 import { cn } from "@/lib/utils"
-import { getLocalVersion, getRemoteVersion, compareVersions } from "@/lib/versioning"
+import { getLocalVersion } from "@/lib/versioning"
 
 type CountResponse = {
   clients: number
@@ -105,12 +104,9 @@ export function AppSidebar() {
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-md">
                   <BarChart3 className="size-4" />
                 </div>
-                {/* Titre + versions */}
                 <div className="flex min-w-0 flex-col">
                   <div className="text-lg font-bold tracking-tight">Aarchive</div>
-                  <div className="text-xs text-muted-foreground leading-none">
-                    {localVersion}
-                  </div>
+                  <div className="text-xs text-muted-foreground leading-none">{localVersion}</div>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -234,6 +230,18 @@ export function AppSidebar() {
                       <Link href="/export/mois" onClick={handleLinkClick}>
                         <FileText className="mr-2 size-4" />
                         Export mois
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn({ "bg-primary/10 text-primary": isActive("/gains") })}
+                    >
+                      <Link href="/" onClick={handleLinkClick}>
+                        <TrendingUp className="mr-2 size-4" />
+                        Évolutions
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
