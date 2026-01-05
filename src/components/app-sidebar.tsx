@@ -239,7 +239,7 @@ export function AppSidebar() {
                       asChild
                       className={cn({ "bg-primary/10 text-primary": isActive("/gains") })}
                     >
-                      <Link href="/" onClick={handleLinkClick}>
+                      <Link href="/gains" onClick={handleLinkClick}>
                         <TrendingUp className="mr-2 size-4" />
                         Évolutions
                       </Link>
