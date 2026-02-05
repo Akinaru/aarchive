@@ -4,6 +4,11 @@ import { NextResponse, NextRequest } from "next/server"
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // Exclure explicitement les fichiers /.well-known (Chrome DevTools, PWA, etc.)
+  if (pathname.startsWith("/.well-known")) {
+    return NextResponse.next()
+  }
+
   // Laisse passer les routes internes Next + API + assets statiques (public/)
   // Sinon /icon-192x192.png redirige vers /login et iOS ne peut pas récupérer l’icône.
   if (
