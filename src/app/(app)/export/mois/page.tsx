@@ -63,6 +63,7 @@ type MissionLite = {
   titre: string
   tjm: number | null
   projet: ProjectLite | null
+  image: string | null
 }
 
 type TypeTacheLite = { id: number; nom: string }
@@ -86,6 +87,7 @@ type AmountByMission = {
   tjm: number
   totalMinutes: number
   amount: number
+  image?: string | null
 }
 
 type WeekBlock = {
@@ -215,14 +217,70 @@ export default function ExportMoisPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, selectedMissionId])
 
-  const handleExport = () => {
+  function isDataUrl(s: string) {
+    return s.startsWith("data:image/")
+  }
+
+  async function urlToDataUrl(url: string): Promise<string | null> {
+    try {
+      // supporte "/uploads/x.png" ou "https://..."
+      const absolute = url.startsWith("http") ? url : new URL(url, window.location.origin).toString()
+
+      const res = await fetch(absolute)
+      if (!res.ok) return null
+
+      const blob = await res.blob()
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(String(reader.result))
+        reader.readAsDataURL(blob)
+      })
+    } catch {
+      return null
+    }
+  }
+
+  const handleExport = async () => {
     if (!data) return
 
+    // 1) prépare une map missionId -> dataUrl (pour éviter de refetch 50 fois)
+    const imageByMissionId = new Map<number, string>()
+
+    // on récupère toutes les images présentes dans le mois (via data.weeks)
+    const allTemps = data.weeks.flatMap((w) => w.temps)
+
+    // on déduplique par missionId
+    const uniqueMissions = new Map<number, string>()
+    for (const t of allTemps) {
+      const img = t.mission?.image
+      if (!img) continue
+      if (!uniqueMissions.has(t.mission.id)) uniqueMissions.set(t.mission.id, img)
+    }
+
+    // 2) convertit les URLs en dataUrl
+    await Promise.all(
+        Array.from(uniqueMissions.entries()).map(async ([missionId, img]) => {
+          if (isDataUrl(img)) {
+            imageByMissionId.set(missionId, img)
+            return
+          }
+
+          const dataUrl = await urlToDataUrl(img)
+          if (dataUrl) imageByMissionId.set(missionId, dataUrl)
+        })
+    )
+
+    // 3) construit les weeks pour le PDF, en injectant mission.image en dataUrl
     const weeksForPdf = data.weeks.map((w) => ({
       weekStart: parseISO(w.weekStart),
       weekEnd: parseISO(w.weekEnd),
       temps: w.temps.map<TempsForPdf>((t) => ({
         ...t,
+        mission: {
+          ...t.mission,
+          // si pas d'image, ou si conversion a échoué => null
+          image: imageByMissionId.get(t.mission.id) ?? null,
+        },
         date: new Date(t.date),
         createdAt: new Date(t.createdAt),
         updatedAt: t.updatedAt ? new Date(t.updatedAt) : undefined,
@@ -234,6 +292,7 @@ export default function ExportMoisPage() {
 
     generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks)
   }
+
 
   const monthLabel = useMemo(
       () => format(selectedDate, "MMMM yyyy", { locale: fr }),

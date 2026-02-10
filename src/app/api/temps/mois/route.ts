@@ -1,5 +1,7 @@
+// src/app/api/temps/mois/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import {
   startOfMonth,
   endOfMonth,
@@ -19,15 +21,18 @@ export async function GET(req: NextRequest) {
   const monthStart = startOfMonth(baseDate)
   const monthEnd = endOfMonth(baseDate)
 
-  const where: any = {
+  const where: Prisma.TempsWhereInput = {
     date: {
       gte: monthStart,
       lte: monthEnd,
     },
   }
 
-  if (missionIdParam) {
-    where.missionId = parseInt(missionIdParam)
+  // ✅ filtre mission uniquement si missionId est un nombre valide
+  const parsedMissionId =
+      missionIdParam && missionIdParam !== "all" ? Number.parseInt(missionIdParam, 10) : null
+  if (typeof parsedMissionId === "number" && Number.isFinite(parsedMissionId)) {
+    where.missionId = parsedMissionId
   }
 
   const allTemps = await prisma.temps.findMany({
@@ -38,6 +43,7 @@ export async function GET(req: NextRequest) {
           id: true,
           titre: true,
           tjm: true,
+          image: true,
           projet: { select: { id: true, nom: true } },
         },
       },
@@ -47,8 +53,8 @@ export async function GET(req: NextRequest) {
   })
 
   const monthlyByMission: Record<
-    string,
-    { missionId: number; titre: string; tjm: number; totalMinutes: number; amount: number }
+      string,
+      { missionId: number; titre: string; tjm: number; totalMinutes: number; amount: number }
   > = {}
 
   for (const t of allTemps) {
@@ -67,12 +73,12 @@ export async function GET(req: NextRequest) {
   }
 
   const monthlyTotals = Object.values(monthlyByMission).reduce(
-    (acc, m) => {
-      acc.totalMinutes += m.totalMinutes
-      acc.totalAmount += m.amount
-      return acc
-    },
-    { totalMinutes: 0, totalAmount: 0 }
+      (acc, m) => {
+        acc.totalMinutes += m.totalMinutes
+        acc.totalAmount += m.amount
+        return acc
+      },
+      { totalMinutes: 0, totalAmount: 0 }
   )
 
   const weeks: Array<{
@@ -81,8 +87,8 @@ export async function GET(req: NextRequest) {
     temps: typeof allTemps
     totals: { totalMinutes: number; totalAmount: number }
     byMission: Record<
-      string,
-      { missionId: number; titre: string; tjm: number; totalMinutes: number; amount: number }
+        string,
+        { missionId: number; titre: string; tjm: number; totalMinutes: number; amount: number; image: string | null }
     >
   }> = []
 
@@ -93,13 +99,14 @@ export async function GET(req: NextRequest) {
     const weekEnd = endOfWeek(current, { weekStartsOn: 1 })
 
     const temps = allTemps.filter((t) =>
-      isWithinInterval(new Date(t.date), { start: weekStart, end: weekEnd })
+        isWithinInterval(new Date(t.date), { start: weekStart, end: weekEnd })
     )
 
     const byMission: Record<
-      string,
-      { missionId: number; titre: string; tjm: number; totalMinutes: number; amount: number }
+        string,
+        { missionId: number; titre: string; tjm: number; totalMinutes: number; amount: number; image: string | null }
     > = {}
+
     let totalMinutes = 0
     let totalAmount = 0
 
@@ -112,11 +119,14 @@ export async function GET(req: NextRequest) {
           tjm: t.mission.tjm ?? 0,
           totalMinutes: 0,
           amount: 0,
+          image: t.mission.image ?? null,
         }
       }
+
       byMission[id].totalMinutes += t.dureeMinutes
       const amount = ((t.mission.tjm ?? 0) / 450) * t.dureeMinutes
       byMission[id].amount += amount
+
       totalMinutes += t.dureeMinutes
       totalAmount += amount
     }

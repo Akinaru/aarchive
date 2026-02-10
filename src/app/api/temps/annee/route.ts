@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
           id: true,
           tjm: true,
           titre: true,
+          image: true
         },
       },
     },
