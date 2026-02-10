@@ -7,7 +7,7 @@ export async function GET() {
     take: 5,
     orderBy: { createdAt: "desc" },
     include: {
-      mission: { select: { titre: true, id: true } },
+      mission: { select: { titre: true, id: true, image: true } },
       typeTache: { select: { nom: true, id: true } },
     },
   })

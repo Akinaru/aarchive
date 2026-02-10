@@ -23,6 +23,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { ChevronDownIcon } from "lucide-react"
 import { Mission } from "@/types/missions"
 import { TypeTache } from "@/types/taches"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface FormAddTempsProps {
   missions?: Mission[]
@@ -93,131 +94,163 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
     }
   }
 
+  const selectedMission =
+      !missionId && selectedMissionId
+          ? missions.find((m) => m.id === parseInt(selectedMissionId, 10)) ?? null
+          : null
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {!missionId && (
-        <div className="flex flex-col gap-1 w-full md:col-span-2">
-          <Label>Mission</Label>
-          <Select value={selectedMissionId} onValueChange={setSelectedMissionId} disabled={isDisabled}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {!missionId && (
+            <div className="flex flex-col gap-1 w-full md:col-span-2">
+              <Label>Mission</Label>
+              <Select
+                  value={selectedMissionId}
+                  onValueChange={setSelectedMissionId}
+                  disabled={isDisabled}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                      placeholder="Choisir une mission"
+                      // ✅ rendu du "value" comme sur ta page clients (avatar + label)
+                      children={
+                        selectedMission ? (
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6 border">
+                                <AvatarImage src={selectedMission.image ?? ""} alt={selectedMission.titre} />
+                                <AvatarFallback className="text-[10px]">
+                                  {(selectedMission.titre?.[0] ?? "?").toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="truncate">{selectedMission.titre}</span>
+                            </div>
+                        ) : undefined
+                      }
+                  />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {missions.map((m) => {
+                    const initial = (m.titre?.[0] ?? "?").toUpperCase()
+                    return (
+                        <SelectItem key={m.id} value={m.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6 border">
+                              <AvatarImage src={m.image ?? ""} alt={m.titre} />
+                              <AvatarFallback className="text-[10px]">{initial}</AvatarFallback>
+                            </Avatar>
+                            <span className="truncate">{m.titre}</span>
+                          </div>
+                        </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+        )}
+
+        <div className="flex flex-col gap-1 w-full">
+          <Label>Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="justify-between w-full" disabled={isDisabled}>
+                {date ? format(date, "dd/MM/yyyy") : "Choisir"}
+                <ChevronDownIcon className="ml-2 h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                  mode="single"
+                  selected={date}
+                  captionLayout="dropdown"
+                  onSelect={(d) => d && setDate(d)}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="flex flex-col gap-1 w-full">
+          <Label>Type de tâche</Label>
+          <Select value={typeTacheId} onValueChange={setTypeTacheId} disabled={isDisabled}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choisir une mission" />
+              <SelectValue placeholder="Choisir un type" />
             </SelectTrigger>
             <SelectContent>
-              {missions.map((m) => (
-                <SelectItem key={m.id} value={m.id.toString()}>
-                  {m.titre}
-                </SelectItem>
+              {types.map((t) => (
+                  <SelectItem key={t.id} value={t.id.toString()}>
+                    {t.nom}
+                  </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-      )}
 
-      <div className="flex flex-col gap-1 w-full">
-        <Label>Date</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="justify-between w-full" disabled={isDisabled}>
-              {date ? format(date, "dd/MM/yyyy") : "Choisir"}
-              <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              captionLayout="dropdown"
-              onSelect={(d) => d && setDate(d)}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      <div className="flex flex-col gap-1 w-full">
-        <Label>Type de tâche</Label>
-        <Select value={typeTacheId} onValueChange={setTypeTacheId} disabled={isDisabled}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Choisir un type" />
-          </SelectTrigger>
-          <SelectContent>
-            {types.map((t) => (
-              <SelectItem key={t.id} value={t.id.toString()}>
-                {t.nom}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Description sur une ligne à elle seule (col-span-2) */}
-      <div className="flex flex-col gap-1 w-full md:col-span-2">
-        <Label>Description</Label>
-        <Input
-          placeholder="Détails de la tâche..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          disabled={isDisabled}
-        />
-      </div>
-
-      <div className="flex flex-col gap-1 w-full">
-        <Label>Mode</Label>
-        <Select value={mode} onValueChange={(v) => setMode(v as "duree" | "plage")}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="duree">Durée définie</SelectItem>
-            <SelectItem value="plage">Plage horaire</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {mode === "duree" ? (
-        <div className="flex flex-col gap-1 w-full">
-          <Label>Durée</Label>
+        {/* Description sur une ligne à elle seule (col-span-2) */}
+        <div className="flex flex-col gap-1 w-full md:col-span-2">
+          <Label>Description</Label>
           <Input
-            type="time"
-            step={60}
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-            disabled={isDisabled}
+              placeholder="Détails de la tâche..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={isDisabled}
           />
         </div>
-      ) : (
-        <div className="flex flex-col gap-1 w-full">
-          <Label>Plage horaire</Label>
-          <div className="flex gap-2">
-            <Input
-              type="time"
-              step={60}
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-              disabled={isDisabled}
-            />
-            <span className="self-center">→</span>
-            <Input
-              type="time"
-              step={60}
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
-              disabled={isDisabled}
-            />
-          </div>
-        </div>
-      )}
 
-      {/* Bouton en dernier :
-          - mobile: pleine largeur
-          - desktop: largeur du contenu, aligné à droite de sa ligne */}
-      <div className="flex items-end w-full md:col-span-2 md:justify-end">
-        <Button onClick={addTemps} disabled={isDisabled} className="w-full md:w-auto">
-          Ajouter
-        </Button>
+        <div className="flex flex-col gap-1 w-full">
+          <Label>Mode</Label>
+          <Select value={mode} onValueChange={(v) => setMode(v as "duree" | "plage")}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="duree">Durée définie</SelectItem>
+              <SelectItem value="plage">Plage horaire</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {mode === "duree" ? (
+            <div className="flex flex-col gap-1 w-full">
+              <Label>Durée</Label>
+              <Input
+                  type="time"
+                  step={60}
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+                  disabled={isDisabled}
+              />
+            </div>
+        ) : (
+            <div className="flex flex-col gap-1 w-full">
+              <Label>Plage horaire</Label>
+              <div className="flex gap-2">
+                <Input
+                    type="time"
+                    step={60}
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+                    disabled={isDisabled}
+                />
+                <span className="self-center">→</span>
+                <Input
+                    type="time"
+                    step={60}
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
+                    disabled={isDisabled}
+                />
+              </div>
+            </div>
+        )}
+
+        <div className="flex items-end w-full md:col-span-2 md:justify-end">
+          <Button onClick={addTemps} disabled={isDisabled} className="w-full md:w-auto">
+            Ajouter
+          </Button>
+        </div>
       </div>
-    </div>
   )
 }

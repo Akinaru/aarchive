@@ -7,23 +7,38 @@ type ContextWithId = {
   }
 }
 
-function isContextWithId(ctx: unknown): ctx is ContextWithId {
-  if (typeof ctx !== "object" || ctx === null) return false
-  const maybeContext = ctx as Record<string, unknown>
-  const params = maybeContext["params"]
-  if (typeof params !== "object" || params === null) return false
-  const maybeParams = params as Record<string, unknown>
-  const id = maybeParams["id"]
-  return typeof id === "string"
+type MissionBody = {
+  titre: string
+  description?: string
+  statut?: "EN_COURS" | "TERMINEE" | "EN_ATTENTE" | "ANNULEE"
+  projetId: number
+  dateDebut?: string
+  dureePrevueMinutes?: number
+  tjm?: number
+  requiredDailyMinutes?: number
+  image?: string
 }
 
-export const GET = async (req: NextRequest, context: unknown) => {
+// ✅ type guard pour éviter tout any
+function isContextWithId(ctx: unknown): ctx is ContextWithId {
+  return (
+      typeof ctx === "object" &&
+      ctx !== null &&
+      "params" in ctx &&
+      typeof (ctx as { params: unknown }).params === "object" &&
+      (ctx as { params: { id?: unknown } }).params !== null &&
+      "id" in (ctx as { params: { id?: unknown } }).params &&
+      typeof (ctx as { params: { id?: unknown } }).params.id === "string"
+  )
+}
+
+export const GET = async (_req: NextRequest, context: unknown) => {
   if (!isContextWithId(context)) {
     return NextResponse.json({ error: "Invalid context" }, { status: 400 })
   }
 
-  const id = parseInt(context.params.id, 10)
-  if (isNaN(id)) {
+  const id = Number.parseInt(context.params.id, 10)
+  if (Number.isNaN(id)) {
     return NextResponse.json({ error: "ID invalide" }, { status: 400 })
   }
 
@@ -55,8 +70,16 @@ export const PUT = async (req: NextRequest, context: unknown) => {
     return NextResponse.json({ error: "Invalid context" }, { status: 400 })
   }
 
-  const id = parseInt(context.params.id, 10)
-  const body = await req.json()
+  const id = Number.parseInt(context.params.id, 10)
+  if (Number.isNaN(id)) {
+    return NextResponse.json({ error: "ID invalide" }, { status: 400 })
+  }
+
+  const body: MissionBody = await req.json()
+
+  if (!body.titre || !body.projetId) {
+    return NextResponse.json({ error: "Titre et projet requis" }, { status: 400 })
+  }
 
   const updated = await prisma.mission.update({
     where: { id },
@@ -69,18 +92,22 @@ export const PUT = async (req: NextRequest, context: unknown) => {
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
       tjm: body.tjm ?? null,
       requiredDailyMinutes: body.requiredDailyMinutes ?? null,
+      image: body.image ?? null,
     },
   })
 
   return NextResponse.json(updated)
 }
 
-export const DELETE = async (req: NextRequest, context: unknown) => {
+export const DELETE = async (_req: NextRequest, context: unknown) => {
   if (!isContextWithId(context)) {
     return NextResponse.json({ error: "Invalid context" }, { status: 400 })
   }
 
-  const id = parseInt(context.params.id, 10)
+  const id = Number.parseInt(context.params.id, 10)
+  if (Number.isNaN(id)) {
+    return NextResponse.json({ error: "ID invalide" }, { status: 400 })
+  }
 
   const deleted = await prisma.mission.delete({
     where: { id },

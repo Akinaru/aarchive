@@ -12,6 +12,7 @@ export type Temps = {
     titre: string
     tjm: number
     requiredDailyMinutes: number
+    image: string
     projet: {
       id: number
       nom: string

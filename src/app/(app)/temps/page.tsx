@@ -25,6 +25,7 @@ import { Mission } from "@/types/missions"
 import { TypeTache } from "@/types/taches"
 import { FormAddTemps } from "@/components/form/form-ajout-temps"
 import { FormEditTemps } from "@/components/form/form-edit-temps"
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 function formatMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60)
@@ -52,7 +53,6 @@ export default function TempsPage() {
 
   const [totalSemaineMinutes, setTotalSemaineMinutes] = useState(0)
   const [totalJourMinutes, setTotalJourMinutes] = useState(0)
-  const [objectifMinutes, setObjectifMinutes] = useState(360)
   const [isLoading, setIsLoading] = useState(true)
 
   // Confirmation suppression
@@ -71,7 +71,6 @@ export default function TempsPage() {
       setTemps(tempsData.temps)
       setTotalSemaineMinutes(tempsData.totalSemaineMinutes)
       setTotalJourMinutes(tempsData.totalJourMinutes)
-      setObjectifMinutes(tempsData.objectifMinutes)
 
       setMissions(await missionRes.json())
       setTypes(await typeRes.json())
@@ -230,67 +229,75 @@ export default function TempsPage() {
                     {lastTemps.map((t) => {
                       const createdAt = t.createdAt ? new Date(t.createdAt) : null
                       const createdAtFormatted =
-                        createdAt && !isNaN(createdAt.getTime())
-                          ? format(createdAt, "dd/MM/yyyy à HH:mm")
-                          : null
+                          createdAt && !isNaN(createdAt.getTime())
+                              ? format(createdAt, "dd/MM/yyyy à HH:mm")
+                              : null
+
+                      const missionTitle = t.mission?.titre ?? "—"
+                      const missionInitial = missionTitle[0]?.toUpperCase() ?? "?"
 
                       return (
-                        <div
-                          key={t.id}
-                          className="rounded-xl border bg-muted/50 p-4 flex flex-col sm:flex-row sm:justify-between gap-2 hover:bg-muted transition"
-                        >
-                          <div className="space-y-1 flex-1 min-w-0">
-                            <p className="text-base font-semibold text-primary break-words">
-                              {t.mission?.titre}
-                              <span className="text-muted-foreground font-normal"> — {t.typeTache?.nom}</span>
-                            </p>
+                          <div
+                              key={t.id}
+                              className="rounded-xl border bg-muted/50 p-4 flex flex-col sm:flex-row sm:justify-between gap-3 hover:bg-muted transition"
+                          >
+                            <div className="flex gap-3 flex-1 min-w-0">
+                              <Avatar className="h-10 w-10 border shrink-0">
+                                <AvatarImage src={t.mission?.image ?? ""} alt={missionTitle} />
+                                <AvatarFallback className="text-sm">{missionInitial}</AvatarFallback>
+                              </Avatar>
 
-                            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                              <span className="inline-block rounded-full bg-primary/10 text-tertiary px-2 py-0.5 text-xs font-semibold">
-                                {formatMinutes(t.dureeMinutes)}
-                              </span>
-                              <span>·</span>
-                              <span>
-                                {format(new Date(t.date), "EEEE dd MMMM yyyy", { locale: fr })}
-                              </span>
+                              <div className="space-y-1 flex-1 min-w-0">
+                                <p className="text-base font-semibold text-primary break-words">
+                                  {missionTitle}
+                                  <span className="text-muted-foreground font-normal"> — {t.typeTache?.nom}</span>
+                                </p>
+
+                                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <span className="inline-block rounded-full bg-primary/10 text-tertiary px-2 py-0.5 text-xs font-semibold">
+              {formatMinutes(t.dureeMinutes)}
+            </span>
+                                  <span>·</span>
+                                  <span>{format(new Date(t.date), "EEEE dd MMMM yyyy", { locale: fr })}</span>
+                                </div>
+
+                                {t.description && (
+                                    <p className="text-sm text-foreground break-words">{t.description}</p>
+                                )}
+
+                                {createdAtFormatted && (
+                                    <p className="text-xs text-muted-foreground opacity-50">
+                                      Enregistré le {createdAtFormatted}
+                                    </p>
+                                )}
+                              </div>
                             </div>
 
-                            {t.description && (
-                              <p className="text-sm text-foreground break-words">{t.description}</p>
-                            )}
-
-                            {createdAtFormatted && (
-                              <p className="text-xs text-muted-foreground opacity-50">
-                                Enregistré le {createdAtFormatted}
-                              </p>
-                            )}
+                            <div className="flex gap-2 justify-end sm:items-start">
+                              <Button
+                                  size="icon"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedTemps(t)
+                                    setEdited({
+                                      date: toYMD(t.date),
+                                      dureeMinutes: t.dureeMinutes,
+                                      typeTacheId: t.typeTache?.id.toString() ?? "",
+                                      description: t.description ?? "",
+                                    })
+                                  }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                  size="icon"
+                                  variant="destructive"
+                                  onClick={() => confirmDelete(t.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-
-                          <div className="flex gap-2 justify-end sm:items-start">
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedTemps(t)
-                                setEdited({
-                                  date: toYMD(t.date),
-                                  dureeMinutes: t.dureeMinutes,
-                                  typeTacheId: t.typeTache?.id.toString() ?? "",
-                                  description: t.description ?? "",
-                                })
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="destructive"
-                              onClick={() => confirmDelete(t.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
                       )
                     })}
                   </CardContent>

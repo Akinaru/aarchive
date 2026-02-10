@@ -56,6 +56,7 @@ model Mission {
   createdAt            DateTime      @default(now())
   tjm                  Int?
   requiredDailyMinutes Int?
+  image                String?
 
   projetId Int
   projet   Projet  @relation(fields: [projetId], references: [id])

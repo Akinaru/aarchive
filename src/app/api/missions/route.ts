@@ -1,6 +1,18 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
+type MissionBody = {
+  titre: string
+  description?: string
+  statut?: "EN_COURS" | "TERMINEE" | "EN_ATTENTE" | "ANNULEE"
+  projetId: number
+  dateDebut?: string
+  dureePrevueMinutes?: number
+  tjm?: number
+  requiredDailyMinutes?: number
+  image?: string
+}
+
 export async function GET() {
   try {
     const missions = await prisma.mission.findMany({
@@ -17,7 +29,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json()
+  const body: MissionBody = await req.json()
 
   if (!body.titre || !body.projetId) {
     return NextResponse.json({ error: "Titre et projet requis" }, { status: 400 })
@@ -33,6 +45,7 @@ export async function POST(req: Request) {
       dureePrevueMinutes: body.dureePrevueMinutes ?? undefined,
       tjm: body.tjm ?? null,
       requiredDailyMinutes: body.requiredDailyMinutes ?? null,
+      image: body.image ?? null,
     },
   })
 

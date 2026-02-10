@@ -8,6 +8,7 @@ export type Mission = {
   dateDebut: Date | null
   dureePrevueMinutes: number | null
   requiredDailyMinutes: number | null
+  image?: string | null
   projet: {
     nom: string
     clients?: {
