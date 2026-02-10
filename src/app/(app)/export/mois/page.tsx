@@ -154,7 +154,10 @@ export default function ExportMoisPage() {
   const [data, setData] = useState<TempsMoisResponse | null>(null)
   const [missions, setMissions] = useState<Mission[]>([])
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [selectedMissionId, setSelectedMissionId] = useState("all")
+
+  // ✅ forcé : une mission doit être sélectionnée
+  const [selectedMissionId, setSelectedMissionId] = useState<string>("")
+
   const [prevYearTotals, setPrevYearTotals] = useState<PrevYearTotals>(null)
 
   const fetchMissions = async () => {
@@ -170,20 +173,28 @@ export default function ExportMoisPage() {
   }
 
   const fetchData = async () => {
+    // ✅ tant qu’on n’a pas une mission, on ne charge rien
+    if (!selectedMissionId) {
+      setData(null)
+      setPrevYearTotals(null)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       const params = new URLSearchParams({ date: selectedDate.toISOString() })
-      if (selectedMissionId !== "all") params.append("missionId", selectedMissionId)
+      params.append("missionId", selectedMissionId)
 
       const res = await fetch(`/api/temps/mois?${params.toString()}`)
       if (!res.ok) throw new Error("Erreur de chargement")
       const json = (await res.json()) as TempsMoisResponse
       setData(json)
 
-      // comparaison année N-1 (même mois)
+      // comparaison année N-1 (même mois / même mission)
       const prevDate = subYears(selectedDate, 1)
       const paramsPrev = new URLSearchParams({ date: prevDate.toISOString() })
-      if (selectedMissionId !== "all") paramsPrev.append("missionId", selectedMissionId)
+      paramsPrev.append("missionId", selectedMissionId)
 
       try {
         const resPrev = await fetch(`/api/temps/mois?${paramsPrev.toString()}`)
@@ -223,9 +234,7 @@ export default function ExportMoisPage() {
 
   async function urlToDataUrl(url: string): Promise<string | null> {
     try {
-      // supporte "/uploads/x.png" ou "https://..."
       const absolute = url.startsWith("http") ? url : new URL(url, window.location.origin).toString()
-
       const res = await fetch(absolute)
       if (!res.ok) return null
 
@@ -243,13 +252,9 @@ export default function ExportMoisPage() {
   const handleExport = async () => {
     if (!data) return
 
-    // 1) prépare une map missionId -> dataUrl (pour éviter de refetch 50 fois)
     const imageByMissionId = new Map<number, string>()
-
-    // on récupère toutes les images présentes dans le mois (via data.weeks)
     const allTemps = data.weeks.flatMap((w) => w.temps)
 
-    // on déduplique par missionId
     const uniqueMissions = new Map<number, string>()
     for (const t of allTemps) {
       const img = t.mission?.image
@@ -257,20 +262,17 @@ export default function ExportMoisPage() {
       if (!uniqueMissions.has(t.mission.id)) uniqueMissions.set(t.mission.id, img)
     }
 
-    // 2) convertit les URLs en dataUrl
     await Promise.all(
         Array.from(uniqueMissions.entries()).map(async ([missionId, img]) => {
           if (isDataUrl(img)) {
             imageByMissionId.set(missionId, img)
             return
           }
-
           const dataUrl = await urlToDataUrl(img)
           if (dataUrl) imageByMissionId.set(missionId, dataUrl)
         })
     )
 
-    // 3) construit les weeks pour le PDF, en injectant mission.image en dataUrl
     const weeksForPdf = data.weeks.map((w) => ({
       weekStart: parseISO(w.weekStart),
       weekEnd: parseISO(w.weekEnd),
@@ -278,7 +280,6 @@ export default function ExportMoisPage() {
         ...t,
         mission: {
           ...t.mission,
-          // si pas d'image, ou si conversion a échoué => null
           image: imageByMissionId.get(t.mission.id) ?? null,
         },
         date: new Date(t.date),
@@ -293,11 +294,13 @@ export default function ExportMoisPage() {
     generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks)
   }
 
+  const monthLabel = useMemo(() => format(selectedDate, "MMMM yyyy", { locale: fr }), [selectedDate])
 
-  const monthLabel = useMemo(
-      () => format(selectedDate, "MMMM yyyy", { locale: fr }),
-      [selectedDate]
-  )
+  const monthInterval = useMemo(() => {
+    const mStart = data?.monthStart ? parseISO(data.monthStart) : startOfMonth(selectedDate)
+    const mEnd = data?.monthEnd ? parseISO(data.monthEnd) : endOfMonth(selectedDate)
+    return { start: mStart, end: mEnd }
+  }, [data?.monthStart, data?.monthEnd, selectedDate])
 
   const monthlyByMission = data?.monthlyByMission ?? {}
   const totalGlobalMinutes = data?.monthlyTotals?.totalMinutes ?? 0
@@ -311,12 +314,6 @@ export default function ExportMoisPage() {
     const pct = prev > 0 ? (diff / prev) * 100 : null
     return { prev, diff, pct }
   }, [prevYearTotals, totalGlobalFacture])
-
-  const monthInterval = useMemo(() => {
-    const mStart = data?.monthStart ? parseISO(data.monthStart) : startOfMonth(selectedDate)
-    const mEnd = data?.monthEnd ? parseISO(data.monthEnd) : endOfMonth(selectedDate)
-    return { start: mStart, end: mEnd }
-  }, [data?.monthStart, data?.monthEnd, selectedDate])
 
   const allTempsFlat = useMemo<TempsItem[]>(() => {
     const weeks = data?.weeks ?? []
@@ -476,6 +473,10 @@ export default function ExportMoisPage() {
     amount: { label: "Facturé (mois)", color: "var(--chart-1)" },
   } satisfies ChartConfig
 
+  const missionSelected = Boolean(selectedMissionId)
+  const canNavigateMonth = missionSelected
+  const canExport = missionSelected && Boolean(data) && !loading
+
   return (
       <div className="flex flex-col flex-1">
         <PageHeader
@@ -497,18 +498,26 @@ export default function ExportMoisPage() {
                   <div className="text-xs text-muted-foreground">
                     {format(monthInterval.start, "dd/MM/yyyy", { locale: fr })} →{" "}
                     {format(monthInterval.end, "dd/MM/yyyy", { locale: fr })}
-                    {selectedMissionId !== "all" ? " • Filtre mission actif" : ""}
+                    {!missionSelected ? " • Sélectionnez une mission" : ""}
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setSelectedDate(subMonths(selectedDate, 1))}>
+                  <Button
+                      variant="outline"
+                      onClick={() => setSelectedDate(subMonths(selectedDate, 1))}
+                      disabled={!canNavigateMonth}
+                  >
                     ←
                   </Button>
-                  <Button variant="outline" onClick={() => setSelectedDate(addMonths(selectedDate, 1))}>
+                  <Button
+                      variant="outline"
+                      onClick={() => setSelectedDate(addMonths(selectedDate, 1))}
+                      disabled={!canNavigateMonth}
+                  >
                     →
                   </Button>
-                  <Button onClick={handleExport} disabled={!data || loading}>
+                  <Button onClick={handleExport} disabled={!canExport}>
                     Exporter PDF
                   </Button>
                 </div>
@@ -518,10 +527,9 @@ export default function ExportMoisPage() {
                 <div className="lg:col-span-4">
                   <Select value={selectedMissionId} onValueChange={setSelectedMissionId}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Toutes les missions" />
+                      <SelectValue placeholder="Sélectionner une mission" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Toutes les missions</SelectItem>
                       {missions.map((m) => (
                           <SelectItem key={m.id} value={m.id.toString()}>
                             {m.titre}
@@ -534,23 +542,27 @@ export default function ExportMoisPage() {
                 <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="rounded-lg border bg-muted/25 px-3 py-2">
                     <div className="text-[11px] text-muted-foreground">Temps</div>
-                    <div className="text-sm font-semibold text-foreground">{formatMinutes(totalGlobalMinutes)}</div>
+                    <div className="text-sm font-semibold text-foreground">
+                      {missionSelected ? formatMinutes(totalGlobalMinutes) : "—"}
+                    </div>
                   </div>
                   <div className="rounded-lg border bg-muted/25 px-3 py-2">
                     <div className="text-[11px] text-muted-foreground">Heures</div>
                     <div className="text-sm font-semibold text-foreground">
-                      {formatHoursFromMinutes(totalGlobalMinutes)} h
+                      {missionSelected ? `${formatHoursFromMinutes(totalGlobalMinutes)} h` : "—"}
                     </div>
                   </div>
                   <div className="rounded-lg border bg-muted/25 px-3 py-2">
                     <div className="text-[11px] text-muted-foreground">Facturé</div>
                     <div className="text-sm font-semibold text-foreground">
-                      {Number(totalGlobalFacture || 0).toFixed(2)} €
+                      {missionSelected ? `${Number(totalGlobalFacture || 0).toFixed(2)} €` : "—"}
                     </div>
                   </div>
                   <div className="rounded-lg border bg-muted/25 px-3 py-2">
                     <div className="text-[11px] text-muted-foreground">Jours travaillés</div>
-                    <div className="text-sm font-semibold text-foreground">{stats.daysWorked}</div>
+                    <div className="text-sm font-semibold text-foreground">
+                      {missionSelected ? stats.daysWorked : "—"}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -558,28 +570,33 @@ export default function ExportMoisPage() {
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className="bg-background/40">
                   Meilleur jour :{" "}
-                  {stats.bestDay.date ? format(parseISO(stats.bestDay.date), "dd/MM", { locale: fr }) : "—"} •{" "}
-                  {stats.bestDay.hours ? `${stats.bestDay.hours.toFixed(2)} h` : "0 h"} •{" "}
-                  {Number(stats.bestDay.amount ?? 0).toFixed(2)} €
+                  {missionSelected && stats.bestDay.date
+                      ? format(parseISO(stats.bestDay.date), "dd/MM", { locale: fr })
+                      : "—"}{" "}
+                  • {missionSelected && stats.bestDay.hours ? `${stats.bestDay.hours.toFixed(2)} h` : "0 h"} •{" "}
+                  {missionSelected ? Number(stats.bestDay.amount ?? 0).toFixed(2) : "0.00"} €
                 </Badge>
 
                 <Badge variant="outline" className="bg-background/40">
-                  Meilleure semaine : {stats.bestWeek.label} •{" "}
+                  Meilleure semaine : {missionSelected ? stats.bestWeek.label : "—"} •{" "}
                   <span className="font-medium text-foreground">
-                  {Number(stats.bestWeek.amount ?? 0).toFixed(2)} €
+                  {missionSelected ? Number(stats.bestWeek.amount ?? 0).toFixed(2) : "0.00"} €
                 </span>{" "}
                   <span className="text-muted-foreground">(montant)</span>
                 </Badge>
 
                 <Badge
                     variant="outline"
-                    className={cn("bg-background/40", stats.deltaDay >= 0 ? "" : "border-destructive/40")}
+                    className={cn(
+                        "bg-background/40",
+                        missionSelected && stats.deltaDay < 0 ? "border-destructive/40" : ""
+                    )}
                 >
-                  Dernier jour Δ : {stats.deltaDay >= 0 ? "+" : "-"}
-                  {Math.abs(stats.deltaDay).toFixed(2)} €
+                  Dernier jour Δ : {missionSelected && stats.deltaDay >= 0 ? "+" : "-"}
+                  {missionSelected ? Math.abs(stats.deltaDay).toFixed(2) : "0.00"} €
                 </Badge>
 
-                {yoy && (
+                {missionSelected && yoy && (
                     <Badge
                         variant="outline"
                         className={cn(
@@ -593,16 +610,28 @@ export default function ExportMoisPage() {
                         {formatCurrencyEUR(Math.abs(yoy.diff))}
                   </span>
                       {typeof yoy.pct === "number" ? (
-                          <span className="text-muted-foreground"> ({yoy.pct >= 0 ? "+" : ""}{yoy.pct.toFixed(1)}%)</span>
+                          <span className="text-muted-foreground">
+                      {" "}
+                            ({yoy.pct >= 0 ? "+" : ""}
+                            {yoy.pct.toFixed(1)}%)
+                    </span>
                       ) : null}
                     </Badge>
                 )}
               </div>
+
+              {!missionSelected && (
+                  <div className="text-xs text-muted-foreground">
+                    Sélectionne une mission pour charger les données et exporter un PDF.
+                  </div>
+              )}
             </div>
           </CardHeader>
         </Card>
 
-        {loading ? (
+        {!missionSelected ? (
+            <p className="text-muted-foreground">Aucune donnée tant qu’une mission n’est pas sélectionnée.</p>
+        ) : loading ? (
             <p className="text-muted-foreground">Chargement...</p>
         ) : !data ? (
             <p className="text-muted-foreground">Aucune donnée.</p>
@@ -674,20 +703,8 @@ export default function ExportMoisPage() {
                             }
                         />
 
-                        <Area
-                            yAxisId="left"
-                            dataKey="amount"
-                            type="natural"
-                            fill="url(#fillAmount)"
-                            name="amount"
-                        />
-                        <Area
-                            yAxisId="right"
-                            dataKey="hours"
-                            type="natural"
-                            fill="url(#fillHours)"
-                            name="hours"
-                        />
+                        <Area yAxisId="left" dataKey="amount" type="natural" fill="url(#fillAmount)" name="amount" />
+                        <Area yAxisId="right" dataKey="hours" type="natural" fill="url(#fillHours)" name="hours" />
 
                         <ChartLegend content={<ChartLegendContent />} />
                       </AreaChart>
@@ -756,9 +773,7 @@ export default function ExportMoisPage() {
                 <Card className="xl:col-span-6 flex flex-col">
                   <CardHeader className="items-center pb-0">
                     <CardTitle>Répartition par type</CardTitle>
-                    <div className="text-xs text-muted-foreground">
-                      Sur le mois • {formatMinutes(byTypeMonthPie.totalMinutes)}
-                    </div>
+                    <div className="text-xs text-muted-foreground">Sur le mois • {formatMinutes(byTypeMonthPie.totalMinutes)}</div>
                   </CardHeader>
 
                   <CardContent className="flex-1 pb-0">
@@ -816,12 +831,7 @@ export default function ExportMoisPage() {
                               margin={{ top: 5, right: 10, bottom: 5, left: 10 }}
                           >
                             <CartesianGrid horizontal={false} />
-                            <XAxis
-                                type="number"
-                                tickLine={false}
-                                axisLine={false}
-                                tickFormatter={(v: number) => `${Math.round(v)}€`}
-                            />
+                            <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={(v: number) => `${Math.round(v)}€`} />
                             <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={160} />
 
                             <ChartTooltip
@@ -848,7 +858,7 @@ export default function ExportMoisPage() {
                 </Card>
               </div>
 
-              {/* Weekly details (comme demandé) */}
+              {/* Weekly details */}
               <Card>
                 <CardHeader>
                   <CardTitle>Détail par semaine</CardTitle>
@@ -942,9 +952,7 @@ export default function ExportMoisPage() {
                                   <div className="flex justify-end text-sm text-muted-foreground">
                             <span>
                               Total semaine :{" "}
-                              <span className="text-foreground font-medium">
-                                {Number(totalAmountWeek || 0).toFixed(2)} €
-                              </span>
+                              <span className="text-foreground font-medium">{Number(totalAmountWeek || 0).toFixed(2)} €</span>
                             </span>
                                   </div>
                                 </div>
@@ -972,7 +980,7 @@ export default function ExportMoisPage() {
               </Card>
 
               <div className="flex justify-end mt-1">
-                <Button onClick={handleExport} disabled={!data}>
+                <Button onClick={handleExport} disabled={!canExport}>
                   Exporter le PDF
                 </Button>
               </div>

@@ -1,6 +1,7 @@
+// src/lib/exportpdf-month.ts
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { format, addDays, isWithinInterval } from "date-fns"
+import { addDays, format } from "date-fns"
 import { formatMinutes } from "@/lib/time"
 import { Temps } from "@/types/temps"
 
@@ -10,6 +11,15 @@ export type WeeklyGroup = {
   temps: Temps[]
 }
 
+type MissionAgg = {
+  missionId: number
+  titre: string
+  tjm: number
+  minutes: number
+}
+
+type RGB = [number, number, number]
+
 function cleanText(input: string): string {
   return input
       .replace(/[^\p{L}\p{N}\s\-'.(),;:!?/]/gu, "")
@@ -17,269 +27,327 @@ function cleanText(input: string): string {
       .trim()
 }
 
-function getMissionLabelFromGroups(weeklyGroups: WeeklyGroup[]) {
-  const allTemps = weeklyGroups.flatMap((w) => w.temps)
-  const titles = new Set<string>()
-
-  for (const t of allTemps) {
-    const title = t.mission?.titre ? String(t.mission.titre) : null
-    if (title) titles.add(title)
-  }
-
-  if (titles.size === 1) return Array.from(titles)[0]
-  if (titles.size > 1) return "Toutes les missions"
-  return "—"
+function moneyEUR(value: number) {
+  return `${Number(value || 0).toFixed(2)} €`
 }
 
-/** ✅ extrait le format + data utilisable par jsPDF.addImage */
-function parseDataUrlImage(dataUrl: string): { format: "PNG" | "JPEG"; data: string } | null {
-  // data:image/png;base64,AAAA
-  const m = /^data:image\/(png|jpeg|jpg);base64,(.+)$/i.exec(dataUrl)
-  if (!m) return null
-  const ext = m[1].toLowerCase()
-  const format = ext === "png" ? "PNG" : "JPEG"
-  return { format, data: m[2] }
+function formatHours(minutes: number) {
+  const h = minutes / 60
+  return `${h.toFixed(2)} h`
 }
 
-function drawMissionAvatar(
-    doc: jsPDF,
-    x: number,
-    y: number,
-    size: number,
-    imageDataUrl: string | null | undefined,
-    fallbackText: string
+export async function generateMonthlyTempsPDF(
+    monthStart: Date,
+    monthEnd: Date,
+    weeklyGroups: WeeklyGroup[]
 ) {
-  // fond cercle
-  doc.setFillColor(241, 245, 249) // slate-100
-  doc.circle(x + size / 2, y + size / 2, size / 2, "F")
-
-  const parsed = imageDataUrl ? parseDataUrlImage(imageDataUrl) : null
-  if (parsed) {
-    try {
-      // petit padding pour éviter de toucher le bord
-      const pad = Math.max(1, Math.round(size * 0.12))
-      doc.addImage(parsed.data, parsed.format, x + pad, y + pad, size - pad * 2, size - pad * 2)
-      return
-    } catch {
-      // fallback texte en cas d'image invalide
-    }
-  }
-
-  // fallback lettre
-  doc.setTextColor(71, 85, 105) // slate-600
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(Math.max(8, Math.round(size * 0.55)))
-  const letter = cleanText(fallbackText).slice(0, 1).toUpperCase() || "?"
-  // centrage approximatif
-  doc.text(letter, x + size / 2, y + size * 0.68, { align: "center" })
-}
-
-export function generateMonthlyTempsPDF(monthStart: Date, monthEnd: Date, weeklyGroups: WeeklyGroup[]) {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
 
-  // ===== Header =====
-  doc.setFillColor(30, 41, 59)
-  doc.rect(0, 0, pageWidth, 32, "F")
+  // ===== Infos hardcodées (toi) =====
+  const issuer = {
+    displayName: "AkiAgency — Maxime GALLOTTA", // ✅ "by" retiré
+    address: "11 Boulevard Jacques Replat\n74000 Annecy\nFrance",
+    email: "maxime.utchimata@gmail.com",
+    phone: "+33 7 85 83 60 07",
+    website: "https://akinaru.fr",
+    siret: "10061790100010",
+    vatLine: "VAT not applicable — Article 293 B of the French General Tax Code.",
+    legalLine: "French sole trader (micro-entrepreneur).",
+  }
+
+  const payment = {
+    methodLine: "Payment in crypto: USDT (Tether) on Ethereum network (ERC-20).",
+    walletLine: "Wallet address: to be provided at payment time (address may vary).",
+    termsLine: "Payment due within 7 days from issue date.",
+    refLine: "Please include the invoice number in the payment reference.",
+  }
+
+  // ===== Facture meta =====
+  const issueDate = new Date()
+  const dueDate = addDays(issueDate, 7)
+  const invoiceNumber = `INV-${format(issueDate, "yyyyMMdd-HHmmss")}`
+  const billingPeriod = `${format(monthStart, "dd/MM/yyyy")} — ${format(monthEnd, "dd/MM/yyyy")}`
+
+  // ===== Aggr par mission =====
+  const allTemps = weeklyGroups.flatMap((w) => w.temps)
+  const byMission = new Map<number, MissionAgg>()
+
+  for (const t of allTemps) {
+    const m = t.mission
+    if (!m?.id) continue
+
+    const missionId = m.id
+    const tjm = Number(m.tjm ?? 0)
+    const minutes = Number(t.dureeMinutes ?? 0)
+
+    const current = byMission.get(missionId)
+    if (!current) {
+      byMission.set(missionId, {
+        missionId,
+        titre: String(m.titre ?? "—"),
+        tjm,
+        minutes,
+      })
+    } else {
+      current.minutes += minutes
+    }
+  }
+
+  const missionAggs = Array.from(byMission.values()).sort((a, b) => b.minutes - a.minutes)
+
+  // ===== Couleurs (RGB tuples) =====
+  const C = {
+    slate800: [30, 41, 59] as RGB,
+    slate900: [15, 23, 42] as RGB,
+    slate200: [226, 232, 240] as RGB,
+    slate100: [241, 245, 249] as RGB,
+    slate50: [248, 250, 252] as RGB,
+    slate600: [71, 85, 105] as RGB,
+  }
+
+  // ===== Header bandeau =====
+  doc.setFillColor(...C.slate800)
+  doc.rect(0, 0, pageWidth, 30, "F")
 
   doc.setTextColor(255, 255, 255)
   doc.setFont("helvetica", "bold")
   doc.setFontSize(18)
-  doc.text("Monthly Time Report", 14, 20)
-
-  doc.setFontSize(10)
-  doc.setFont("helvetica", "normal")
-  doc.text(`From ${format(monthStart, "dd/MM/yyyy")} to ${format(monthEnd, "dd/MM/yyyy")}`, 14, 28)
-
-  const missionLabel = cleanText(getMissionLabelFromGroups(weeklyGroups))
-  doc.setTextColor(17, 24, 39)
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(12)
-  doc.text(`Mission: ${missionLabel}`, 14, 42)
-
-  doc.setDrawColor(226, 232, 240)
-  doc.setLineWidth(0.6)
-  doc.line(14, 46, pageWidth - 14, 46)
-
-  let currentY = 54
-  const totalWorkedDays = new Set<string>()
-
-  // ===== Weekly sections =====
-  weeklyGroups.forEach(({ weekStart, weekEnd, temps }, index) => {
-    const totalMinutes = temps.reduce((sum, t) => sum + Number(t.dureeMinutes ?? 0), 0)
-
-    doc.setFillColor(241, 245, 249)
-    doc.roundedRect(14, currentY - 6, pageWidth - 28, 10, 2, 2, "F")
-    doc.setTextColor(15, 23, 42)
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(11)
-    doc.text(
-        `Week ${index + 1} (${format(weekStart, "dd/MM")} - ${format(weekEnd, "dd/MM")}): ${formatMinutes(totalMinutes)}`,
-        16,
-        currentY
-    )
-    currentY += 10
-
-    const byType: Record<string, number> = {}
-    const byDay: Record<string, number> = {}
-
-    temps.forEach((t) => {
-      const type = cleanText(t.typeTache?.nom ?? "Sans type")
-      byType[type] = (byType[type] || 0) + Number(t.dureeMinutes ?? 0)
-
-      const key = format(new Date(t.date as any), "yyyy-MM-dd")
-      byDay[key] = (byDay[key] || 0) + Number(t.dureeMinutes ?? 0)
-    })
-
-    const repartition = Object.entries(byType)
-        .sort((a, b) => b[1] - a[1])
-        .map(([type, minutes]) => [
-          type,
-          formatMinutes(minutes),
-          `${totalMinutes > 0 ? ((minutes / totalMinutes) * 100).toFixed(1) : "0.0"}%`,
-        ])
-
-    autoTable(doc, {
-      head: [["Task Type", "Duration", "%"]],
-      body: repartition.length ? repartition : [["—", "0m", "0.0%"]],
-      startY: currentY,
-      theme: "grid",
-      headStyles: { fillColor: [226, 232, 240], textColor: 15, fontStyle: "bold" },
-      styles: { fontSize: 9, cellPadding: 2, textColor: 20 },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      margin: { left: 14, right: 14 },
-    })
-
-    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4
-
-    const dailyRows = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-        .filter((date) => isWithinInterval(date, { start: monthStart, end: monthEnd }))
-        .map((date) => {
-          const key = format(date, "yyyy-MM-dd")
-          const minutes = byDay[key] || 0
-          if (minutes > 0) totalWorkedDays.add(key)
-          return [format(date, "EEEE"), format(date, "dd/MM/yyyy"), formatMinutes(minutes)]
-        })
-
-    autoTable(doc, {
-      head: [["Day", "Date", "Time Worked"]],
-      body: dailyRows.length ? dailyRows : [["—", "—", "0m"]],
-      startY: currentY,
-      theme: "striped",
-      headStyles: { fillColor: [241, 245, 249], textColor: 15, fontStyle: "bold" },
-      styles: { fontSize: 9, cellPadding: 2, textColor: 20 },
-      margin: { left: 14, right: 14 },
-    })
-
-    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4
-
-    const detailedRows = temps
-        .slice()
-        .sort((a, b) => +new Date(a.date as any) - +new Date(b.date as any))
-        .map((t) => {
-          const dt = new Date(t.date as any)
-          const mission = cleanText(t.mission?.titre ?? "—")
-          const type = cleanText(t.typeTache?.nom ?? "—")
-          const desc = t.description ? cleanText(String(t.description)) : "—"
-          const minutes = Number(t.dureeMinutes ?? 0)
-
-          return [format(dt, "dd/MM/yyyy"), format(dt, "HH:mm"), mission, type, desc, formatMinutes(minutes)]
-        })
-
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(10)
-    doc.setTextColor(15, 23, 42)
-    doc.text("Detailed time entries", 14, currentY + 4)
-    currentY += 8
-
-    autoTable(doc, {
-      head: [["Date", "Time", "Mission", "Task Type", "Description", "Duration"]],
-      body: detailedRows.length ? detailedRows : [["—", "—", "—", "—", "—", "0m"]],
-      startY: currentY,
-      theme: "grid",
-      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: "bold" },
-      styles: { fontSize: 8.5, cellPadding: 2, overflow: "linebreak", valign: "top" },
-      columnStyles: {
-        0: { cellWidth: 18 },
-        1: { cellWidth: 14 },
-        2: { cellWidth: 34 },
-        3: { cellWidth: 26 },
-        4: { cellWidth: 70 },
-        5: { cellWidth: 18, halign: "right" },
-      },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      margin: { left: 14, right: 14 },
-    })
-
-    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
-  })
-
-  // ===== Billing summary =====
-  const allTemps = weeklyGroups.flatMap((w) => w.temps)
-  const groupedByMission: Record<number, Temps[]> = {}
-
-  allTemps.forEach((t) => {
-    const mid = t.mission?.id
-    if (!mid) return
-    groupedByMission[mid] = groupedByMission[mid] || []
-    groupedByMission[mid].push(t)
-  })
-
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(13)
-  doc.setTextColor(15, 23, 42)
-  doc.text("Billing Summary", 14, currentY)
-  currentY += 8
-
-  let totalFacture = 0
-
-  Object.entries(groupedByMission).forEach(([, entries]) => {
-    const mission = entries[0].mission
-    if (!mission) return
-
-    const tjm = Number(mission.tjm || 0)
-    const totalMinutes = entries.reduce((sum, t) => sum + Number(t.dureeMinutes ?? 0), 0)
-    const days = totalMinutes / 450
-    const invoiceAmount = tjm * days
-    totalFacture += invoiceAmount
-
-    // ✅ avatar + titre
-    const avatarSize = 10
-    drawMissionAvatar(doc, 14, currentY - 7, avatarSize, mission.image ?? null, mission.titre)
-
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(11)
-    doc.setTextColor(15, 23, 42)
-    doc.text(`${cleanText(mission.titre)}`, 14 + avatarSize + 3, currentY)
-    currentY += 6
-
-    autoTable(doc, {
-      head: [["Daily Rate (TJM)", "Time", "Days", "Billed"]],
-      body: [[`${tjm.toFixed(2)} €`, formatMinutes(totalMinutes), `${days.toFixed(2)} d`, `${invoiceAmount.toFixed(2)} €`]],
-      startY: currentY,
-      theme: "striped",
-      headStyles: { fillColor: [226, 232, 240], textColor: 15, fontStyle: "bold" },
-      styles: { fontSize: 10, cellPadding: 2, textColor: 20 },
-      margin: { left: 14, right: 14 },
-    })
-
-    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
-  })
-
-  doc.setDrawColor(226, 232, 240)
-  doc.setLineWidth(0.6)
-  doc.line(14, currentY, pageWidth - 14, currentY)
-  currentY += 7
-
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(12)
-  doc.setTextColor(15, 23, 42)
-  doc.text(`Total billed: ${totalFacture.toFixed(2)} €`, 14, currentY)
+  doc.text("INVOICE", 14, 19)
 
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
-  doc.setTextColor(71, 85, 105)
-  doc.text(`Worked days: ${totalWorkedDays.size}`, pageWidth - 14, currentY, { align: "right" })
+  doc.text(`Billing period: ${billingPeriod}`, 14, 26)
 
-  doc.save(`monthly-report-${format(monthStart, "yyyy-MM")}.pdf`)
+  // ===== Bloc émetteur / meta =====
+  let y = 38
+
+  // Émetteur (gauche)
+  doc.setTextColor(...C.slate900)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(12)
+  doc.text(cleanText(issuer.displayName), 14, y)
+
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9.5)
+  y += 5
+  doc.setTextColor(...C.slate600)
+  doc.text(issuer.address, 14, y)
+  y += 16
+
+  doc.text(`Email: ${issuer.email}`, 14, y)
+  y += 5
+  doc.text(`Phone: ${issuer.phone}`, 14, y)
+  y += 5
+  doc.text(`Website: ${issuer.website}`, 14, y)
+  y += 5
+  doc.text(`SIRET: ${issuer.siret}`, 14, y)
+  y += 5
+  doc.text(issuer.vatLine, 14, y)
+  y += 5
+  doc.text(issuer.legalLine, 14, y)
+
+  // Meta (droite)
+  const metaX = pageWidth - 14
+  const metaTop = 38
+
+  doc.setTextColor(...C.slate900)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(10)
+  doc.text("Invoice details", metaX, metaTop, { align: "right" })
+
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9.5)
+  doc.setTextColor(...C.slate600)
+  doc.text(`Invoice #: ${invoiceNumber}`, metaX, metaTop + 6, { align: "right" })
+  doc.text(`Issue date: ${format(issueDate, "dd/MM/yyyy HH:mm")}`, metaX, metaTop + 11, { align: "right" })
+  doc.text(`Due date: ${format(dueDate, "dd/MM/yyyy")}`, metaX, metaTop + 16, { align: "right" })
+  doc.text("Currency: EUR", metaX, metaTop + 21, { align: "right" })
+
+  // “Bill To” placeholder (pas de client pour l’instant)
+  doc.setDrawColor(...C.slate200)
+  doc.setLineWidth(0.6)
+  doc.line(14, 86, pageWidth - 14, 86)
+
+  doc.setTextColor(...C.slate900)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(10)
+  doc.text("Bill To", 14, 94)
+  doc.setFont("helvetica", "normal")
+  doc.setTextColor(...C.slate600)
+  doc.text("Client details not provided.", 14, 100)
+
+  // ===== Lignes facture (missions) =====
+  const lineItemsY = 108
+
+  const lineRows = missionAggs.map((m) => {
+    const days = m.minutes / 450
+    const amount = Number(m.tjm || 0) * days
+    return {
+      service: cleanText(m.titre),
+      hours: formatHours(m.minutes),
+      rate: moneyEUR(m.tjm),
+      days: `${days.toFixed(2)} d`,
+      amount: moneyEUR(amount),
+    }
+  })
+
+  const subtotal = missionAggs.reduce((s, m) => s + Number(m.tjm || 0) * (m.minutes / 450), 0)
+  const vat = 0
+  const total = subtotal + vat
+
+  // ✅ tableau noir avec les mêmes marges que le reste (14 / 14)
+  autoTable(doc, {
+    startY: lineItemsY,
+    theme: "grid",
+    tableWidth: pageWidth - 28,
+    margin: { left: 14, right: 14 },
+    head: [["Service", "Hours", "Daily rate", "Days", "Amount"]],
+    body: lineRows.length
+        ? lineRows.map((r) => [r.service, r.hours, r.rate, r.days, r.amount])
+        : [["—", "0.00 h", moneyEUR(0), "0.00 d", moneyEUR(0)]],
+    headStyles: {
+      fillColor: C.slate800,
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    styles: {
+      fontSize: 9,
+      cellPadding: 2.5,
+      textColor: 20,
+      valign: "middle",
+    },
+    alternateRowStyles: { fillColor: C.slate50 },
+    columnStyles: {
+      0: { cellWidth: 78 }, // Service
+      1: { cellWidth: 22, halign: "right" }, // Hours
+      2: { cellWidth: 28, halign: "right" }, // Daily rate
+      3: { cellWidth: 18, halign: "right" }, // Days
+      4: { cellWidth: 26, halign: "right" }, // Amount
+    },
+  })
+
+  let afterLinesY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6
+
+  // ===== Totaux =====
+  autoTable(doc, {
+    startY: afterLinesY,
+    theme: "plain",
+    margin: { left: 14, right: 14 },
+    tableWidth: pageWidth - 28,
+    body: [
+      ["Subtotal", moneyEUR(subtotal)],
+      ["VAT", issuer.vatLine.includes("not applicable") ? "0.00 €" : moneyEUR(vat)],
+      ["Total", moneyEUR(total)],
+      ["Amount due", moneyEUR(total)],
+    ],
+    styles: { fontSize: 10, cellPadding: 2.5, textColor: 20 },
+    columnStyles: {
+      0: { halign: "right" },
+      1: { halign: "right" },
+    },
+    didParseCell: (data) => {
+      const label = String(data.cell.raw ?? "")
+      if (label === "Total" || label === "Amount due") {
+        data.cell.styles.fontStyle = "bold"
+      }
+    },
+  })
+
+  afterLinesY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6
+
+  // ===== Paiement =====
+  doc.setDrawColor(...C.slate200)
+  doc.setLineWidth(0.6)
+  doc.line(14, afterLinesY, pageWidth - 14, afterLinesY)
+  afterLinesY += 7
+
+  doc.setTextColor(...C.slate900)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(10)
+  doc.text("Payment instructions", 14, afterLinesY)
+  afterLinesY += 5
+
+  doc.setFont("helvetica", "normal")
+  doc.setTextColor(...C.slate600)
+  doc.setFontSize(9.5)
+  doc.text(payment.methodLine, 14, afterLinesY)
+  afterLinesY += 5
+  doc.text(payment.walletLine, 14, afterLinesY)
+  afterLinesY += 5
+  doc.text(payment.termsLine, 14, afterLinesY)
+  afterLinesY += 5
+  doc.text(payment.refLine, 14, afterLinesY)
+  afterLinesY += 8
+
+  // ===== Mentions facture (EN) =====
+  doc.setTextColor(...C.slate900)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(10)
+  doc.text("Legal notes", 14, afterLinesY)
+  afterLinesY += 5
+
+  doc.setFont("helvetica", "normal")
+  doc.setTextColor(...C.slate600)
+  doc.setFontSize(9.2)
+
+  const notes = [
+    issuer.vatLine,
+    "No early payment discount is granted unless otherwise agreed in writing.",
+    "Late payment may result in penalties in accordance with applicable French regulations.",
+    "For professional customers, a fixed recovery fee of €40 may apply in case of late payment (French Commercial Code).",
+  ]
+  notes.forEach((n) => {
+    doc.text(`• ${n}`, 14, afterLinesY)
+    afterLinesY += 4.6
+  })
+
+  // ===== Annexe (détails temps) =====
+  afterLinesY += 6
+  doc.setTextColor(...C.slate900)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(11)
+  doc.text("Appendix — Detailed time entries", 14, afterLinesY)
+  afterLinesY += 6
+
+  const detailedRows = allTemps
+      .slice()
+      .sort((a, b) => +new Date(a.date as any) - +new Date(b.date as any))
+      .map((t) => {
+        const dt = new Date(t.date as any)
+        const mission = cleanText(t.mission?.titre ?? "—")
+        const type = cleanText(t.typeTache?.nom ?? "—")
+        const desc = t.description ? cleanText(String(t.description)) : "—"
+        const minutes = Number(t.dureeMinutes ?? 0)
+        return [format(dt, "dd/MM/yyyy"), mission, type, desc, formatMinutes(minutes)]
+      })
+
+  autoTable(doc, {
+    startY: afterLinesY,
+    theme: "grid",
+    head: [["Date", "Mission", "Task type", "Description", "Duration"]],
+    body: detailedRows.length ? detailedRows : [["—", "—", "—", "—", "0m"]],
+    headStyles: {
+      fillColor: C.slate100,
+      textColor: 15,
+      fontStyle: "bold",
+    },
+    styles: {
+      fontSize: 8.5,
+      cellPadding: 2,
+      overflow: "linebreak",
+      valign: "top",
+    },
+    columnStyles: {
+      0: { cellWidth: 20 },
+      1: { cellWidth: 35 },
+      2: { cellWidth: 26 },
+      3: { cellWidth: 78 },
+      4: { cellWidth: 18, halign: "right" },
+    },
+    alternateRowStyles: { fillColor: C.slate50 },
+    margin: { left: 14, right: 14 },
+  })
+
+  doc.save(`invoice-${format(issueDate, "yyyy-MM")}-${invoiceNumber}.pdf`)
 }
