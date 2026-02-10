@@ -367,7 +367,7 @@ export function TempsBarDashboard({ temps }: Props) {
                   key={key}
                   dataKey={key}
                   fill={chartConfig[key].color}
-                  stroke={stroke}
+                  stroke="#1A191C"
                   strokeWidth={1.5}
                   stackId="a"
                   radius={[4, 4, 0, 0]}

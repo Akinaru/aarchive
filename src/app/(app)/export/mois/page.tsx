@@ -620,7 +620,6 @@ export default function ExportMoisPage() {
                             dataKey="amount"
                             type="natural"
                             fill="url(#fillAmount)"
-                            stroke="var(--color-amount)"
                             name="amount"
                         />
                         <Area
@@ -628,7 +627,6 @@ export default function ExportMoisPage() {
                             dataKey="hours"
                             type="natural"
                             fill="url(#fillHours)"
-                            stroke="var(--color-hours)"
                             name="hours"
                         />
 
