@@ -14,13 +14,52 @@ model Utilisateur {
   nom        String?
 }
 
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum VatStatus {
+  UNKNOWN
+  NOT_APPLICABLE
+  VAT_EXEMPT
+  VAT_REGISTERED
+}
+
 model Client {
-  id        Int      @id @default(autoincrement())
-  nom       String
+  id Int @id @default(autoincrement())
+
+  // ===== Identité (affichage + facturation) =====
+  nom       String // nom affiché (ex: "ACME", ou "Jean Dupont")
+  legalName String? // raison sociale / nom légal exact si différent
+  type      ClientType @default(COMPANY)
+
+  // ===== Contact =====
   email     String?
   telephone String?
   siteWeb   String?
   photoPath String?
+
+  // ===== Adresse de facturation =====
+  addressLine1 String?
+  addressLine2 String?
+  postalCode   String?
+  city         String?
+  state        String? // optionnel (ex: région/état)
+  countryCode  String? // ISO2 (ex: "FR", "BE", "CH")
+
+  // ===== Infos société (si COMPANY) =====
+  companyRegistrationNumber String? // n° registre local (RCS/KB/… selon pays)
+  siret                     String? // utile si client FR
+  siren                     String? // utile si tu veux, optionnel
+  tvaNumber                 String? // VAT number intracom (ex: "FRxx...")
+  vatStatus                 VatStatus @default(UNKNOWN)
+
+  // ===== Facturation =====
+  billingEmail String? // si différent du mail principal
+  billingNote  String? // infos utiles facture (ex: "PO #123", "Service compta: ...")
+
+  // ===== Meta =====
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -36,14 +75,18 @@ model Projet {
 }
 
 model ProjetClient {
-  id       Int @id @default(autoincrement())
-  projetId Int
-  clientId Int
+  id        Int     @id @default(autoincrement())
+  projetId  Int
+  clientId  Int
+  isBilling Boolean @default(false)
 
-  projet Projet @relation(fields: [projetId], references: [id])
-  client Client @relation(fields: [clientId], references: [id])
+  projet Projet @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@unique([projetId, clientId])
+  @@index([projetId])
+  @@index([clientId])
+  @@index([projetId, isBilling])
 }
 
 model Mission {

@@ -31,38 +31,70 @@ export async function PUT(req: Request, context: unknown) {
     return NextResponse.json({ error: "Nom requis" }, { status: 400 })
   }
 
-  try {
-    await prisma.projetClient.deleteMany({
-      where: { projetId: id },
-    })
+  const clientIds: number[] = Array.isArray(body.clientIds) ? body.clientIds : []
+  const billingClientIdRaw = body.billingClientId
+  const billingClientId: number | null =
+      typeof billingClientIdRaw === "number" ? billingClientIdRaw : null
 
-    const updated = await prisma.projet.update({
-      where: { id },
-      data: {
-        nom: body.nom,
-        description: body.description ?? null,
-        clients: {
-          create: (body.clientIds ?? []).map((clientId: number) => ({
-            client: { connect: { id: clientId } },
-          })),
-        },
-      },
-      include: {
-        missions: { select: { id: true } },
-        clients: {
-          include: {
-            client: { select: { id: true, nom: true } },
+  if (clientIds.length > 0) {
+    if (!billingClientId) {
+      return NextResponse.json(
+          { error: "billingClientId requis si des clients sont associés" },
+          { status: 400 }
+      )
+    }
+
+    if (!clientIds.includes(billingClientId)) {
+      return NextResponse.json(
+          { error: "billingClientId doit être inclus dans clientIds" },
+          { status: 400 }
+      )
+    }
+  }
+
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      // 1) reset pivot
+      await tx.projetClient.deleteMany({
+        where: { projetId: id },
+      })
+
+      // 2) update projet + recreate pivot
+      return await tx.projet.update({
+        where: { id },
+        data: {
+          nom: body.nom,
+          description: body.description ?? null,
+          clients: {
+            create: clientIds.map((clientId: number) => ({
+              client: { connect: { id: clientId } },
+              isBilling: billingClientId ? clientId === billingClientId : false,
+            })),
           },
         },
-      },
+        include: {
+          missions: { select: { id: true } },
+          clients: {
+            select: {
+              id: true,
+              projetId: true,
+              clientId: true,
+              isBilling: true,
+              client: {
+                select: { id: true, nom: true, photoPath: true },
+              },
+            },
+          },
+        },
+      })
     })
 
     return NextResponse.json(updated)
   } catch (error) {
     console.error(error)
     return NextResponse.json(
-      { error: "Erreur lors de la mise à jour." },
-      { status: 500 }
+        { error: "Erreur lors de la mise à jour." },
+        { status: 500 }
     )
   }
 }
@@ -91,8 +123,8 @@ export async function DELETE(req: Request, context: unknown) {
   } catch (error) {
     console.error("Erreur lors de la suppression du projet :", error)
     return NextResponse.json(
-      { error: "Suppression impossible. Vérifiez les dépendances." },
-      { status: 500 }
+        { error: "Suppression impossible. Vérifiez les dépendances." },
+        { status: 500 }
     )
   }
 }
