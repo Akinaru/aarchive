@@ -4,7 +4,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import React, { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +32,7 @@ import {
   BarChart3,
   ChevronDown,
   TrendingUp,
+  CreditCard,
 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 import { cn } from "@/lib/utils"
@@ -190,6 +190,18 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuButton>
                     <SidebarMenuBadge>{badge(counts?.typesTache)}</SidebarMenuBadge>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn({ "bg-primary/10 text-primary": isActive("/moyens-paiement") })}
+                    >
+                      <Link href="/moyens-paiement" onClick={handleLinkClick}>
+                        <CreditCard className="mr-2 size-4" />
+                        Moyens de paiement
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>

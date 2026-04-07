@@ -74,6 +74,7 @@ export default function ProjetSinglePage() {
   const totalHeures = Math.floor(totalMinutes / 60)
   const totalMissions = projet.missions.length
   const totalClients = projet.clients.length
+  const totalMoyensPaiement = projet.moyensPaiement?.length ?? 0
 
   return (
     <div className="flex flex-1 flex-col">
@@ -130,6 +131,29 @@ export default function ProjetSinglePage() {
                       <span className="text-xs text-muted-foreground">{pc.client.email}</span>
                     )}
                   </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {totalMoyensPaiement > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Moyens de paiement associés</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              {(projet.moyensPaiement || []).map((link) => (
+                <div
+                  key={link.moyenPaiement.id}
+                  className="rounded-lg bg-muted/50 px-3 py-2 text-sm"
+                >
+                  <p className="font-medium">{link.moyenPaiement.nom}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {link.moyenPaiement.type === "CRYPTO"
+                      ? `${link.moyenPaiement.cryptoSymbol || "CRYPTO"}${link.moyenPaiement.cryptoNetwork ? ` - ${link.moyenPaiement.cryptoNetwork}` : ""}`
+                      : "IBAN"}
+                  </p>
                 </div>
               ))}
             </CardContent>

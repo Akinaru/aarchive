@@ -25,18 +25,25 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
+import { MoyenPaiement } from "@/types/moyens-paiement"
 
 type ProjetClientLink = {
   client: Client
   isBilling?: boolean
 }
 
+type ProjetMoyenPaiementLink = {
+  moyenPaiement: MoyenPaiement
+}
+
 export default function ProjetsPage() {
   const [projets, setProjets] = useState<Projet[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [moyensPaiement, setMoyensPaiement] = useState<MoyenPaiement[]>([])
 
   // Add dialog
   const [selectedClientIds, setSelectedClientIds] = useState<number[]>([])
+  const [selectedMoyenPaiementIds, setSelectedMoyenPaiementIds] = useState<number[]>([])
   const [newBillingClientId, setNewBillingClientId] = useState<number | null>(null)
   const [newNom, setNewNom] = useState("")
   const [newDescription, setNewDescription] = useState("")
@@ -45,6 +52,7 @@ export default function ProjetsPage() {
   // Edit dialog
   const [editProjet, setEditProjet] = useState<Projet | null>(null)
   const [editClientIds, setEditClientIds] = useState<number[]>([])
+  const [editMoyenPaiementIds, setEditMoyenPaiementIds] = useState<number[]>([])
   const [editBillingClientId, setEditBillingClientId] = useState<number | null>(null)
 
   // Delete dialog
@@ -73,6 +81,16 @@ export default function ProjetsPage() {
     }
   }
 
+  const fetchMoyensPaiement = async () => {
+    try {
+      const res = await fetch("/api/moyens-paiement")
+      const data = await res.json()
+      setMoyensPaiement(data)
+    } catch {
+      toast.error("Erreur lors du chargement des moyens de paiement.")
+    }
+  }
+
   // ===== Helpers Billing (Add) =====
   const addSelectedClients = useMemo(
       () => clients.filter((c) => selectedClientIds.includes(c.id)),
@@ -94,6 +112,17 @@ export default function ProjetsPage() {
     })
   }
 
+  const addSelectedMoyens = useMemo(
+    () => moyensPaiement.filter((m) => selectedMoyenPaiementIds.includes(m.id)),
+    [moyensPaiement, selectedMoyenPaiementIds]
+  )
+
+  const toggleMoyenPaiement = (id: number) => {
+    setSelectedMoyenPaiementIds((prev) =>
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+    )
+  }
+
   // ===== Helpers Billing (Edit) =====
   const editSelectedClients = useMemo(
       () => clients.filter((c) => editClientIds.includes(c.id)),
@@ -113,6 +142,17 @@ export default function ProjetsPage() {
     })
   }
 
+  const editSelectedMoyens = useMemo(
+    () => moyensPaiement.filter((m) => editMoyenPaiementIds.includes(m.id)),
+    [moyensPaiement, editMoyenPaiementIds]
+  )
+
+  const toggleEditMoyenPaiement = (id: number) => {
+    setEditMoyenPaiementIds((prev) =>
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+    )
+  }
+
   const addProjet = async () => {
     if (!isFormValid()) return
 
@@ -129,6 +169,7 @@ export default function ProjetsPage() {
           nom: newNom,
           description: newDescription,
           clientIds: selectedClientIds,
+          moyenPaiementIds: selectedMoyenPaiementIds,
           billingClientId: newBillingClientId, // ✅
         }),
         headers: { "Content-Type": "application/json" },
@@ -138,6 +179,7 @@ export default function ProjetsPage() {
       setNewNom("")
       setNewDescription("")
       setSelectedClientIds([])
+      setSelectedMoyenPaiementIds([])
       setNewBillingClientId(null)
       setAddDialogOpen(false)
       await fetchProjets()
@@ -166,6 +208,7 @@ export default function ProjetsPage() {
           nom: editProjet.nom,
           description: editProjet.description,
           clientIds: editClientIds,
+          moyenPaiementIds: editMoyenPaiementIds,
           billingClientId: editBillingClientId, // ✅
         }),
         headers: { "Content-Type": "application/json" },
@@ -174,6 +217,7 @@ export default function ProjetsPage() {
 
       setEditProjet(null)
       setEditClientIds([])
+      setEditMoyenPaiementIds([])
       setEditBillingClientId(null)
       await fetchProjets()
       toast.success("Projet modifié")
@@ -206,6 +250,7 @@ export default function ProjetsPage() {
   useEffect(() => {
     fetchProjets()
     fetchClients()
+    fetchMoyensPaiement()
   }, [])
 
   return (
@@ -226,7 +271,7 @@ export default function ProjetsPage() {
                 <Button>Ajouter un projet</Button>
               </DialogTrigger>
 
-              <DialogContent>
+              <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Ajouter un projet</DialogTitle>
                 </DialogHeader>
@@ -320,6 +365,57 @@ export default function ProjetsPage() {
                     )}
                   </div>
 
+                  <div className="space-y-2">
+                    <Label>Moyens de paiement liés</Label>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="justify-start w-full">
+                          {selectedMoyenPaiementIds.length > 0
+                            ? `${selectedMoyenPaiementIds.length} moyen(s) sélectionné(s)`
+                            : "Sélectionner des moyens de paiement"}
+                        </Button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent className="w-80 max-h-72 overflow-auto">
+                        {moyensPaiement.length === 0 ? (
+                          <div className="px-4 py-2 text-sm text-muted-foreground">
+                            Aucun moyen de paiement disponible
+                          </div>
+                        ) : (
+                          moyensPaiement.map((moyen) => (
+                            <DropdownMenuCheckboxItem
+                              key={moyen.id}
+                              checked={selectedMoyenPaiementIds.includes(moyen.id)}
+                              onCheckedChange={() => toggleMoyenPaiement(moyen.id)}
+                              className="flex items-center justify-between gap-3"
+                            >
+                              <span className="truncate">{moyen.nom}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {moyen.type === "CRYPTO"
+                                  ? moyen.cryptoSymbol || "CRYPTO"
+                                  : "IBAN"}
+                              </span>
+                            </DropdownMenuCheckboxItem>
+                          ))
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {addSelectedMoyens.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {addSelectedMoyens.map((moyen) => (
+                          <span
+                            key={moyen.id}
+                            className="text-xs rounded bg-muted px-2 py-1"
+                          >
+                            {moyen.nom}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <Button onClick={addProjet} disabled={!isFormValid()}>
                     Ajouter
                   </Button>
@@ -342,6 +438,9 @@ export default function ProjetsPage() {
                     const ids = links.map((c) => c.client.id)
                     setEditClientIds(ids)
 
+                    const moyenLinks = (projet.moyensPaiement || []) as unknown as ProjetMoyenPaiementLink[]
+                    setEditMoyenPaiementIds(moyenLinks.map((m) => m.moyenPaiement.id))
+
                     const billing = links.find((c) => c.isBilling)?.client.id ?? null
                     setEditBillingClientId(billing ?? (ids.length ? ids[0] : null))
                   }}
@@ -351,7 +450,7 @@ export default function ProjetsPage() {
           </Card>
 
           <Dialog open={!!editProjet} onOpenChange={(open) => !open && setEditProjet(null)}>
-            <DialogContent>
+            <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Modifier le projet</DialogTitle>
               </DialogHeader>
@@ -451,6 +550,57 @@ export default function ProjetsPage() {
                               })}
                             </div>
                           </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Moyens de paiement liés</Label>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="justify-start w-full">
+                            {editMoyenPaiementIds.length > 0
+                              ? `${editMoyenPaiementIds.length} moyen(s) sélectionné(s)`
+                              : "Sélectionner des moyens de paiement"}
+                          </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent className="w-80 max-h-72 overflow-auto">
+                          {moyensPaiement.length === 0 ? (
+                            <div className="px-4 py-2 text-sm text-muted-foreground">
+                              Aucun moyen de paiement disponible
+                            </div>
+                          ) : (
+                            moyensPaiement.map((moyen) => (
+                              <DropdownMenuCheckboxItem
+                                key={moyen.id}
+                                checked={editMoyenPaiementIds.includes(moyen.id)}
+                                onCheckedChange={() => toggleEditMoyenPaiement(moyen.id)}
+                                className="flex items-center justify-between gap-3"
+                              >
+                                <span className="truncate">{moyen.nom}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {moyen.type === "CRYPTO"
+                                    ? moyen.cryptoSymbol || "CRYPTO"
+                                    : "IBAN"}
+                                </span>
+                              </DropdownMenuCheckboxItem>
+                            ))
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      {editSelectedMoyens.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {editSelectedMoyens.map((moyen) => (
+                            <span
+                              key={moyen.id}
+                              className="text-xs rounded bg-muted px-2 py-1"
+                            >
+                              {moyen.nom}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
 

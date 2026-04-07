@@ -39,6 +39,11 @@ export async function GET(_: Request, context: unknown) {
             client: true,
           },
         },
+        moyensPaiement: {
+          include: {
+            moyenPaiement: true,
+          },
+        },
         missions: true,
       },
     })

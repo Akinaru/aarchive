@@ -3,6 +3,16 @@ export type Projet = {
   nom: string
   description: string | null
   missions: { id: number }[]
+  moyensPaiement?: {
+    moyenPaiement: {
+      id: number
+      nom: string
+      type: "CRYPTO" | "BANCAIRE"
+      cryptoSymbol?: string | null
+      cryptoNetwork?: string | null
+      bankIban?: string | null
+    }
+  }[]
   clients: {
       client: {
         id: number

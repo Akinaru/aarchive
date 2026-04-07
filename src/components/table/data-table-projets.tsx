@@ -49,6 +49,16 @@ type ProjetClientLink = {
   isBilling?: boolean
 }
 
+type ProjetMoyenPaiementLink = {
+  moyenPaiement: {
+    id: number
+    nom: string
+    type: "CRYPTO" | "BANCAIRE"
+    cryptoSymbol?: string | null
+    cryptoNetwork?: string | null
+  }
+}
+
 export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -92,15 +102,6 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
       ),
       cell: ({ cell }) => (
           <div className="font-medium truncate max-w-[320px]">
-            {cell.getValue<string>()}
-          </div>
-      ),
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ cell }) => (
-          <div className="text-muted-foreground truncate max-w-[520px]">
             {cell.getValue<string>()}
           </div>
       ),
@@ -166,6 +167,46 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
       },
     },
     {
+      accessorKey: "moyensPaiement",
+      header: "Paiement",
+      cell: ({ row }) => {
+        const raw = (row.original.moyensPaiement || []) as unknown as ProjetMoyenPaiementLink[]
+        if (!raw.length) return <span className="text-muted-foreground">Aucun</span>
+
+        const visibles = raw.slice(0, 2)
+        const hiddenCount = raw.length - visibles.length
+
+        return (
+          <div className="flex flex-wrap gap-2">
+            {visibles.map((item) => {
+              const moyen = item.moyenPaiement
+              const label =
+                moyen.type === "CRYPTO"
+                  ? `${moyen.cryptoSymbol || "CRYPTO"}${moyen.cryptoNetwork ? ` (${moyen.cryptoNetwork})` : ""}`
+                  : "IBAN"
+
+              return (
+                <span
+                  key={moyen.id}
+                  className="inline-flex items-center gap-2 text-xs rounded bg-muted px-2 py-1"
+                  title={moyen.nom}
+                >
+                  <span className="font-medium truncate max-w-[140px]">{moyen.nom}</span>
+                  <span className="text-muted-foreground">{label}</span>
+                </span>
+              )
+            })}
+
+            {hiddenCount > 0 && (
+              <span className="inline-flex items-center text-xs rounded bg-muted px-2 py-1 text-muted-foreground">
+                +{hiddenCount}
+              </span>
+            )}
+          </div>
+        )
+      },
+    },
+    {
       id: "actions",
       enableHiding: false,
       header: () => null,
@@ -219,16 +260,13 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
           <TableCell className="w-[96px] py-1">
             <Skeleton className="h-8 w-[64px] rounded-md" />
           </TableCell>
-          <TableCell className="w-[360px] py-1">
-            <Skeleton className="h-4 w-[320px] rounded" />
-          </TableCell>
-          <TableCell className="w-[560px] py-1">
-            <Skeleton className="h-4 w-[520px] rounded" />
+          <TableCell className="w-[300px] py-1">
+            <Skeleton className="h-4 w-[240px] rounded" />
           </TableCell>
           <TableCell className="w-[120px] py-1">
             <Skeleton className="h-4 w-[32px] rounded" />
           </TableCell>
-          <TableCell className="w-[420px] py-1">
+          <TableCell className="w-[360px] py-1">
             <div className="flex flex-nowrap items-center gap-2 overflow-hidden">
               <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
                 <Skeleton className="h-6 w-6 rounded-full" />
@@ -241,6 +279,12 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
               <div className="ml-1 bg-muted px-2 py-1 rounded">
                 <Skeleton className="h-4 w-[48px] rounded" />
               </div>
+            </div>
+          </TableCell>
+          <TableCell className="w-[320px] py-1">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-[140px] rounded" />
+              <Skeleton className="h-6 w-[120px] rounded" />
             </div>
           </TableCell>
           <TableCell className="w-[80px] py-1">
@@ -287,16 +331,7 @@ export function DataTableProjets({ data, onEdit, onDelete, isLoading }: Props) {
         </div>
 
         <div className="rounded-md border">
-          <Table className="table-fixed text-sm">
-            <colgroup>
-              <col style={{ width: "96px" }} />
-              <col style={{ width: "360px" }} />
-              <col style={{ width: "560px" }} />
-              <col style={{ width: "120px" }} />
-              <col style={{ width: "420px" }} />
-              <col style={{ width: "80px" }} />
-            </colgroup>
-
+          <Table className="text-sm">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id} className="h-[44px]">

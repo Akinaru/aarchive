@@ -67,11 +67,12 @@ model Client {
 }
 
 model Projet {
-  id          Int            @id @default(autoincrement())
-  nom         String
-  description String?
-  missions    Mission[]
-  clients     ProjetClient[]
+  id             Int                  @id @default(autoincrement())
+  nom            String
+  description    String?
+  missions       Mission[]
+  clients        ProjetClient[]
+  moyensPaiement ProjetMoyenPaiement[]
 }
 
 model ProjetClient {
@@ -134,6 +135,37 @@ model PaiementMensuel {
   mois      DateTime @unique
   montant   Float
   createdAt DateTime @default(now())
+}
+
+enum TypeMoyenPaiement {
+  CRYPTO
+  BANCAIRE
+}
+
+model MoyenPaiement {
+  id                Int               @id @default(autoincrement())
+  nom               String
+  type              TypeMoyenPaiement
+  cryptoSymbol      String?
+  cryptoNetwork     String?
+  bankAccountHolder String?
+  bankIban          String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now()) @updatedAt
+  projets           ProjetMoyenPaiement[]
+}
+
+model ProjetMoyenPaiement {
+  id              Int @id @default(autoincrement())
+  projetId        Int
+  moyenPaiementId Int
+
+  projet        Projet        @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  moyenPaiement MoyenPaiement @relation(fields: [moyenPaiementId], references: [id], onDelete: Cascade)
+
+  @@unique([projetId, moyenPaiementId])
+  @@index([projetId])
+  @@index([moyenPaiementId])
 }
 
 enum StatutMission {
