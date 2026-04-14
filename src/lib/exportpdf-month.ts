@@ -11,6 +11,16 @@ export type WeeklyGroup = {
   temps: Temps[]
 }
 
+export type InvoicePaymentMethod = {
+  id: number
+  nom: string
+  type: "CRYPTO" | "BANCAIRE"
+  cryptoSymbol?: string | null
+  cryptoNetwork?: string | null
+  bankAccountHolder?: string | null
+  bankIban?: string | null
+}
+
 type MissionAgg = {
   missionId: number
   titre: string
@@ -27,6 +37,44 @@ function cleanText(input: string): string {
       .trim()
 }
 
+function buildPaymentMethodLines(paymentMethods: InvoicePaymentMethod[] = []): string[] {
+  if (paymentMethods.length === 0) {
+    return ["Payment method will be communicated separately."]
+  }
+
+  const lines: string[] = []
+
+  for (const method of paymentMethods) {
+    if (method.type === "BANCAIRE") {
+      const methodName = cleanText(method.nom || "Bank transfer")
+      const accountHolder = method.bankAccountHolder ? cleanText(method.bankAccountHolder) : null
+      const iban = method.bankIban ? cleanText(method.bankIban) : null
+
+      const lineParts = [`Bank transfer (${methodName}).`]
+      if (accountHolder) lineParts.push(`Account holder: ${accountHolder}.`)
+      if (iban) lineParts.push(`IBAN: ${iban}.`)
+      if (!accountHolder && !iban) {
+        lineParts.push("Bank account details will be shared separately.")
+      }
+
+      lines.push(lineParts.join(" "))
+      continue
+    }
+
+    const symbol = method.cryptoSymbol ? cleanText(method.cryptoSymbol) : cleanText(method.nom)
+    const network = method.cryptoNetwork ? cleanText(method.cryptoNetwork) : null
+
+    if (network) {
+      lines.push(`Crypto payment: ${symbol} on ${network} network.`)
+    } else {
+      lines.push(`Crypto payment: ${symbol}. Network will be confirmed separately.`)
+    }
+    lines.push("Wallet address will be provided in addition to the invoice.")
+  }
+
+  return lines
+}
+
 function moneyEUR(value: number) {
   return `${Number(value || 0).toFixed(2)} €`
 }
@@ -39,7 +87,8 @@ function formatHours(minutes: number) {
 export async function generateMonthlyTempsPDF(
     monthStart: Date,
     monthEnd: Date,
-    weeklyGroups: WeeklyGroup[]
+    weeklyGroups: WeeklyGroup[],
+    paymentMethods: InvoicePaymentMethod[] = []
 ) {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
@@ -57,8 +106,7 @@ export async function generateMonthlyTempsPDF(
   }
 
   const payment = {
-    methodLine: "Payment in crypto: USDT (Tether) on Ethereum network (ERC-20).",
-    walletLine: "Wallet address: to be provided at payment time (address may vary).",
+    methodLines: buildPaymentMethodLines(paymentMethods),
     termsLine: "Payment due within 7 days from issue date.",
     refLine: "Please include the invoice number in the payment reference.",
   }
@@ -271,14 +319,15 @@ export async function generateMonthlyTempsPDF(
   doc.setFont("helvetica", "normal")
   doc.setTextColor(...C.slate600)
   doc.setFontSize(9.5)
-  doc.text(payment.methodLine, 14, afterLinesY)
-  afterLinesY += 5
-  doc.text(payment.walletLine, 14, afterLinesY)
-  afterLinesY += 5
-  doc.text(payment.termsLine, 14, afterLinesY)
-  afterLinesY += 5
-  doc.text(payment.refLine, 14, afterLinesY)
-  afterLinesY += 8
+  const paymentLines = [...payment.methodLines, payment.termsLine, payment.refLine]
+
+  for (const line of paymentLines) {
+    const wrapped = doc.splitTextToSize(line, pageWidth - 28)
+    doc.text(wrapped, 14, afterLinesY)
+    afterLinesY += wrapped.length * 4.5
+    afterLinesY += 0.8
+  }
+  afterLinesY += 2
 
   // ===== Mentions facture (EN) =====
   doc.setTextColor(...C.slate900)

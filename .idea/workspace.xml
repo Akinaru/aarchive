@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="fb0154f5-d43b-4c17-9575-10371a0a226b" name="Changes" comment="Ajout moyen de paiements sur les projets">
+      <change beforePath="$PROJECT_DIR$/src/app/(app)/export/mois/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/(app)/export/mois/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/missions/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/missions/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/exportpdf-month.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/exportpdf-month.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/types/missions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/types/missions.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager">
+    <option name="groupingKeys">
+      <option value="directory" />
+    </option>
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Akinaru&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Akinaru/aarchive.git&quot;,
+    &quot;accountId&quot;: &quot;e082768f-52f4-4fac-8ff2-adfad724ba00&quot;
+  }
+}</component>
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="php" />
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="39UkBvJh8ZWw77iCwanCvLY3vZU" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/maximegallotta/Documents/Developpement/aarchive/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;,
+      &quot;postgresql&quot;
+    ]
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-PS-243.26574.100" />
+        <option value="bundled-php-predefined-a98d8de5180a-1ec7b7818973-com.jetbrains.php.sharedIndexes-PS-243.26574.100" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="fb0154f5-d43b-4c17-9575-10371a0a226b" name="Changes" comment="" />
+      <created>1770757905392</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1770757905392</updated>
+      <workItem from="1770757906484" duration="5725000" />
+      <workItem from="1770792178696" duration="1574000" />
+      <workItem from="1770798834054" duration="603000" />
+      <workItem from="1770811562584" duration="749000" />
+      <workItem from="1771227559559" duration="1504000" />
+      <workItem from="1772480969222" duration="606000" />
+      <workItem from="1772484854838" duration="4000" />
+      <workItem from="1775502310095" duration="2240000" />
+      <workItem from="1775578416162" duration="1534000" />
+    </task>
+    <task id="LOCAL-00001" summary="Ajout image mission">
+      <option name="closed" value="true" />
+      <created>1770759654177</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1770759654177</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Ajout image mission">
+      <option name="closed" value="true" />
+      <created>1770759666259</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1770759666259</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Ajout image export">
+      <option name="closed" value="true" />
+      <created>1770760348982</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1770760348983</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Changement export pour facture">
+      <option name="closed" value="true" />
+      <created>1770762238664</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1770762238664</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Changement champs client">
+      <option name="closed" value="true" />
+      <created>1770793153579</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1770793153579</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Ajout moyen de paiements sur les projets">
+      <option name="closed" value="true" />
+      <created>1775580591571</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1775580591571</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Ajout image mission" />
+    <MESSAGE value="Ajout image export" />
+    <MESSAGE value="Changement export pour facture" />
+    <MESSAGE value="Changement champs client" />
+    <MESSAGE value="Ajout moyen de paiements sur les projets" />
+    <option name="LAST_COMMIT_MESSAGE" value="Ajout moyen de paiements sur les projets" />
+  </component>
+</project>

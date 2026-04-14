@@ -26,7 +26,7 @@ import {
 } from "date-fns"
 import { fr } from "date-fns/locale"
 import { toast } from "sonner"
-import { generateMonthlyTempsPDF } from "@/lib/exportpdf-month"
+import { generateMonthlyTempsPDF, type InvoicePaymentMethod } from "@/lib/exportpdf-month"
 import { formatMinutes } from "@/lib/time"
 import { Mission } from "@/types/missions"
 import { cn } from "@/lib/utils"
@@ -291,7 +291,18 @@ export default function ExportMoisPage() {
     type WeeklyGroupsParam = Parameters<typeof generateMonthlyTempsPDF>[2]
     const weeks = weeksForPdf as unknown as WeeklyGroupsParam
 
-    generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks)
+    const selectedMission = missions.find((mission) => String(mission.id) === selectedMissionId)
+    const paymentMethods: InvoicePaymentMethod[] = (selectedMission?.projet?.moyensPaiement ?? []).map((link) => ({
+      id: link.moyenPaiement.id,
+      nom: link.moyenPaiement.nom,
+      type: link.moyenPaiement.type,
+      cryptoSymbol: link.moyenPaiement.cryptoSymbol ?? null,
+      cryptoNetwork: link.moyenPaiement.cryptoNetwork ?? null,
+      bankAccountHolder: link.moyenPaiement.bankAccountHolder ?? null,
+      bankIban: link.moyenPaiement.bankIban ?? null,
+    }))
+
+    generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks, paymentMethods)
   }
 
   const monthLabel = useMemo(() => format(selectedDate, "MMMM yyyy", { locale: fr }), [selectedDate])

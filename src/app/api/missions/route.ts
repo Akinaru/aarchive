@@ -17,7 +17,30 @@ export async function GET() {
   try {
     const missions = await prisma.mission.findMany({
       include: {
-        projet: { select: { nom: true } },
+        projet: {
+          select: {
+            id: true,
+            nom: true,
+            moyensPaiement: {
+              select: {
+                id: true,
+                projetId: true,
+                moyenPaiementId: true,
+                moyenPaiement: {
+                  select: {
+                    id: true,
+                    nom: true,
+                    type: true,
+                    cryptoSymbol: true,
+                    cryptoNetwork: true,
+                    bankAccountHolder: true,
+                    bankIban: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { id: "desc" },
     })

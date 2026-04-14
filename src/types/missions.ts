@@ -10,7 +10,22 @@ export type Mission = {
   requiredDailyMinutes: number | null
   image?: string | null
   projet: {
+    id?: number
     nom: string
+    moyensPaiement?: {
+      id: number
+      projetId: number
+      moyenPaiementId: number
+      moyenPaiement: {
+        id: number
+        nom: string
+        type: "CRYPTO" | "BANCAIRE"
+        cryptoSymbol?: string | null
+        cryptoNetwork?: string | null
+        bankAccountHolder?: string | null
+        bankIban?: string | null
+      }
+    }[]
     clients?: {
       client: {
         id: number
