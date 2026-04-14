@@ -73,6 +73,7 @@ model Projet {
   missions       Mission[]
   clients        ProjetClient[]
   moyensPaiement ProjetMoyenPaiement[]
+  paiements      PaiementProjet[]
 }
 
 model ProjetClient {
@@ -137,6 +138,41 @@ model PaiementMensuel {
   createdAt DateTime @default(now())
 }
 
+model PaiementProjet {
+  id           Int      @id @default(autoincrement())
+  projetId     Int
+  moyenPaiementId Int?
+  datePaiement DateTime
+  moisReference Int?
+  anneeReference Int?
+  montantRecu  Float
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  projet        Projet         @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  moyenPaiement MoyenPaiement? @relation(fields: [moyenPaiementId], references: [id], onDelete: SetNull)
+
+  @@index([projetId])
+  @@index([moyenPaiementId])
+  @@index([datePaiement])
+  @@index([anneeReference, moisReference])
+}
+
+model CycleDeclaration {
+  id          Int      @id @default(autoincrement())
+  annee       Int
+  trimestre   Int
+  debutSaisie DateTime
+  finSaisie   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([annee, trimestre])
+  @@index([debutSaisie])
+  @@index([finSaisie])
+}
+
 enum TypeMoyenPaiement {
   CRYPTO
   BANCAIRE
@@ -153,6 +189,7 @@ model MoyenPaiement {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @default(now()) @updatedAt
   projets           ProjetMoyenPaiement[]
+  paiements         PaiementProjet[]
 }
 
 model ProjetMoyenPaiement {
