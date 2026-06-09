@@ -1,7 +1,7 @@
 // src/components/form/form-ajout-temps.tsx
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -32,6 +32,15 @@ interface FormAddTempsProps {
   onAdd: () => void
 }
 
+type RecentTempsItem = {
+  missionId: number
+  typeTacheId: number
+}
+
+function uniqueByOrder(values: number[]) {
+  return values.filter((value, index) => values.indexOf(value) === index)
+}
+
 export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAddTempsProps) {
   const [selectedMissionId, setSelectedMissionId] = useState("")
   const [typeTacheId, setTypeTacheId] = useState("")
@@ -41,8 +50,25 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
   const [time, setTime] = useState("00:30")
   const [startTime, setStartTime] = useState("")
   const [endTime, setEndTime] = useState("")
+  const [recentTemps, setRecentTemps] = useState<RecentTempsItem[]>([])
 
   const isDisabled = (missions.length === 0 && !missionId) || types.length === 0
+
+  useEffect(() => {
+    const loadRecentTemps = async () => {
+      try {
+        const res = await fetch("/api/temps/recent?page=1&limit=10")
+        if (!res.ok) return
+
+        const data = await res.json()
+        setRecentTemps(data.temps ?? [])
+      } catch {
+        // no-op
+      }
+    }
+
+    loadRecentTemps()
+  }, [])
 
   const calculateDuration = () => {
     if (mode === "duree") {
@@ -82,6 +108,10 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
 
     if (res.ok) {
       toast.success("Temps ajouté")
+      setRecentTemps((prev) => [
+        { missionId: finalMissionId, typeTacheId: parseInt(typeTacheId, 10) },
+        ...prev,
+      ])
       setDescription("")
       setTime("00:30")
       setStartTime("")
@@ -98,6 +128,22 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
       !missionId && selectedMissionId
           ? missions.find((m) => m.id === parseInt(selectedMissionId, 10)) ?? null
           : null
+
+  const recentMissionButtons = useMemo(() => {
+    if (missionId) return []
+
+    return uniqueByOrder(recentTemps.map((item) => item.missionId))
+      .map((id) => missions.find((mission) => mission.id === id))
+      .filter((mission): mission is Mission => Boolean(mission))
+      .slice(0, 2)
+  }, [missionId, missions, recentTemps])
+
+  const recentTypeButtons = useMemo(() => {
+    return uniqueByOrder(recentTemps.map((item) => item.typeTacheId))
+      .map((id) => types.find((type) => type.id === id))
+      .filter((type): type is TypeTache => Boolean(type))
+      .slice(0, 2)
+  }, [recentTemps, types])
 
   return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -146,6 +192,30 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
                   })}
                 </SelectContent>
               </Select>
+
+              {recentMissionButtons.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Récentes :</span>
+                  {recentMissionButtons.map((mission) => (
+                    <Button
+                      key={mission.id}
+                      type="button"
+                      variant={selectedMissionId === String(mission.id) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedMissionId(String(mission.id))}
+                      disabled={isDisabled}
+                    >
+                      <Avatar className="h-5 w-5 border">
+                        <AvatarImage src={mission.image ?? ""} alt={mission.titre} />
+                        <AvatarFallback className="text-[10px]">
+                          {(mission.titre?.[0] ?? "?").toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{mission.titre}</span>
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
         )}
 
@@ -183,6 +253,24 @@ export function FormAddTemps({ missions = [], missionId, types, onAdd }: FormAdd
               ))}
             </SelectContent>
           </Select>
+
+          {recentTypeButtons.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Récents :</span>
+              {recentTypeButtons.map((type) => (
+                <Button
+                  key={type.id}
+                  type="button"
+                  variant={typeTacheId === String(type.id) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTypeTacheId(String(type.id))}
+                  disabled={isDisabled}
+                >
+                  {type.nom}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Description sur une ligne à elle seule (col-span-2) */}
