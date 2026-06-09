@@ -39,6 +39,24 @@ function toYMD(value: string | Date) {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
 }
 
+const PAGE_SIZE = 15
+
+function buildPagination(currentPage: number, totalPages: number): Array<number | "..."> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, "...", totalPages]
+  }
+
+  if (currentPage >= totalPages - 3) {
+    return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages]
+  }
+
+  return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages]
+}
+
 export default function TempsPage() {
   const [temps, setTemps] = useState<Temps[]>([])
   const [missions, setMissions] = useState<Mission[]>([])
@@ -54,15 +72,17 @@ export default function TempsPage() {
   const [totalSemaineMinutes, setTotalSemaineMinutes] = useState(0)
   const [totalJourMinutes, setTotalJourMinutes] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   // Confirmation suppression
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tempsToDelete, setTempsToDelete] = useState<Temps | null>(null)
 
-  const fetchData = async () => {
+  const fetchData = async (page = currentPage) => {
     try {
       const [tempsRes, missionRes, typeRes] = await Promise.all([
-        fetch("/api/temps/recent"),
+        fetch(`/api/temps/recent?page=${page}&limit=${PAGE_SIZE}`),
         fetch("/api/missions"),
         fetch("/api/type-tache"),
       ])
@@ -71,6 +91,8 @@ export default function TempsPage() {
       setTemps(tempsData.temps)
       setTotalSemaineMinutes(tempsData.totalSemaineMinutes)
       setTotalJourMinutes(tempsData.totalJourMinutes)
+      setCurrentPage(tempsData.pagination?.page ?? 1)
+      setTotalPages(tempsData.pagination?.totalPages ?? 1)
 
       setMissions(await missionRes.json())
       setTypes(await typeRes.json())
@@ -121,16 +143,66 @@ export default function TempsPage() {
 
   useEffect(() => {
     fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const isReady = missions.length > 0 && types.length > 0
-  const lastTemps = temps.slice(0, 5)
 
   const todayTemps = temps.filter((t) => isToday(new Date(t.date)))
   const typesToday = todayTemps.map((t) => t.typeTache?.nom).filter(Boolean) as string[]
   const mostUsedTypeToday = typesToday.length
     ? typesToday.sort((a, b) => typesToday.filter((v) => v === b).length - typesToday.filter((v) => v === a).length)[0]
     : "Aucun"
+
+  const paginationItems = buildPagination(currentPage, totalPages)
+
+  const renderPagination = (position: "top" | "bottom") => (
+    <div
+      className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${
+        position === "bottom" ? "border-t pt-4" : ""
+      }`}
+    >
+      <p className="text-sm text-muted-foreground">
+        Page {currentPage} sur {totalPages}
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchData(currentPage - 1)}
+          disabled={currentPage <= 1}
+        >
+          Précédent
+        </Button>
+
+        {paginationItems.map((item, index) =>
+          item === "..." ? (
+            <span key={`${position}-ellipsis-${index}`} className="px-1 text-sm text-muted-foreground">
+              ...
+            </span>
+          ) : (
+            <Button
+              key={`${position}-page-${item}`}
+              variant={item === currentPage ? "default" : "outline"}
+              size="sm"
+              onClick={() => fetchData(item)}
+            >
+              {item}
+            </Button>
+          )
+        )}
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchData(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+        >
+          Suivant
+        </Button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="flex flex-1 flex-col">
@@ -223,10 +295,12 @@ export default function TempsPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-xl">5 derniers temps enregistrés</CardTitle>
+                    <CardTitle className="text-xl">Derniers temps enregistrés</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {lastTemps.map((t) => {
+                    {renderPagination("top")}
+
+                    {temps.map((t) => {
                       const createdAt = t.createdAt ? new Date(t.createdAt) : null
                       const createdAtFormatted =
                           createdAt && !isNaN(createdAt.getTime())
@@ -300,6 +374,8 @@ export default function TempsPage() {
                           </div>
                       )
                     })}
+
+                    {renderPagination("bottom")}
                   </CardContent>
                 </Card>
 
