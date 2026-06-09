@@ -207,6 +207,14 @@ function getCycleStatus(cycle: CycleDeclaration) {
   return "Ouvert"
 }
 
+function getDeclarationAmountHint(moyenPaiement?: MoyenPaiementOption | null) {
+  if (moyenPaiement?.type === "CRYPTO") {
+    return "Dans ton cas Ledger -> Revolut -> compte pro, saisis la valeur en euros du paiement au moment de la réception sur Ledger."
+  }
+
+  return "Saisis le montant réellement encaissé pour ce paiement."
+}
+
 export default function PageMonnaie() {
   const [projets, setProjets] = useState<ProjetOption[]>([])
   const [moyensPaiement, setMoyensPaiement] = useState<MoyenPaiementOption[]>([])
@@ -317,6 +325,16 @@ export default function PageMonnaie() {
   const totalGlobal = useMemo(
     () => encaissements.reduce((sum, row) => sum + Number(row.montantRecu || 0), 0),
     [encaissements]
+  )
+
+  const selectedCreateMoyen = useMemo(
+    () => moyensPaiement.find((item) => String(item.id) === createForm.moyenPaiementId) ?? null,
+    [moyensPaiement, createForm.moyenPaiementId]
+  )
+
+  const selectedEditMoyen = useMemo(
+    () => moyensPaiement.find((item) => String(item.id) === editForm.moyenPaiementId) ?? null,
+    [moyensPaiement, editForm.moyenPaiementId]
   )
 
   const cycleSummaries = useMemo(() => {
@@ -1036,6 +1054,9 @@ export default function PageMonnaie() {
                     onChange={(e) => setCreateForm((prev) => ({ ...prev, montantRecu: e.target.value }))}
                     placeholder="Ex: 1250.00"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {getDeclarationAmountHint(selectedCreateMoyen)}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -1126,6 +1147,52 @@ export default function PageMonnaie() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="mt-4 space-y-4">
+            <Card>
+              <CardHeader className="gap-4">
+                <CardTitle>Quel montant ajouter en paiement ?</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Pour ton cas crypto, on retient le montant en euros au moment de la réception sur Ledger. Les transferts vers Revolut et la conversion en EUR ne doivent pas créer un nouveau paiement.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Étape</TableHead>
+                        <TableHead>Détail</TableHead>
+                        <TableHead className="text-right">Valeur</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">1. Facture envoyée</TableCell>
+                        <TableCell>Montant demandé au client</TableCell>
+                        <TableCell className="text-right">70,00 €</TableCell>
+                      </TableRow>
+                      <TableRow className="bg-primary/5">
+                        <TableCell className="font-medium">2. Paiement reçu sur Ledger</TableCell>
+                        <TableCell>80,0407 USDT (ETH) - montant à déclarer</TableCell>
+                        <TableCell className="text-right font-semibold text-primary">69,43 €</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">3. Transfert vers Revolut</TableCell>
+                        <TableCell>80,0407 USDT (ETH)</TableCell>
+                        <TableCell className="text-right">68,44 €</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">4. Conversion en EUR</TableCell>
+                        <TableCell>Conversion sur Revolut</TableCell>
+                        <TableCell className="text-right">68,40 €</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </CardContent>
       </Card>
@@ -1227,6 +1294,9 @@ export default function PageMonnaie() {
                 value={editForm.montantRecu}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, montantRecu: e.target.value }))}
               />
+              <p className="text-xs text-muted-foreground">
+                {getDeclarationAmountHint(selectedEditMoyen)}
+              </p>
             </div>
 
             <div className="space-y-2">
