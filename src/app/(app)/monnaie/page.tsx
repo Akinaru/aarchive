@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { format, startOfQuarter, endOfQuarter } from "date-fns"
 import { fr } from "date-fns/locale"
 import { toast } from "sonner"
+import { ExternalLink, Info, CheckCircle2 } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -368,12 +369,24 @@ export default function PageMonnaie() {
     }
 
     const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentQuarter = Math.floor(now.getMonth() / 3) + 1
+
+    // 1. Cycle du trimestre en cours (pour voir l'évolution en direct)
+    const currentCycle = cycles.find((c) => c.annee === currentYear && c.trimestre === currentQuarter)
+    if (currentCycle) {
+      setSelectedCycleId(currentCycle.id)
+      return
+    }
+
+    // 2. Cycle ouvert à la déclaration (fallback)
     const openCycle = cycles.find((cycle) => now >= new Date(cycle.debutSaisie) && now <= new Date(cycle.finSaisie))
     if (openCycle) {
       setSelectedCycleId(openCycle.id)
       return
     }
 
+    // 3. Plus récent
     const latest = cycles
       .slice()
       .sort((a, b) => (a.annee === b.annee ? a.trimestre - b.trimestre : a.annee - b.annee))
@@ -442,12 +455,13 @@ export default function PageMonnaie() {
     }
   }
 
-  const seedCycles2026 = async () => {
+  const generateCurrentYearCycles = async () => {
+    const year = new Date().getFullYear()
     const presets = [
-      { annee: 2026, trimestre: 1, debutSaisie: "2026-04-01T00:00:00", finSaisie: "2026-07-31T23:59:00" },
-      { annee: 2026, trimestre: 2, debutSaisie: "2026-07-01T00:00:00", finSaisie: "2026-07-31T23:59:00" },
-      { annee: 2026, trimestre: 3, debutSaisie: "2026-10-01T00:00:00", finSaisie: "2026-11-02T23:59:00" },
-      { annee: 2026, trimestre: 4, debutSaisie: "2027-01-01T00:00:00", finSaisie: "2027-02-01T23:59:00" },
+      { annee: year, trimestre: 1, debutSaisie: `${year}-04-01T00:00:00`, finSaisie: `${year}-04-30T23:59:00` },
+      { annee: year, trimestre: 2, debutSaisie: `${year}-07-01T00:00:00`, finSaisie: `${year}-07-31T23:59:00` },
+      { annee: year, trimestre: 3, debutSaisie: `${year}-10-01T00:00:00`, finSaisie: `${year}-10-31T23:59:00` },
+      { annee: year, trimestre: 4, debutSaisie: `${year + 1}-01-01T00:00:00`, finSaisie: `${year + 1}-01-31T23:59:00` },
     ]
 
     let created = 0
@@ -473,7 +487,7 @@ export default function PageMonnaie() {
     }
 
     await loadCycles()
-    toast.success(`Cycles 2026: ${created} ajouté(s), ${skipped} déjà présent(s).`)
+    toast.success(`Cycles ${year}: ${created} ajouté(s), ${skipped} déjà présent(s).`)
   }
 
   const openCycleEdit = (cycle: CycleDeclaration) => {
@@ -692,8 +706,12 @@ export default function PageMonnaie() {
     }
   }
 
+  const sortedEncaissements = useMemo(() => {
+    return [...encaissements].sort((a, b) => new Date(b.datePaiement).getTime() - new Date(a.datePaiement).getTime())
+  }, [encaissements])
+
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-6">
       <PageHeader
         title="Gestion monétaire"
         subtitle="Encaissements par projet et calcul de déclaration trimestrielle."
@@ -704,114 +722,16 @@ export default function PageMonnaie() {
       />
 
       <Card>
-        <CardHeader className="gap-4">
-          <CardTitle>Périodes de déclaration (selon cycles)</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Le calcul est fait automatiquement à partir des cycles que tu définis.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {cycleSummaries.length === 0 ? (
+        <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-1">
+            <CardTitle>Périodes de déclaration (Cycles URSSAF)</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Aucun cycle défini pour le moment. Ajoute un cycle dans la section en bas pour lancer le calcul.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Cycle actif</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-xl font-semibold">
-                      {activeCycleSummary ? formatCycleLabel(activeCycleSummary.cycle) : "Aucun"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activeCycleSummary
-                        ? `${format(activeCycleSummary.periodStart, "dd/MM/yyyy")} → ${format(activeCycleSummary.periodEnd, "dd/MM/yyyy")}`
-                        : "Sélectionne un cycle"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Montant à déclarer (cycle actif)</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-2xl font-semibold">{formatCurrency(activeCycleMontant)}</p>
-                    <p className="text-xs text-muted-foreground">{activeCycleCount} paiement(s) dans le cycle</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Hors cycle actif</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-2xl font-semibold">{formatCurrency(activeCycleOutside)}</p>
-                    <p className="text-xs text-muted-foreground">Encaissements non inclus dans ce cycle</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cycle</TableHead>
-                      <TableHead>Période à déclarer</TableHead>
-                      <TableHead>Fenêtre de saisie</TableHead>
-                      <TableHead className="text-right">Paiements</TableHead>
-                      <TableHead className="text-right">Montant à déclarer</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {cycleSummaries.map((entry) => {
-                      const isActive = entry.cycle.id === selectedCycleId
-                      return (
-                        <TableRow key={entry.cycle.id} className={isActive ? "bg-primary/5" : ""}>
-                          <TableCell className="font-medium">{formatCycleLabel(entry.cycle)}</TableCell>
-                          <TableCell>
-                            {format(entry.periodStart, "dd/MM/yyyy")} → {format(entry.periodEnd, "dd/MM/yyyy")}
-                          </TableCell>
-                          <TableCell>
-                            {format(new Date(entry.cycle.debutSaisie), "dd/MM/yyyy HH:mm")} →{" "}
-                            {format(new Date(entry.cycle.finSaisie), "dd/MM/yyyy HH:mm")}
-                          </TableCell>
-                          <TableCell className="text-right">{entry.count}</TableCell>
-                          <TableCell className="text-right font-medium">{formatCurrency(entry.montant)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={isActive ? "default" : "outline"}
-                              onClick={() => activateCycle(entry.cycle.id)}
-                            >
-                              {isActive ? "Actif" : "Activer"}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="order-2">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Cycles de déclaration URSSAF</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Définis les fenêtres de saisie officielles par trimestre.
+              Gère tes trimestres et vérifie les montants à déclarer.
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button type="button" variant="outline" onClick={seedCycles2026}>
-              Préremplir 2026
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" onClick={generateCurrentYearCycles}>
+              Générer l'année en cours
             </Button>
             <Dialog open={isCycleAddOpen} onOpenChange={setIsCycleAddOpen}>
               <DialogTrigger asChild>
@@ -878,70 +798,139 @@ export default function PageMonnaie() {
             </Dialog>
           </div>
         </CardHeader>
-
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Trimestre</TableHead>
-                  <TableHead>Début saisie</TableHead>
-                  <TableHead>Fin saisie</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cycles.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-20 text-center">
-                      Aucun cycle défini.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  cycles.map((cycle) => {
-                    const status = getCycleStatus(cycle)
+          {cycleSummaries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucun cycle défini pour le moment. Génère l'année en cours ou ajoute un cycle pour commencer.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card className="bg-primary/5 border-primary/20 shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-primary">Cycle sélectionné</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl font-bold text-primary">
+                      {activeCycleSummary ? formatCycleLabel(activeCycleSummary.cycle) : "Aucun"}
+                    </p>
+                    <p className="text-sm text-primary/80 mt-1">
+                      {activeCycleSummary
+                        ? `${format(activeCycleSummary.periodStart, "dd/MM/yyyy")} → ${format(activeCycleSummary.periodEnd, "dd/MM/yyyy")}`
+                        : "Sélectionne un cycle"}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Montant à déclarer</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl font-bold">{formatCurrency(activeCycleMontant)}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{activeCycleCount} paiement(s) inclus</p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Hors cycle</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-2xl font-bold text-muted-foreground">{formatCurrency(activeCycleOutside)}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Montant global non inclus</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-                    return (
-                      <TableRow key={cycle.id}>
-                        <TableCell className="font-medium">{formatCycleLabel(cycle)}</TableCell>
-                        <TableCell>{format(new Date(cycle.debutSaisie), "dd/MM/yyyy HH:mm")}</TableCell>
-                        <TableCell>{format(new Date(cycle.finSaisie), "dd/MM/yyyy HH:mm")}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              status === "Ouvert"
-                                ? "default"
-                                : status === "A venir"
-                                  ? "secondary"
-                                  : "outline"
-                            }
-                          >
-                            {status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => activateCycle(cycle.id)}>
-                              Utiliser
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => openCycleEdit(cycle)}>
-                              Modifier
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={() => deleteCycle(cycle.id)}>
-                              Supprimer
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+              {activeCycleSummary && (
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-5">
+                  <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
+                    <div className="flex-1 space-y-3">
+                      <h4 className="flex items-center gap-2 font-semibold text-blue-900 dark:text-blue-300">
+                        <Info className="w-5 h-5" />
+                        Comment déclarer à l'URSSAF ?
+                      </h4>
+                      <div className="text-sm text-blue-800 dark:text-blue-400 space-y-2">
+                        <p>Pour ton activité de développeur, tu dois déclarer ce montant dans la case :</p>
+                        <div className="font-medium text-base py-2 px-3 bg-white dark:bg-blue-900/50 rounded border border-blue-100 dark:border-blue-800 inline-block">
+                          👉 « Recettes des activités libérales (BNC) »
+                        </div>
+                        <p>
+                          Montant réellement encaissé entre le {format(activeCycleSummary.periodStart, "d MMMM", { locale: fr })} et le {format(activeCycleSummary.periodEnd, "d MMMM yyyy", { locale: fr })}. Les autres cases restent à 0 €.
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <a href="https://www.autoentrepreneur.urssaf.fr/services/espace-personnel/mes-echeances-encours/declarer-et-payer" target="_blank" rel="noopener noreferrer">
+                          Accéder à l'URSSAF
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Cycle</TableHead>
+                      <TableHead>Période</TableHead>
+                      <TableHead>Saisie URSSAF</TableHead>
+                      <TableHead className="text-right">Montant</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cycleSummaries.map((entry) => {
+                      const isActive = entry.cycle.id === selectedCycleId
+                      return (
+                        <TableRow key={entry.cycle.id} className={isActive ? "bg-primary/5" : ""}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {isActive && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                              {formatCycleLabel(entry.cycle)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {format(entry.periodStart, "dd/MM/yyyy")} → {format(entry.periodEnd, "dd/MM/yyyy")}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {format(new Date(entry.cycle.debutSaisie), "dd/MM/yy")} →{" "}
+                            {format(new Date(entry.cycle.finSaisie), "dd/MM/yy")}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">{formatCurrency(entry.montant)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={isActive ? "default" : "secondary"}
+                                onClick={() => activateCycle(entry.cycle.id)}
+                              >
+                                {isActive ? "Sélectionné" : "Sélectionner"}
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => openCycleEdit(entry.cycle)}>
+                                Modifier
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => deleteCycle(entry.cycle.id)}>
+                                Supprimer
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+
 
       <Card className="order-1">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -1077,66 +1066,71 @@ export default function PageMonnaie() {
         </CardHeader>
 
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Mois/Année concerné</TableHead>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[120px]">Date</TableHead>
                   <TableHead>Projet</TableHead>
                   <TableHead>Moyen</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead className="text-right">Montant</TableHead>
-                  <TableHead>Déclaration</TableHead>
+                  <TableHead className="text-center">Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
-                      Chargement...
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                      Chargement des encaissements...
                     </TableCell>
                   </TableRow>
-                ) : encaissements.length === 0 ? (
+                ) : sortedEncaissements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
-                      Aucun paiement enregistré.
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                      Aucun paiement enregistré pour le moment.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  encaissements.map((item) => {
+                  sortedEncaissements.map((item) => {
                     const inPeriod = isInActiveCycle(item.datePaiement)
 
                     return (
-                      <TableRow key={item.id}>
-                        <TableCell>{format(new Date(item.datePaiement), "dd/MM/yyyy")}</TableCell>
-                        <TableCell>{formatReferenceMonth(item.moisReference, item.anneeReference, item.datePaiement)}</TableCell>
-                        <TableCell>{item.projet.nom}</TableCell>
-                        <TableCell className="max-w-[260px] truncate">
-                          {item.moyenPaiement ? formatMoyenPaiementLabel(item.moyenPaiement) : "—"}
-                        </TableCell>
-                        <TableCell className="max-w-[420px] truncate">
-                          {item.description?.trim() || "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(item.montantRecu)}
+                      <TableRow key={item.id} className="group hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium">
+                          {format(new Date(item.datePaiement), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
+                          <div className="font-medium">{item.projet.nom}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatReferenceMonth(item.moisReference, item.anneeReference, item.datePaiement)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                          {item.moyenPaiement ? formatMoyenPaiementLabel(item.moyenPaiement) : "—"}
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate text-sm">
+                          {item.description?.trim() || "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {formatCurrency(item.montantRecu)}
+                        </TableCell>
+                        <TableCell className="text-center">
                           {activeCycleSummary ? (
-                            <Badge variant={inPeriod ? "default" : "secondary"}>
-                              {inPeriod ? "A déclarer" : "Hors cycle actif"}
+                            <Badge variant={inPeriod ? "default" : "secondary"} className={inPeriod ? "bg-green-600 hover:bg-green-700" : "font-normal"}>
+                              {inPeriod ? "Inclus" : "Hors cycle"}
                             </Badge>
                           ) : (
-                            <Badge variant="outline">Aucun cycle actif</Badge>
+                            <Badge variant="outline" className="font-normal text-muted-foreground">Aucun cycle</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => openEdit(item)}>
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>
                               Modifier
                             </Button>
-                            <Button variant="destructive" size="sm" onClick={() => removeEncaissement(item.id)}>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeEncaissement(item.id)}>
                               Supprimer
                             </Button>
                           </div>
