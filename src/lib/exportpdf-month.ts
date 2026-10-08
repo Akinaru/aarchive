@@ -114,7 +114,7 @@ export async function generateMonthlyTempsPDF(
   // ===== Facture meta =====
   const issueDate = new Date()
   const dueDate = addDays(issueDate, 7)
-  const invoiceNumber = `INV-${format(issueDate, "yyyyMMdd-HHmmss")}`
+  const invoiceNumber = `INV-${format(issueDate, "yyyyMMdd-HHmmssSSS")}`
   const billingPeriod = `${format(monthStart, "dd/MM/yyyy")} — ${format(monthEnd, "dd/MM/yyyy")}`
 
   // ===== Aggr par mission =====
@@ -398,5 +398,5 @@ export async function generateMonthlyTempsPDF(
     margin: { left: 14, right: 14 },
   })
 
-  doc.save(`invoice-${format(monthStart, "yyyy-MM")}-${invoiceNumber}.pdf`)
+  return doc
 }

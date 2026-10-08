@@ -50,8 +50,18 @@ export function getMissionPaymentMethods(mission?: Mission | null): InvoicePayme
   }))
 }
 
-/** Génère et télécharge la facture PDF d'un mois à partir de la réponse /api/temps/mois. */
-export async function downloadMonthlyInvoice(data: InvoiceMonthData, paymentMethods: InvoicePaymentMethod[]) {
+/** Titre de mission utilisable dans un nom de fichier. */
+export function fileSafeMissionName(missionTitre: string) {
+  return missionTitre.trim().replace(/[^\p{L}\p{N}-]+/gu, "-").replace(/^-+|-+$/g, "") || "mission"
+}
+
+/** Nom de fichier d'une facture : MISSION_ANNEE_MOIS.pdf (ex. KGYTB_2025_11.pdf). */
+export function invoiceFileName(missionTitre: string, annee: number, mois: number) {
+  return `${fileSafeMissionName(missionTitre)}_${annee}_${String(mois).padStart(2, "0")}.pdf`
+}
+
+/** Construit la facture PDF d'un mois à partir de la réponse /api/temps/mois. */
+export async function buildMonthlyInvoicePdf(data: InvoiceMonthData, paymentMethods: InvoicePaymentMethod[]) {
   const imageByMissionId = new Map<number, string>()
   const uniqueMissions = new Map<number, string>()
 
@@ -90,5 +100,14 @@ export async function downloadMonthlyInvoice(data: InvoiceMonthData, paymentMeth
   type WeeklyGroupsParam = Parameters<typeof generateMonthlyTempsPDF>[2]
   const weeks = weeksForPdf as unknown as WeeklyGroupsParam
 
-  await generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks, paymentMethods)
+  return generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks, paymentMethods)
+}
+
+export async function downloadMonthlyInvoice(
+  data: InvoiceMonthData,
+  paymentMethods: InvoicePaymentMethod[],
+  fileName: string
+) {
+  const doc = await buildMonthlyInvoicePdf(data, paymentMethods)
+  doc.save(fileName)
 }

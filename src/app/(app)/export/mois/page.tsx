@@ -26,7 +26,7 @@ import {
 } from "date-fns"
 import { fr } from "date-fns/locale"
 import { toast } from "sonner"
-import { downloadMonthlyInvoice, getMissionPaymentMethods } from "@/lib/invoice-download"
+import { downloadMonthlyInvoice, getMissionPaymentMethods, invoiceFileName } from "@/lib/invoice-download"
 import { formatMinutes } from "@/lib/time"
 import { Mission } from "@/types/missions"
 import { cn } from "@/lib/utils"
@@ -220,7 +220,12 @@ export default function ExportMoisPage() {
   const handleExport = async () => {
     if (!data) return
     const selectedMission = missions.find((mission) => String(mission.id) === selectedMissionId)
-    await downloadMonthlyInvoice(data, getMissionPaymentMethods(selectedMission))
+    const monthStart = parseISO(data.monthStart)
+    await downloadMonthlyInvoice(
+      data,
+      getMissionPaymentMethods(selectedMission),
+      invoiceFileName(selectedMission?.titre ?? "mission", monthStart.getFullYear(), monthStart.getMonth() + 1)
+    )
   }
 
   const monthLabel = useMemo(() => format(selectedDate, "MMMM yyyy", { locale: fr }), [selectedDate])
