@@ -26,7 +26,7 @@ import {
 } from "date-fns"
 import { fr } from "date-fns/locale"
 import { toast } from "sonner"
-import { generateMonthlyTempsPDF, type InvoicePaymentMethod } from "@/lib/exportpdf-month"
+import { downloadMonthlyInvoice, getMissionPaymentMethods } from "@/lib/invoice-download"
 import { formatMinutes } from "@/lib/time"
 import { Mission } from "@/types/missions"
 import { cn } from "@/lib/utils"
@@ -138,17 +138,6 @@ function formatCurrencyEUR(value: number) {
   })
 }
 
-/**
- * PDF generator expects Date objects for weekStart/weekEnd (and often for t.date in temps)
- * and a shape compatible with its internal Temps type.
- * Here we keep your old flow, but we convert dates + cast to the function parameter type.
- */
-type TempsForPdf = Omit<TempsItem, "date" | "createdAt" | "updatedAt"> & {
-  date: Date
-  createdAt: Date
-  updatedAt?: Date
-}
-
 export default function ExportMoisPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<TempsMoisResponse | null>(null)
@@ -228,81 +217,10 @@ export default function ExportMoisPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, selectedMissionId])
 
-  function isDataUrl(s: string) {
-    return s.startsWith("data:image/")
-  }
-
-  async function urlToDataUrl(url: string): Promise<string | null> {
-    try {
-      const absolute = url.startsWith("http") ? url : new URL(url, window.location.origin).toString()
-      const res = await fetch(absolute)
-      if (!res.ok) return null
-
-      const blob = await res.blob()
-      return await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(String(reader.result))
-        reader.readAsDataURL(blob)
-      })
-    } catch {
-      return null
-    }
-  }
-
   const handleExport = async () => {
     if (!data) return
-
-    const imageByMissionId = new Map<number, string>()
-    const allTemps = data.weeks.flatMap((w) => w.temps)
-
-    const uniqueMissions = new Map<number, string>()
-    for (const t of allTemps) {
-      const img = t.mission?.image
-      if (!img) continue
-      if (!uniqueMissions.has(t.mission.id)) uniqueMissions.set(t.mission.id, img)
-    }
-
-    await Promise.all(
-        Array.from(uniqueMissions.entries()).map(async ([missionId, img]) => {
-          if (isDataUrl(img)) {
-            imageByMissionId.set(missionId, img)
-            return
-          }
-          const dataUrl = await urlToDataUrl(img)
-          if (dataUrl) imageByMissionId.set(missionId, dataUrl)
-        })
-    )
-
-    const weeksForPdf = data.weeks.map((w) => ({
-      weekStart: parseISO(w.weekStart),
-      weekEnd: parseISO(w.weekEnd),
-      temps: w.temps.map<TempsForPdf>((t) => ({
-        ...t,
-        mission: {
-          ...t.mission,
-          image: imageByMissionId.get(t.mission.id) ?? null,
-        },
-        date: new Date(t.date),
-        createdAt: new Date(t.createdAt),
-        updatedAt: t.updatedAt ? new Date(t.updatedAt) : undefined,
-      })),
-    }))
-
-    type WeeklyGroupsParam = Parameters<typeof generateMonthlyTempsPDF>[2]
-    const weeks = weeksForPdf as unknown as WeeklyGroupsParam
-
     const selectedMission = missions.find((mission) => String(mission.id) === selectedMissionId)
-    const paymentMethods: InvoicePaymentMethod[] = (selectedMission?.projet?.moyensPaiement ?? []).map((link) => ({
-      id: link.moyenPaiement.id,
-      nom: link.moyenPaiement.nom,
-      type: link.moyenPaiement.type,
-      cryptoSymbol: link.moyenPaiement.cryptoSymbol ?? null,
-      cryptoNetwork: link.moyenPaiement.cryptoNetwork ?? null,
-      bankAccountHolder: link.moyenPaiement.bankAccountHolder ?? null,
-      bankIban: link.moyenPaiement.bankIban ?? null,
-    }))
-
-    generateMonthlyTempsPDF(parseISO(data.monthStart), parseISO(data.monthEnd), weeks, paymentMethods)
+    await downloadMonthlyInvoice(data, getMissionPaymentMethods(selectedMission))
   }
 
   const monthLabel = useMemo(() => format(selectedDate, "MMMM yyyy", { locale: fr }), [selectedDate])

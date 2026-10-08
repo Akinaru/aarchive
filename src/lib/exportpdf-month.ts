@@ -398,5 +398,5 @@ export async function generateMonthlyTempsPDF(
     margin: { left: 14, right: 14 },
   })
 
-  doc.save(`invoice-${format(issueDate, "yyyy-MM")}-${invoiceNumber}.pdf`)
+  doc.save(`invoice-${format(monthStart, "yyyy-MM")}-${invoiceNumber}.pdf`)
 }

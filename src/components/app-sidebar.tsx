@@ -33,6 +33,8 @@ import {
   ChevronDown,
   TrendingUp,
   CreditCard,
+  Receipt,
+  DatabaseBackup,
 } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
 import { cn } from "@/lib/utils"
@@ -235,6 +237,15 @@ export function AppSidebar() {
                   </SidebarMenuItem>
 
                   <SidebarMenuItem>
+                    <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/factures") })}>
+                      <Link href="/factures" onClick={handleLinkClick}>
+                        <Receipt className="mr-2 size-4" />
+                        Factures
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       className={cn({ "bg-primary/10 text-primary": isActive("/gains") })}
@@ -251,6 +262,15 @@ export function AppSidebar() {
                       <Link href="/monnaie" onClick={handleLinkClick}>
                         <Euro className="mr-2 size-4" />
                         Gestion monétaire
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild className={cn({ "bg-primary/10 text-primary": isActive("/sauvegarde") })}>
+                      <Link href="/sauvegarde" onClick={handleLinkClick}>
+                        <DatabaseBackup className="mr-2 size-4" />
+                        Sauvegarde
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

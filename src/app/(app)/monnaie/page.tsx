@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { format, startOfQuarter, endOfQuarter } from "date-fns"
+import { format, startOfQuarter, endOfQuarter, differenceInCalendarDays } from "date-fns"
 import { fr } from "date-fns/locale"
 import { toast } from "sonner"
-import { ExternalLink, Info, CheckCircle2 } from "lucide-react"
+import { ExternalLink, Info, CheckCircle2, AlertTriangle, Copy } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -208,6 +208,19 @@ function getCycleStatus(cycle: CycleDeclaration) {
   return "Ouvert"
 }
 
+const URSSAF_DECLARATION_URL =
+  "https://www.autoentrepreneur.urssaf.fr/services/espace-personnel/mes-echeances-encours/declarer-et-payer"
+
+// L'URSSAF attend un montant en euros entiers.
+function formatAmountForUrssaf(amount: number) {
+  return `${Math.round(amount)} €`
+}
+
+function formatDaysLeft(days: number) {
+  if (days <= 0) return "aujourd'hui"
+  return days === 1 ? "1 jour" : `${days} jours`
+}
+
 function getDeclarationAmountHint(moyenPaiement?: MoyenPaiementOption | null) {
   if (moyenPaiement?.type === "CRYPTO") {
     return "Dans ton cas Ledger -> Revolut -> compte pro, saisis la valeur en euros du paiement au moment de la réception sur Ledger."
@@ -394,6 +407,27 @@ export default function PageMonnaie() {
 
     setSelectedCycleId(latest ? latest.id : cycles[0].id)
   }, [cycles, selectedCycleId])
+
+  const now = new Date()
+
+  const openDeclaration =
+    cycleSummaries.find(
+      (entry) => now >= new Date(entry.cycle.debutSaisie) && now <= new Date(entry.cycle.finSaisie)
+    ) ?? null
+
+  const nextDeclaration =
+    cycleSummaries
+      .filter((entry) => new Date(entry.cycle.debutSaisie) > now)
+      .sort((a, b) => new Date(a.cycle.debutSaisie).getTime() - new Date(b.cycle.debutSaisie).getTime())[0] ?? null
+
+  const copyAmount = async (amount: number) => {
+    try {
+      await navigator.clipboard.writeText(String(Math.round(amount)))
+      toast.success("Montant copié.")
+    } catch {
+      toast.error("Impossible de copier le montant.")
+    }
+  }
 
   const activeCycleSummary =
     cycleSummaries.find((entry) => entry.cycle.id === selectedCycleId) ?? null
@@ -841,33 +875,80 @@ export default function PageMonnaie() {
                 </Card>
               </div>
 
-              {activeCycleSummary && (
-                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-5">
-                  <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-                    <div className="flex-1 space-y-3">
-                      <h4 className="flex items-center gap-2 font-semibold text-blue-900 dark:text-blue-300">
-                        <Info className="w-5 h-5" />
-                        Comment déclarer à l'URSSAF ?
-                      </h4>
-                      <div className="text-sm text-blue-800 dark:text-blue-400 space-y-2">
-                        <p>Pour ton activité de développeur, tu dois déclarer ce montant dans la case :</p>
-                        <div className="font-medium text-base py-2 px-3 bg-white dark:bg-blue-900/50 rounded border border-blue-100 dark:border-blue-800 inline-block">
-                          👉 « Recettes des activités libérales (BNC) »
-                        </div>
-                        <p>
-                          Montant réellement encaissé entre le {format(activeCycleSummary.periodStart, "d MMMM", { locale: fr })} et le {format(activeCycleSummary.periodEnd, "d MMMM yyyy", { locale: fr })}. Les autres cases restent à 0 €.
+              {openDeclaration ? (
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-900 rounded-lg p-5">
+                  <div className="flex flex-col md:flex-row gap-6 items-start">
+                    <div className="flex-1 space-y-4">
+                      <div className="space-y-1">
+                        <h4 className="flex items-center gap-2 font-semibold text-blue-900 dark:text-blue-300">
+                          <AlertTriangle className="w-5 h-5" />
+                          C'est le moment de déclarer : {formatCycleLabel(openDeclaration.cycle)}
+                        </h4>
+                        <p className="text-sm text-blue-800 dark:text-blue-400">
+                          Saisie ouverte jusqu'au {format(new Date(openDeclaration.cycle.finSaisie), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                          {" "}({formatDaysLeft(differenceInCalendarDays(new Date(openDeclaration.cycle.finSaisie), now))} restant).
                         </p>
                       </div>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="py-2 px-4 bg-white dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-800">
+                          <p className="text-xs text-muted-foreground">Montant à saisir</p>
+                          <p className="text-2xl font-bold">{formatAmountForUrssaf(openDeclaration.montant)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(openDeclaration.montant)} encaissés, arrondi à l'euro (sans centimes)
+                          </p>
+                        </div>
+                        <Button type="button" variant="outline" onClick={() => copyAmount(openDeclaration.montant)}>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Copier le montant
+                        </Button>
+                      </div>
+
+                      <ol className="text-sm text-blue-900 dark:text-blue-300 space-y-1 list-decimal list-inside">
+                        <li>Ouvre ton espace URSSAF puis « Déclarer et payer ».</li>
+                        <li>
+                          Dans la case « Recettes des activités libérales (BNC) », saisis{" "}
+                          <strong>{formatAmountForUrssaf(openDeclaration.montant)}</strong> (nombre entier, sans centimes).
+                        </li>
+                        <li>Laisse toutes les autres cases à 0 €.</li>
+                        <li>Valide la déclaration et le paiement avant la date limite.</li>
+                      </ol>
+
+                      <p className="text-xs text-blue-800/80 dark:text-blue-400/80">
+                        {openDeclaration.count} paiement(s) encaissé(s) entre le{" "}
+                        {format(openDeclaration.periodStart, "d MMMM", { locale: fr })} et le{" "}
+                        {format(openDeclaration.periodEnd, "d MMMM yyyy", { locale: fr })}.
+                        {openDeclaration.count === 0 && " Aucun encaissement : la déclaration à 0 € reste obligatoire."}
+                      </p>
                     </div>
                     <div>
                       <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
-                        <a href="https://www.autoentrepreneur.urssaf.fr/services/espace-personnel/mes-echeances-encours/declarer-et-payer" target="_blank" rel="noopener noreferrer">
-                          Accéder à l'URSSAF
+                        <a href={URSSAF_DECLARATION_URL} target="_blank" rel="noopener noreferrer">
+                          Déclarer sur l'URSSAF
                           <ExternalLink className="w-4 h-4 ml-2" />
                         </a>
                       </Button>
                     </div>
                   </div>
+                </div>
+              ) : (
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-5">
+                  <h4 className="flex items-center gap-2 font-semibold text-amber-900 dark:text-amber-300">
+                    <Info className="w-5 h-5" />
+                    Aucune déclaration à faire pour le moment
+                  </h4>
+                  <p className="text-sm text-amber-800 dark:text-amber-400 mt-2">
+                    {nextDeclaration ? (
+                      <>
+                        Prochaine déclaration ({formatCycleLabel(nextDeclaration.cycle)}) dans{" "}
+                        <strong>{formatDaysLeft(differenceInCalendarDays(new Date(nextDeclaration.cycle.debutSaisie), now))}</strong>, le{" "}
+                        {format(new Date(nextDeclaration.cycle.debutSaisie), "d MMMM yyyy", { locale: fr })}.
+                        Montant encaissé à ce jour pour ce trimestre : {formatCurrency(nextDeclaration.montant)}.
+                      </>
+                    ) : (
+                      "Aucun cycle de déclaration à venir. Génère l'année en cours ou ajoute un cycle."
+                    )}
+                  </p>
                 </div>
               )}
 
